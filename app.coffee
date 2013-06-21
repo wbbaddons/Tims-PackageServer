@@ -13,8 +13,11 @@ logger = new (require 'caterpillar').Logger
 
 ((logger.pipe new (require('caterpillar-filter').Filter)).pipe new (require('caterpillar-human').Human)).pipe process.stdout
 
+# Try to load config
 try
 	filename = "#{__dirname}/config.js"
+
+	# configuration file was passed via `process.argv`
 	if process.argv[2]
 		if process.argv[2].substring(0, 1) is '/'
 			filename = process.argv[2]
@@ -29,13 +32,18 @@ catch e
 	logger.log "warn", e.message
 	config = { }
 
+# default values for configuration
 config.port ?= 9001
 config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableManualUpdate = on
 
+# initialize express
 app = do express
+
+# don't tell anyone we are running express
 app.disable 'x-powered-by'
+
 #app.use do express.logger
 app.use do express.compress
 
@@ -47,6 +55,7 @@ lastUpdate = new Date
 updateTime = 0
 watcher = [ ]
 
+# Creates watchers for every relevant file in the package folder
 updateWatcher = ->
 	async.each watcher, (obj, callback) ->
 		do obj.close
@@ -64,7 +73,8 @@ updateWatcher = ->
 				logger.log "note", "The package folder was changed (#{config.packageFolder}#{file}/#{filename}: #{event})"
 				clearTimeout updateTimeout if updateTimeout?
 				updateTimeout = setTimeout readPackages, 1e3
-				
+
+# extracts and parses the package.xml of the archive given as `filename`
 getPackageXml = (filename, callback) ->
 	stream = fs.createReadStream filename
 	tarStream = stream.pipe do tar.Parse
@@ -72,6 +82,7 @@ getPackageXml = (filename, callback) ->
 	packageXmlFound = no
 	
 	stream.on 'end', ->
+		# no more data, but no package.xml was found
 		callback "package.xml is missing in #{filename}", null unless packageXmlFound
 	
 	tarStream.on 'entry', (e) ->
@@ -81,15 +92,19 @@ getPackageXml = (filename, callback) ->
 		e.on 'data', (chunk) ->
 			packageXml += do chunk.toString
 		e.on 'end', ->
+			# we received the full package.xml -> parse it
 			(new xml.parser()).parseString packageXml, (err, contents) ->
 				if err?
 					callback "Error parsing package.xml of #{filename}: #{err}", null
+				# push the parsed contents to the callback
 				callback null, contents
-				
+
+# Updates package list.
 readPackages = (callback) ->
 	return if updating
 	updating = yes
 	updateStart = do (new Date).getTime
+
 	fs.readdir config.packageFolder, (err, files) ->
 		logger.log "info", "Starting update"
 		if err?
@@ -98,6 +113,7 @@ readPackages = (callback) ->
 		
 		newPackageList = { }
 		
+		# loop over each file in the package folder
 		async.eachSeries files, (file, fileCallback) ->
 			if file is '.gitignore'
 				fileCallback null
@@ -122,25 +138,30 @@ readPackages = (callback) ->
 					fileCallback null
 				
 				fs.exists latest, (latestExists) ->
+					# abort if `latest` is missing
 					unless latestExists
 						logger.log "warn", "#{latest} is missing"
 						fileCallback null
 						return
-						
+					
+					# parse package.xml of `latest`
 					getPackageXml latest, (err, latestPackageXml) ->
 						if err?
 							fileCallback "Error parsing package.xml of #{latest}: #{err}"
 							return
 						logger.log "debug", "Finished parsing #{latest}"
 						currentPackage.name = latestPackageXml.package.$.name
+						# either latest does not belong here, or the folder is incorrectly named
 						if currentPackage.name isnt path.basename packageFolder
 							fileCallback "package name does not match folder (#{currentPackage.name} != #{path.basename packageFolder})"
 							return
-							
+						
+						# provide relevant information to the callback
 						currentPackage.packageinformation = latestPackageXml.package.packageinformation[0]
 						currentPackage.authorinformation = latestPackageXml.package.authorinformation[0]
 						currentPackage.versions = { }
 						
+						# read every file in the folder to find the available versions
 						fs.readdir packageFolder, (err, versions) ->
 							if err?
 								fileCallback err
@@ -160,7 +181,8 @@ readPackages = (callback) ->
 									unless do versionFileStat.isFile
 										logger.log "warn", "#{versionFile} is not a file"
 										return
-										
+									
+									# parse package.xml
 									getPackageXml versionFile, (err, versionPackageXml) ->
 										if err?
 											versionsCallback err
@@ -169,6 +191,8 @@ readPackages = (callback) ->
 										currentVersion = { }
 										currentVersion.versionnumber = versionNumber
 										currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
+
+										# the tar file is incorrectly named -> abort
 										if (currentVersion.versionnumber.replace new RegExp(' ', 'g'), '_') isnt path.basename versionFile, '.tar'
 											fileCallback "version number does not match file (#{currentVersion.versionnumber.replace ' ', '_'} != #{path.basename versionFile, '.tar'})"
 											return
@@ -186,18 +210,24 @@ readPackages = (callback) ->
 								do parsingFinished
 		, (err) ->
 			do updateWatcher
+
 			if err?
 				logger.log "crit", "Error reading package list: #{err}"
 				updating = no
 				callback false if callback?
 				return
 			
+			# overwrite packageList once everything succeeded
 			packageList = newPackageList
+			# clear xml writer cache
 			writer = null
+			# update scan time and statistics
 			lastUpdate = new Date
 			updateTime = ((do lastUpdate.getTime) - updateStart) / 1e3
 			logger.log "info", "Finished update"
 			updating = no
+
+			# and finally call the callback
 			(callback true) if callback?
 			
 app.all '/', (req, res) ->
@@ -205,6 +235,7 @@ app.all '/', (req, res) ->
 	res.type 'xml'
 	
 	unless writer?
+		# build the xml structure of the package list
 		start = do (new Date).getTime
 		writer = new xml.writer true
 		writer.startDocument '1.0', 'UTF-8'
@@ -230,6 +261,8 @@ app.all '/', (req, res) ->
 			for versionNumber, version of _package.versions
 				writer.startElement 'version'
 				writer.writeAttribute 'name', versionNumber
+
+				# we do not support authentification
 				writer.writeAttribute 'accessible', "true"
 				writer.writeAttribute 'isCritical', if (/pl/i.test versionNumber) then "true" else "false"
 				if version.fromversions.length
@@ -246,7 +279,11 @@ app.all '/', (req, res) ->
 						do writer.endElement
 					do writer.endElement
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
+
+				# e.g. {{packageServerHost}}/com.example.wcf.test/1.0.0_Alpha_15
 				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.replace(new RegExp(' ', 'g'), '_')}"
+
+				# try to extract license
 				if version.license
 					result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version.license
 					writer.startElement 'license'
@@ -264,17 +301,20 @@ app.all '/', (req, res) ->
 		do writer.endElement
 		do writer.endDocument
 	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, config.basePath ? "#{req.protocol}://#{req.header 'host'}"
-	
+
+# package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)/i, (req, res) ->
 	res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
 	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar"
 
+# manual update via {{packageServerHost}}/update
 if config.enableManualUpdate
 	app.get '/update', (req, res) ->
 		logger.log "info", 'Manual update was requested'
 		readPackages ->
 			res.redirect 303, config.basePath ? '/'
-			
+
+# Once the package list was successfully scanned once bind to the port
 readPackages ->
 	app.listen config.port
 	
