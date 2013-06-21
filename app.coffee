@@ -102,7 +102,7 @@ readPackages = (callback) ->
 			if file is '.gitignore'
 				fileCallback null
 				return
-
+			
 			packageFolder = config.packageFolder + file
 			logger.log "debug", "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
@@ -263,7 +263,7 @@ app.all '/', (req, res) ->
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion}"
 		do writer.endElement
 		do writer.endDocument
-	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, "#{req.protocol}://#{req.header 'host'}"
+	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)/i, (req, res) ->
 	res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
@@ -273,8 +273,8 @@ if config.enableManualUpdate
 	app.get '/update', (req, res) ->
 		logger.log "info", 'Manual update was requested'
 		readPackages ->
-			res.redirect 303, '/'
-
+			res.redirect 303, config.basePath ? '/'
+			
 readPackages ->
 	app.listen config.port
 	
