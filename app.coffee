@@ -191,7 +191,7 @@ readPackages = (callback) ->
 										currentVersion = { }
 										currentVersion.versionnumber = versionNumber
 										currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
-
+										
 										# the tar file is incorrectly named -> abort
 										if (currentVersion.versionnumber.replace new RegExp(' ', 'g'), '_') isnt path.basename versionFile, '.tar'
 											fileCallback "version number does not match file (#{currentVersion.versionnumber.replace ' ', '_'} != #{path.basename versionFile, '.tar'})"
@@ -210,7 +210,7 @@ readPackages = (callback) ->
 								do parsingFinished
 		, (err) ->
 			do updateWatcher
-
+			
 			if err?
 				logger.log "crit", "Error reading package list: #{err}"
 				updating = no
@@ -226,11 +226,21 @@ readPackages = (callback) ->
 			updateTime = ((do lastUpdate.getTime) - updateStart) / 1e3
 			logger.log "info", "Finished update"
 			updating = no
-
+			
 			# and finally call the callback
 			(callback true) if callback?
 			
 app.all '/', (req, res) ->
+	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+	
+	# redirect when ?packageName=com.example.wcf.test[&packageVersion=1.0.0_Alpha_15] was requested
+	if req.query?.packageName?
+		if req.query.packageVersion?
+			res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace (new RegExp ' ', 'g'), '_'}"
+		else
+			res.redirect 301, "#{host}/#{req.query.packageName}"
+		return
+	
 	req.accepts 'xml'
 	res.type 'xml'
 	
@@ -261,7 +271,7 @@ app.all '/', (req, res) ->
 			for versionNumber, version of _package.versions
 				writer.startElement 'version'
 				writer.writeAttribute 'name', versionNumber
-
+				
 				# we do not support authentification
 				writer.writeAttribute 'accessible', "true"
 				writer.writeAttribute 'isCritical', if (/pl/i.test versionNumber) then "true" else "false"
@@ -279,10 +289,10 @@ app.all '/', (req, res) ->
 						do writer.endElement
 					do writer.endElement
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
-
+				
 				# e.g. {{packageServerHost}}/com.example.wcf.test/1.0.0_Alpha_15
-				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.replace(new RegExp(' ', 'g'), '_')}"
-
+				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.replace (new RegExp ' ', 'g'), '_'}"
+				
 				# try to extract license
 				if version.license
 					result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version.license
@@ -300,19 +310,35 @@ app.all '/', (req, res) ->
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion}"
 		do writer.endElement
 		do writer.endDocument
-	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
 
 # package download requested
-app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)/i, (req, res) ->
+app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
 	res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
-	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar"
+	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err)  ->
+		if err?
+			res.statusCode = 404
+			do res.end
+
+# allow download without version number
+app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, res) ->
+	res.attachment "#{req.params[0]}.tar"
+	res.sendfile "#{config.packageFolder}/#{req.params[0]}/latest", (err) ->
+		if err?
+			res.statusCode = 404
+			do res.end
 
 # manual update via {{packageServerHost}}/update
 if config.enableManualUpdate
 	app.get '/update', (req, res) ->
 		logger.log "info", 'Manual update was requested'
 		readPackages ->
-			res.redirect 303, config.basePath ? '/'
+			res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
+
+# throw 404 on any unknown route
+app.all '*', (req, res) ->
+	res.statusCode = 404
+	do res.end
 
 # Once the package list was successfully scanned once bind to the port
 readPackages ->
