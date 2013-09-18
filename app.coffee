@@ -95,6 +95,8 @@ getPackageXml = (filename, callback) ->
 			(new xml.parser()).parseString packageXml, (err, contents) ->
 				if err?
 					callback "Error parsing package.xml of #{filename}: #{err}", null
+					return
+
 				# push the parsed contents to the callback
 				callback null, contents
 	tarStream.on 'error', ->
@@ -116,10 +118,15 @@ readPackages = (callback) ->
 		
 		# loop over each file in the package folder
 		async.eachSeries files, (file, fileCallback) ->
-			if file is '.gitignore'
+			if (file.substring 0, 1) is '.'
+				logger.log "notice", "Skipping dotfile #{config.packageFolder}#{file}"
 				fileCallback null
 				return
-			
+			unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
+				logger.log "notice", "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
+				fileCallback null
+				return
+
 			packageFolder = config.packageFolder + file
 			logger.log "debug", "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
@@ -172,7 +179,11 @@ readPackages = (callback) ->
 									versionsCallback null
 									return
 								if (versionFile.substring 0, 1) is '.'
-									logger.log "info", "Skipping dotfile #{packageFolder}/#{versionFile}"
+									logger.log "notice", "Skipping dotfile #{packageFolder}/#{versionFile}"
+									versionsCallback null
+									return
+								unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
+									logger.log "notice", "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
 									versionsCallback null
 									return
 
@@ -337,8 +348,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 if config.enableManualUpdate
 	app.get '/update', (req, res) ->
 		logger.log "info", 'Manual update was requested'
-		readPackages ->
-			res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
+		readPackages -> res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
 
 # throw 404 on any unknown route
 app.all '*', (req, res) ->
@@ -346,6 +356,4 @@ app.all '*', (req, res) ->
 	do res.end
 
 # Once the package list was successfully scanned once bind to the port
-readPackages ->
-	app.listen config.port
-	
+readPackages -> app.listen config.port
