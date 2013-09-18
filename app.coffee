@@ -171,7 +171,11 @@ readPackages = (callback) ->
 								if versionFile is 'latest'
 									versionsCallback null
 									return
-									
+								if (versionFile.substring 0, 1) is '.'
+									logger.log "info", "Skipping dotfile #{packageFolder}/#{versionFile}"
+									versionsCallback null
+									return
+
 								versionFile = packageFolder + '/' + versionFile
 								logger.log "debug", "Parsing #{versionFile}"
 								fs.stat versionFile, (err, versionFileStat) ->
