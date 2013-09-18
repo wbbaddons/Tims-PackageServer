@@ -8,21 +8,21 @@
 	"author": "Tim Düsterhus <timwolla@bastelstu.be>",
 	"dependencies": {
 		"express": "~3",
-		"async": "> 0.2",
-		"tar": "> 0.1",
-		"xml2js": "> 0.2",
+		"async": ">=0.2",
+		"tar": ">=0.1",
+		"xml2js": ">=0.2",
 		"caterpillar": "~2",
 		"caterpillar-human": "*",
 		"caterpillar-filter": "*",
-		"xml-writer": "> 1.2",
-		"coffee-script": "> 1.4"
+		"xml-writer": ">=1.2",
+		"coffee-script": ">=1.4"
 	},
 	"scripts": {
 		"prestart": "npm install",
 		"start": "coffee app.coffee"
         },
 	"engines": { 
-		"node": ">=0.6.0",
+		"node": ">=0.8.0",
 		"npm": ">=1.0"
 	}, 
 	"version": "1.0.0"

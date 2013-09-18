@@ -89,8 +89,7 @@ getPackageXml = (filename, callback) ->
 		return unless e.props.path is 'package.xml'
 		packageXmlFound = yes
 		packageXml = ''
-		e.on 'data', (chunk) ->
-			packageXml += do chunk.toString
+		e.on 'data', (chunk) -> packageXml += do chunk.toString
 		e.on 'end', ->
 			# we received the full package.xml -> parse it
 			(new xml.parser()).parseString packageXml, (err, contents) ->
@@ -152,8 +151,8 @@ readPackages = (callback) ->
 						logger.log "debug", "Finished parsing #{latest}"
 						currentPackage.name = latestPackageXml.package.$.name
 						# either latest does not belong here, or the folder is incorrectly named
-						if currentPackage.name isnt path.basename packageFolder
-							fileCallback "package name does not match folder (#{currentPackage.name} != #{path.basename packageFolder})"
+						unless currentPackage.name is path.basename packageFolder
+							fileCallback "package name does not match folder (#{currentPackage.name} isnt #{path.basename packageFolder})"
 							return
 						
 						# provide relevant information to the callback
