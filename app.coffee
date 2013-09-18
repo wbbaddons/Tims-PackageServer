@@ -107,7 +107,7 @@ readPackages = (callback) ->
 	return if updating
 	updating = yes
 	updateStart = do (new Date).getTime
-
+	
 	fs.readdir config.packageFolder, (err, files) ->
 		logger.log "info", "Starting update"
 		if err?
@@ -126,7 +126,7 @@ readPackages = (callback) ->
 				logger.log "notice", "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
 				fileCallback null
 				return
-
+				
 			packageFolder = config.packageFolder + file
 			logger.log "debug", "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
@@ -186,7 +186,7 @@ readPackages = (callback) ->
 									logger.log "notice", "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
 									versionsCallback null
 									return
-
+									
 								versionFile = packageFolder + '/' + versionFile
 								logger.log "debug", "Parsing #{versionFile}"
 								fs.stat versionFile, (err, versionFileStat) ->
