@@ -97,6 +97,8 @@ getPackageXml = (filename, callback) ->
 					callback "Error parsing package.xml of #{filename}: #{err}", null
 				# push the parsed contents to the callback
 				callback null, contents
+	tarStream.on 'error', ->
+		callback "Error while extracting #{filename}", null
 
 # Updates package list.
 readPackages = (callback) ->
