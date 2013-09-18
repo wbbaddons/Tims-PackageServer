@@ -20,7 +20,7 @@
 	"scripts": {
 		"prestart": "npm install",
 		"start": "coffee app.coffee"
-        },
+	},
 	"engines": { 
 		"node": ">=0.8.0",
 		"npm": ">=1.0"

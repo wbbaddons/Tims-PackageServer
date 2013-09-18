@@ -331,18 +331,12 @@ app.all '/', (req, res) ->
 # package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
 	res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
-	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err)  ->
-		if err?
-			res.statusCode = 404
-			do res.end
+	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
 
 # allow download without version number
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, res) ->
 	res.attachment "#{req.params[0]}.tar"
-	res.sendfile "#{config.packageFolder}/#{req.params[0]}/latest", (err) ->
-		if err?
-			res.statusCode = 404
-			do res.end
+	res.sendfile "#{config.packageFolder}/#{req.params[0]}/latest", (err) -> res.send 404, '404 Not Found' if err?
 
 # manual update via {{packageServerHost}}/update
 if config.enableManualUpdate
@@ -351,9 +345,7 @@ if config.enableManualUpdate
 		readPackages -> res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
 
 # throw 404 on any unknown route
-app.all '*', (req, res) ->
-	res.statusCode = 404
-	do res.end
+app.all '*', (req, res) -> res.send 404, '404 Not Found'
 
 # Once the package list was successfully scanned once bind to the port
 readPackages -> app.listen config.port
