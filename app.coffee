@@ -81,8 +81,10 @@ updateWatcher = ->
 					updateTimeout = setTimeout readPackages, 1e3
 
 createComparator = (comparison) ->
+	# simply return true if versions are *
 	(return -> true) if comparison is '*'
 	
+	# normalize comparison string
 	comparison = comparison.replace /([0-9]+\.[0-9]+\.[0-9]+(?: (?:a|alpha|b|beta|d|dev|rc|pl) [0-9]+)?)/ig, (version) ->
 		version = version.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
 		version[0] ?= 0
@@ -95,6 +97,7 @@ createComparator = (comparison) ->
 	comparison = comparison.replace /[ ]/g, ''
 	
 	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) ->
+		# build comparison function
 		return """
 		((function($v) {
 			$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./)
@@ -123,16 +126,21 @@ createComparator = (comparison) ->
 	
 isAccessible = (username, testPackage, testVersion) ->
 	return true if auth is null
+	
+	# check general packages
 	if auth.packages?
 		for _package, version of auth.packages
 			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
 			if RegExp("^#{_package}$", 'i').test testPackage
 				return true if version testVersion
+	
+	# check user
 	if auth.users?[username]?.packages?
 		for _package, version of auth.users[username].packages
 			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
 			if RegExp("^#{_package}$", 'i').test testPackage
 				return true if version testVersion
+		# check user groups
 		for group in auth.users[username].groups
 			if auth.groups?[group]?
 				for _package, version of auth.groups[group]
@@ -187,17 +195,16 @@ readPackages = (callback) ->
 				return
 			try
 				auth = JSON.parse contents
+				
+				# convert into functions
 				if auth.packages?
-					for _package, versions of auth.packages
-						auth.packages[_package] = createComparator versions
+					auth.packages[_package] = createComparator versions for _package, versions of auth.packages
 				if auth.groups?
 					for group, packages of auth.groups
-						for _package, versions of packages
-							auth.groups[group][_package] = createComparator versions
+						auth.groups[group][_package] = createComparator versions for _package, versions of packages
 				if auth.users?
 					for user of auth.users
-						for _package, versions of auth.users[user].packages
-							auth.users[user].packages[_package] = createComparator versions
+						auth.users[user].packages[_package] = createComparator versions for _package, versions of auth.users[user].packages
 				logger.log "notice", "Updated auth"
 			catch err
 				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
@@ -240,6 +247,7 @@ readPackages = (callback) ->
 				latest = packageFolder + '/latest'
 				logger.log "debug", "Parsing #{latest}"
 				currentPackage = { }
+				
 				parsingFinished = ->
 					newPackageList[currentPackage.name] = currentPackage
 					fileCallback null
@@ -312,10 +320,11 @@ readPackages = (callback) ->
 											fileCallback "version number does not match file (#{currentVersion.versionnumber.replace ' ', '_'} != #{path.basename versionFile, '.tar'})"
 											return
 										currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
-										currentVersion.requiredpackages = versionPackageXml.package.requiredpackages[0]
+										currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
+										currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
 										currentVersion.timestamp = versionFileStat.mtime
 										currentPackage.versions[versionNumber] = currentVersion
-										# TODO: Excludes and optionals
+										# TODO: optionals
 										logger.log "debug", "Finished parsing #{versionFile}"
 										versionsCallback null
 							, (err) ->
@@ -375,6 +384,8 @@ app.all '/', (req, res) ->
 			writer.writeElement 'packagedescription', _package.packageinformation.packagedescription[0]._ ? _package.packageinformation.packagedescription[0]
 			writer.writeElement 'isapplication', String(_package.packageinformation.isapplication ? 0)
 			do writer.endElement
+			
+			# write <authorinformation>
 			if _package.authorinformation?
 				writer.startElement 'authorinformation'
 				writer.writeElement 'author', _package.authorinformation.author[0] if _package.authorinformation.author[0]?
@@ -385,22 +396,37 @@ app.all '/', (req, res) ->
 				writer.startElement 'version'
 				writer.writeAttribute 'name', versionNumber
 				
-				# we do not support authentification
 				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false" # TODO: Use proper username
 				writer.writeAttribute 'isCritical', if (/pl/i.test versionNumber) then "true" else "false"
-				if version.fromversions.length
+				
+				# write <fromversions>
+				if version.fromversions?.length
 					writer.startElement 'fromversions'
 					for fromVersion in version.fromversions
 						writer.writeElement 'fromversion', fromVersion
 					do writer.endElement
-				if version.requiredpackages.requiredpackage.length
+				
+				# write <requiredpackages>
+				if version.requiredpackages?.requiredpackage?.length
 					writer.startElement 'requiredpackages'
 					for requiredPackage in version.requiredpackages.requiredpackage
 						writer.startElement 'requiredpackage'
-						writer.writeAttribute 'minversion', requiredPackage.$.minversion if requiredPackage.$.minversion?
-						writer.text requiredPackage._
+						writer.writeAttribute 'minversion', requiredPackage.$.minversion if requiredPackage.$?.minversion?
+						writer.text requiredPackage._ ? requiredPackage
 						do writer.endElement
 					do writer.endElement
+				
+				# write <excludedpackages>
+				if version.excludedpackages?.excludedpackage?.length
+					writer.startElement 'excludedpackages'
+					console.log version.excludedpackages
+					for excludedPackage in version.excludedpackages.excludedpackage
+						writer.startElement 'excludedpackage'
+						writer.writeAttribute 'version', requiredPackage.$.version if excludedPackage.$?.version?
+						writer.text excludedPackage._ ? excludedPackage
+						do writer.endElement
+					do writer.endElement
+				
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
 				
 				# e.g. {{packageServerHost}}/com.example.wcf.test/1.0.0_Alpha_15
@@ -413,6 +439,7 @@ app.all '/', (req, res) ->
 					writer.writeAttribute 'url', result[2] if result[2]?
 					writer.text result[1]
 					do writer.endElement
+					
 				do writer.endElement
 			do writer.endElement
 			do writer.endElement
