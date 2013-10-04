@@ -34,6 +34,7 @@ catch e
 
 # default values for configuration
 config.port ?= 9001
+config.ip ?= '0.0.0.0'
 config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableManualUpdate = on
@@ -356,4 +357,4 @@ app.all '*', (req, res) ->
 	do res.end
 
 # Once the package list was successfully scanned once bind to the port
-readPackages -> app.listen config.port
+readPackages -> app.listen config.port, config.ip
