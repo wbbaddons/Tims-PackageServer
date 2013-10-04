@@ -6,14 +6,14 @@
 			"packages": {
 			}
 		},
-		"Constumer": {
+		"Costumer": {
 			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
 			"groups": [ ],
 			"packages": {
 				"be.bastelstu.wcf.commercial": "$v >= 1.0.0 && $v < 1.1.0",
 			}
 		},
-		"Constumer2": {
+		"Costumer2": {
 			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
 			"groups": [ ],
 			"packages": {
