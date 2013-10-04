@@ -474,15 +474,19 @@ app.all '/', (req, res) ->
 # package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
 	callback = (username) ->
-		if isAccessible username, req.params[0], req.params[1]
-			logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1]}"
-			res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
-			res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
-		else
-			logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1]}"
-			res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-			res.send 401, 'Please provide proper username and password to access this package'
-	
+		fs.exists "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (packageExists) ->
+			if packageExists
+				if isAccessible username, req.params[0], req.params[1]
+					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1]}"
+					res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
+					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
+				else
+					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1]}"
+					res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
+					res.send 401, 'Please provide proper username and password to access this package'
+			else
+				res.send 404, '404 Not Found'
+		
 	if req.auth?
 		if auth?.users?[req.auth.username]?
 			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
