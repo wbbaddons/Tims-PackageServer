@@ -131,22 +131,19 @@ isAccessible = (username, testPackage, testVersion) ->
 	if auth.packages?
 		for _package, version of auth.packages
 			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
-			if RegExp("^#{_package}$", 'i').test testPackage
-				return true if version testVersion
+			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 	
 	# check user
 	if auth.users?[username]?.packages?
 		for _package, version of auth.users[username].packages
 			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
-			if RegExp("^#{_package}$", 'i').test testPackage
-				return true if version testVersion
+			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 		# check user groups
 		for group in auth.users[username].groups
 			if auth.groups?[group]?
 				for _package, version of auth.groups[group]
 					_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
-					if RegExp("^#{_package}$", 'i').test testPackage
-						return true if version testVersion
+					return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 	false
 
 # extracts and parses the package.xml of the archive given as `filename`
@@ -156,12 +153,13 @@ getPackageXml = (filename, callback) ->
 	
 	packageXmlFound = no
 	
-	stream.on 'end', ->
-		# no more data, but no package.xml was found
-		callback "package.xml is missing in #{filename}", null unless packageXmlFound
+	# no more data, but no package.xml was found
+	stream.on 'end', -> callback "package.xml is missing in #{filename}", null unless packageXmlFound
 	
 	tarStream.on 'entry', (e) ->
+		# we are searching for the package.xml
 		return unless e.props.path is 'package.xml'
+		
 		packageXmlFound = yes
 		packageXml = ''
 		e.on 'data', (chunk) -> packageXml += do chunk.toString
@@ -171,11 +169,11 @@ getPackageXml = (filename, callback) ->
 				if err?
 					callback "Error parsing package.xml of #{filename}: #{err}", null
 					return
-
+					
 				# push the parsed contents to the callback
 				callback null, contents
-	tarStream.on 'error', ->
-		callback "Error while extracting #{filename}", null
+	
+	tarStream.on 'error', -> callback "Error while extracting #{filename}", null
 
 # Updates package list.
 readPackages = (callback) ->
@@ -183,12 +181,14 @@ readPackages = (callback) ->
 	updating = yes
 	updateStart = do (new Date).getTime
 	
-	fs.exists config.packageFolder + 'auth.json', (authExists) ->
+	fs.exists "#{config.packageFolder}auth.json", (authExists) ->
+		# no auth.json was found
 		unless authExists
 			logger.log "warn", "auth.json does not exist. Assuming all packages are free"
 			auth = null
 			return
-		fs.readFile config.packageFolder + 'auth.json', (err, contents) ->
+			
+		fs.readFile "#{config.packageFolder}auth.json", (err, contents) ->
 			if err?
 				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
 				auth = { }
@@ -207,7 +207,7 @@ readPackages = (callback) ->
 						auth.users[user].packages[_package] = createComparator versions for _package, versions of auth.users[user].packages
 				logger.log "notice", "Updated auth"
 			catch err
-				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
+				logger.log "error", "error parsing auth.json. Denying access to all packages: #{err}"
 				auth = {}
 	
 	fs.readdir config.packageFolder, (err, files) ->
@@ -220,18 +220,21 @@ readPackages = (callback) ->
 		
 		# loop over each file in the package folder
 		async.eachSeries files, (file, fileCallback) ->
+			# ignore dotfiles…
 			if (file.substring 0, 1) is '.'
 				logger.log "notice", "Skipping dotfile #{config.packageFolder}#{file}"
 				fileCallback null
 				return
+			# … auth.json
 			if file is 'auth.json'
 				fileCallback null
 				return
+			# … and files that don't look like a valid package identifier
 			unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
 				logger.log "notice", "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
 				fileCallback null
 				return
-				
+			
 			packageFolder = config.packageFolder + file
 			logger.log "debug", "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
@@ -311,20 +314,21 @@ readPackages = (callback) ->
 											versionsCallback err
 											return
 										versionNumber = versionPackageXml.package.packageinformation[0].version[0]
+										# the tar file is incorrectly named -> abort
+										if (versionNumber.replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
+											fileCallback "version number does not match file (#{versionNumber.replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
+											return
+										
 										currentVersion = { }
 										currentVersion.versionnumber = versionNumber
 										currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
-										
-										# the tar file is incorrectly named -> abort
-										if (currentVersion.versionnumber.replace new RegExp(' ', 'g'), '_') isnt path.basename versionFile, '.tar'
-											fileCallback "version number does not match file (#{currentVersion.versionnumber.replace ' ', '_'} != #{path.basename versionFile, '.tar'})"
-											return
 										currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
 										currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
 										currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
 										currentVersion.timestamp = versionFileStat.mtime
 										currentPackage.versions[versionNumber] = currentVersion
 										# TODO: optionals
+										
 										logger.log "debug", "Finished parsing #{versionFile}"
 										versionsCallback null
 							, (err) ->
@@ -508,7 +512,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	versionNumber = packageList?[req.params[0]]?.packageinformation?.version[0]
 	unless versionNumber?
-		res.send 404, '404 Not Found' if err?
+		res.send 404, '404 Not Found'
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.replace (new RegExp ' ', 'g'), '_'}"
 
