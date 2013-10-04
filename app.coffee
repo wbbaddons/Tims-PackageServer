@@ -179,7 +179,7 @@ getPackageXml = (filename, callback) ->
 readPackages = (callback) ->
 	return if updating
 	updating = yes
-	updateStart = do (new Date).getTime
+	updateStart = do process.hrtime
 	
 	fs.exists "#{config.packageFolder}auth.json", (authExists) ->
 		# no auth.json was found
@@ -348,7 +348,7 @@ readPackages = (callback) ->
 			packageList = newPackageList
 			# update scan time and statistics
 			lastUpdate = new Date
-			updateTime = ((do lastUpdate.getTime) - updateStart) / 1e3
+			updateTime = process.hrtime updateStart
 			logger.log "info", "Finished update"
 			updating = no
 			
@@ -371,7 +371,7 @@ app.all '/', (req, res) ->
 		res.type 'xml'
 		
 		# build the xml structure of the package list
-		start = do (new Date).getTime
+		start = do process.hrtime
 		writer = new xml.writer true
 		writer.startDocument '1.0', 'UTF-8'
 		writer.startElement 'section'
@@ -446,10 +446,11 @@ app.all '/', (req, res) ->
 				do writer.endElement
 			do writer.endElement
 			do writer.endElement
-		end = do (new Date).getTime
-		writer.writeComment "xml generated in #{(end - start) / 1e3} seconds"
-		writer.writeComment "packages scanned in #{updateTime} seconds"
+		diff = process.hrtime start
+		writer.writeComment "xml generated in #{diff[0] + diff[1] / 1e9} seconds"
+		writer.writeComment "packages scanned in #{updateTime[0] + updateTime[1] / 1e9} seconds"
 		writer.writeComment "last update #{lastUpdate}"
+		writer.writeComment "up since #{do process.uptime} seconds"
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>"
 		do writer.endElement
 		do writer.endDocument
