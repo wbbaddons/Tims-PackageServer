@@ -200,11 +200,10 @@ readPackages = (callback) ->
 				if auth.packages?
 					auth.packages[_package] = createComparator versions for _package, versions of auth.packages
 				if auth.groups?
-					for group, packages of auth.groups
-						auth.groups[group][_package] = createComparator versions for _package, versions of packages
+					(auth.groups[group][_package] = createComparator versions for _package, versions of packages) for group, packages of auth.groups
 				if auth.users?
-					for user of auth.users
-						auth.users[user].packages[_package] = createComparator versions for _package, versions of auth.users[user].packages
+					(auth.users[user].packages[_package] = createComparator versions for _package, versions of auth.users[user].packages) for user of auth.users
+				
 				logger.log "notice", "Updated auth"
 			catch err
 				logger.log "error", "error parsing auth.json. Denying access to all packages: #{err}"
@@ -334,8 +333,8 @@ readPackages = (callback) ->
 							, (err) ->
 								if err?
 									fileCallback err
-									return
-								do parsingFinished
+								else
+									do parsingFinished
 		, (err) ->
 			do updateWatcher
 			
@@ -455,24 +454,20 @@ app.all '/', (req, res) ->
 		do writer.endElement
 		do writer.endDocument
 		res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
-		return
 	
 	if req.auth?
 		if auth?.users?[req.auth.username]?
 			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
 				if err?
 					res.send 500, '500 Internal Server Error'
-					return
-				if result
+				else if result
 					callback req.auth.username
 				else
 					res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
 					res.send 401, 'Invalid password or username'
-					return
 		else
 			res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
 			res.send 401, 'Invalid password or username'
-			return
 	else
 		callback ''
 
