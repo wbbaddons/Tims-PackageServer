@@ -5,6 +5,7 @@ fs = require 'fs'
 path = require 'path'
 async = require 'async'
 tar = require 'tar'
+bcrypt = require 'bcrypt'
 xml = 
 	parser: (require 'xml2js').Parser
 	writer: require 'xml-writer'
@@ -50,10 +51,10 @@ app.use do express.compress
 packageList = { }
 updating = no
 updateTimeout = null
-writer = null
 lastUpdate = new Date
 updateTime = 0
 watcher = [ ]
+auth = null
 
 # Creates watchers for every relevant file in the package folder
 updateWatcher = ->
@@ -63,16 +64,81 @@ updateWatcher = ->
 	watcher = [ ]
 	
 	watcher.push fs.watch config.packageFolder, (event, filename) ->
-		logger.log "note", "The package folder was changed (#{config.packageFolder}#{filename}: #{event})"
+		logger.log "notice", "The package folder was changed (#{config.packageFolder}#{filename}: #{event})"
 		clearTimeout updateTimeout if updateTimeout?
 		updateTimeout = setTimeout readPackages, 1e3
 		
 	fs.readdir config.packageFolder, (err, files) ->
 		async.each files, (file, callback) ->
-			watcher.push fs.watch config.packageFolder + file, (event, filename) ->
-				logger.log "note", "The package folder was changed (#{config.packageFolder}#{file}/#{filename}: #{event})"
-				clearTimeout updateTimeout if updateTimeout?
-				updateTimeout = setTimeout readPackages, 1e3
+			fs.stat config.packageFolder + file, (err, stat) ->
+				callback err
+				return unless do stat.isDirectory
+				
+				watcher.push fs.watch config.packageFolder + file, (event, filename) ->
+					logger.log "notice", "The package folder was changed (#{config.packageFolder}#{file}/#{filename}: #{event})"
+					clearTimeout updateTimeout if updateTimeout?
+					updateTimeout = setTimeout readPackages, 1e3
+
+createComparator = (comparison) ->
+	(return -> true) if comparison is '*'
+	
+	comparison = comparison.replace /([0-9]+\.[0-9]+\.[0-9]+(?: (?:a|alpha|b|beta|d|dev|rc|pl) [0-9]+)?)/ig, (version) ->
+		version = version.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
+		version[0] ?= 0
+		version[1] ?= 0
+		version[2] ?= 0
+		version[3] ?= 0
+		version[4] ?= 0
+		version = version.join '.'
+		
+	comparison = comparison.replace /[ ]/g, ''
+	
+	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) ->
+		return """
+		((function($v) {
+			$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./)
+			if ($v[0] == null) $v[0] = 0
+			if ($v[1] == null) $v[1] = 0
+			if ($v[2] == null) $v[2] = 0
+			if ($v[3] == null) $v[3] = 0
+			if ($v[4] == null) $v[4] = 0
+			v2 = "#{v2}".split(/\\./)
+			
+			result = 0
+			for (var i = 0; i < 5; i++) {
+				if (parseInt($v[i]) == parseInt(v2[i])) continue;
+				if (parseInt($v[i]) < parseInt(v2[i])) {
+					result = -1;
+					break;
+				}
+				if (parseInt($v[i]) > parseInt(v2[i])) {
+					result = 1;
+					break;
+				}
+			}
+			return result #{operator} 0;
+		})($v))"""
+	new Function '$v', 'return ' + comparison
+	
+isAccessible = (username, testPackage, testVersion) ->
+	return true if auth is null
+	if auth.packages?
+		for _package, version of auth.packages
+			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+			if RegExp("^#{_package}$", 'i').test testPackage
+				return true if version testVersion
+	if auth.users?[username]?.packages?
+		for _package, version of auth.users[username].packages
+			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+			if RegExp("^#{_package}$", 'i').test testPackage
+				return true if version testVersion
+		for group in auth.users[username].groups
+			if auth.groups?[group]?
+				for _package, version of auth.groups[group]
+					_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+					if RegExp("^#{_package}$", 'i').test testPackage
+						return true if version testVersion
+	false
 
 # extracts and parses the package.xml of the archive given as `filename`
 getPackageXml = (filename, callback) ->
@@ -108,6 +174,34 @@ readPackages = (callback) ->
 	updating = yes
 	updateStart = do (new Date).getTime
 	
+	fs.exists config.packageFolder + 'auth.json', (authExists) ->
+		unless authExists
+			logger.log "warn", "auth.json does not exist. Assuming all packages are free"
+			auth = null
+			return
+		fs.readFile config.packageFolder + 'auth.json', (err, contents) ->
+			if err?
+				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
+				auth = { }
+				return
+			try
+				auth = JSON.parse contents
+				if auth.packages?
+					for _package, versions of auth.packages
+						auth.packages[_package] = createComparator versions
+				if auth.groups?
+					for group, packages of auth.groups
+						for _package, versions of packages
+							auth.groups[group][_package] = createComparator versions
+				if auth.users?
+					for user of auth.users
+						for _package, versions of auth.users[user].packages
+							auth.users[user].packages[_package] = createComparator versions
+				logger.log "notice", "Updated auth"
+			catch err
+				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
+				auth = {}
+	
 	fs.readdir config.packageFolder, (err, files) ->
 		logger.log "info", "Starting update"
 		if err?
@@ -120,6 +214,9 @@ readPackages = (callback) ->
 		async.eachSeries files, (file, fileCallback) ->
 			if (file.substring 0, 1) is '.'
 				logger.log "notice", "Skipping dotfile #{config.packageFolder}#{file}"
+				fileCallback null
+				return
+			if file is 'auth.json'
 				fileCallback null
 				return
 			unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
@@ -136,6 +233,7 @@ readPackages = (callback) ->
 					
 				unless do packageFolderStat.isDirectory
 					logger.log "warn", "#{packageFolder} is not a folder"
+					do fileCallback
 					return
 				
 				latest = packageFolder + '/latest'
@@ -193,7 +291,7 @@ readPackages = (callback) ->
 									if err?
 										versionsCallback versionFileStat
 										return
-								
+									
 									unless do versionFileStat.isFile
 										logger.log "warn", "#{versionFile} is not a file"
 										return
@@ -235,8 +333,6 @@ readPackages = (callback) ->
 			
 			# overwrite packageList once everything succeeded
 			packageList = newPackageList
-			# clear xml writer cache
-			writer = null
 			# update scan time and statistics
 			lastUpdate = new Date
 			updateTime = ((do lastUpdate.getTime) - updateStart) / 1e3
@@ -247,20 +343,20 @@ readPackages = (callback) ->
 			(callback true) if callback?
 			
 app.all '/', (req, res) ->
-	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
-	
-	# redirect when ?packageName=com.example.wcf.test[&packageVersion=1.0.0_Alpha_15] was requested
-	if req.query?.packageName?
-		if req.query.packageVersion?
-			res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace (new RegExp ' ', 'g'), '_'}"
-		else
-			res.redirect 301, "#{host}/#{req.query.packageName}"
-		return
-	
-	req.accepts 'xml'
-	res.type 'xml'
-	
-	unless writer?
+	callback = (username) ->
+		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+		
+		# redirect when ?packageName=com.example.wcf.test[&packageVersion=1.0.0_Alpha_15] was requested
+		if req.query?.packageName?
+			if req.query.packageVersion?
+				res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace (new RegExp ' ', 'g'), '_'}"
+			else
+				res.redirect 301, "#{host}/#{req.query.packageName}"
+			return
+		
+		req.accepts 'xml'
+		res.type 'xml'
+		
 		# build the xml structure of the package list
 		start = do (new Date).getTime
 		writer = new xml.writer true
@@ -289,7 +385,7 @@ app.all '/', (req, res) ->
 				writer.writeAttribute 'name', versionNumber
 				
 				# we do not support authentification
-				writer.writeAttribute 'accessible', "true"
+				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false" # TODO: Use proper username
 				writer.writeAttribute 'isCritical', if (/pl/i.test versionNumber) then "true" else "false"
 				if version.fromversions.length
 					writer.startElement 'fromversions'
@@ -326,17 +422,67 @@ app.all '/', (req, res) ->
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion}"
 		do writer.endElement
 		do writer.endDocument
-	res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
+		res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
+		return
+	
+	if req.auth?
+		if auth?.users?[req.auth.username]?
+			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
+				if err?
+					res.send 500, '500 Internal Server Error'
+					return
+				if result
+					callback req.auth.username
+				else
+					res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
+					res.send 401, 'Invalid password or username'
+					return
+		else
+			res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
+			res.send 401, 'Invalid password or username'
+			return
+	else
+		callback ''
 
 # package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
-	res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
-	res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
+	callback = (username) ->
+		if isAccessible username, req.params[0], req.params[1]
+			logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1]}"
+			res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
+			res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
+		else
+			logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1]}"
+			res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
+			res.send 401, 'Please provide proper username and password to access this package'
+	
+	if req.auth?
+		if auth?.users?[req.auth.username]?
+			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
+				if err?
+					res.send 500, '500 Internal Server Error'
+					return
+				if result
+					callback req.auth.username
+				else
+					res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
+					res.send 401, 'Please provide proper username and password to access this package'
+					return
+		else
+			res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
+			res.send 401, 'Please provide proper username and password to access this package'
+			return
+	else
+		callback ''
 
 # allow download without version number
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, res) ->
-	res.attachment "#{req.params[0]}.tar"
-	res.sendfile "#{config.packageFolder}/#{req.params[0]}/latest", (err) -> res.send 404, '404 Not Found' if err?
+	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+	versionNumber = packageList?[req.params[0]]?.packageinformation?.version[0]
+	unless versionNumber?
+		res.send 404, '404 Not Found' if err?
+		return
+	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.replace (new RegExp ' ', 'g'), '_'}"
 
 # manual update via {{packageServerHost}}/update
 if config.enableManualUpdate

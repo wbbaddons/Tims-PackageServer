@@ -1,0 +1,33 @@
+{
+	"users": {
+		"Administrator": {
+			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
+			"groups": [ "Admin" ],
+			"packages": {
+			}
+		},
+		"Constumer": {
+			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
+			"groups": [ ],
+			"packages": {
+				"be.bastelstu.wcf.commercial": "$v >= 1.0.0 && $v < 1.1.0",
+			}
+		},
+		"Constumer2": {
+			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
+			"groups": [ ],
+			"packages": {
+				"be.bastelstu.wcf.commercial": "$v >= 1.1.0",
+			}
+		}
+	},
+	"groups": {
+		"Admin": {
+			"*": "*"
+		}
+	},
+	"packages": {
+		"be.bastelstu.wcf.freePackage": "*",
+		"be.bastelstu.wcf.openBeta": "$v >= 1.0.0 Beta 1 && $v < 1.0.0 RC 1"
+	}
+}
