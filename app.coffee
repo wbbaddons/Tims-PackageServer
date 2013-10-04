@@ -420,7 +420,7 @@ app.all '/', (req, res) ->
 		writer.writeComment "xml generated in #{(end - start) / 1e3} seconds"
 		writer.writeComment "packages scanned in #{updateTime} seconds"
 		writer.writeComment "last update #{lastUpdate}"
-		writer.writeComment "This list was presented by Tims Package Server #{serverVersion}"
+		writer.writeComment "This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>"
 		do writer.endElement
 		do writer.endDocument
 		res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
