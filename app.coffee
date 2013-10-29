@@ -399,7 +399,7 @@ app.all '/', (req, res) ->
 				writer.startElement 'version'
 				writer.writeAttribute 'name', versionNumber
 				
-				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false" # TODO: Use proper username
+				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false"
 				writer.writeAttribute 'critical', if (/pl/i.test versionNumber) then "true" else "false"
 				
 				# write <fromversions>
