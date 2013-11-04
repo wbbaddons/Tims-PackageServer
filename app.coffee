@@ -425,7 +425,7 @@ app.all '/', (req, res) ->
 					console.log version.excludedpackages
 					for excludedPackage in version.excludedpackages.excludedpackage
 						writer.startElement 'excludedpackage'
-						writer.writeAttribute 'version', requiredPackage.$.version if excludedPackage.$?.version?
+						writer.writeAttribute 'version', excludedPackage.$.version if excludedPackage.$?.version?
 						writer.text excludedPackage._ ? excludedPackage
 						do writer.endElement
 					do writer.endElement
