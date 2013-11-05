@@ -314,7 +314,7 @@ readPackages = (callback) ->
 											return
 										versionNumber = versionPackageXml.package.packageinformation[0].version[0]
 										# the tar file is incorrectly named -> abort
-										if (versionNumber.replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
+										if (versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
 											fileCallback "version number does not match file (#{versionNumber.replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
 											return
 										
@@ -433,7 +433,7 @@ app.all '/', (req, res) ->
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
 				
 				# e.g. {{packageServerHost}}/com.example.wcf.test/1.0.0_Alpha_15
-				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.replace (new RegExp ' ', 'g'), '_'}"
+				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
 				
 				# try to extract license
 				if version.license
@@ -475,14 +475,14 @@ app.all '/', (req, res) ->
 # package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
 	callback = (username) ->
-		fs.exists "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (packageExists) ->
+		fs.exists "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (packageExists) ->
 			if packageExists
 				if isAccessible username, req.params[0], req.params[1]
-					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1]}"
+					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
-					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
+					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
-					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1]}"
+					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
 					res.send 401, 'Please provide proper username and password to access this package'
 			else
@@ -514,7 +514,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 	unless versionNumber?
 		res.send 404, '404 Not Found'
 		return
-	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.replace (new RegExp ' ', 'g'), '_'}"
+	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
 
 # manual update via {{packageServerHost}}/update
 if config.enableManualUpdate
