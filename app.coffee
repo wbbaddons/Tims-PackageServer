@@ -422,7 +422,6 @@ app.all '/', (req, res) ->
 				# write <excludedpackages>
 				if version.excludedpackages?.excludedpackage?.length
 					writer.startElement 'excludedpackages'
-					console.log version.excludedpackages
 					for excludedPackage in version.excludedpackages.excludedpackage
 						writer.startElement 'excludedpackage'
 						writer.writeAttribute 'version', excludedPackage.$.version if excludedPackage.$?.version?
