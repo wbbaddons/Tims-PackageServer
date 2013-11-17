@@ -16,7 +16,8 @@
 		"caterpillar-filter": "*",
 		"xml-writer": ">=1.2",
 		"coffee-script": ">=1.4",
-		"bcrypt": "*"
+		"bcrypt": "*",
+		"watchr": ">=2.4"
 	},
 	"scripts": {
 		"prestart": "npm install",

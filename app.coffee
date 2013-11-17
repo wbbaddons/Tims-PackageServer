@@ -6,6 +6,8 @@ path = require 'path'
 async = require 'async'
 tar = require 'tar'
 bcrypt = require 'bcrypt'
+watchr = require 'watchr'
+
 xml = 
 	parser: (require 'xml2js').Parser
 	writer: require 'xml-writer'
@@ -39,6 +41,7 @@ config.ip ?= '0.0.0.0'
 config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableManualUpdate = on
+config.enableStatistics = on
 
 # initialize express
 app = do express
@@ -56,29 +59,48 @@ lastUpdate = new Date
 updateTime = 0
 watcher = [ ]
 auth = null
+downloadCounterFiles = { }
 
-# Creates watchers for every relevant file in the package folder
-updateWatcher = ->
-	async.each watcher, (obj, callback) ->
-		do obj.close
-		do callback
-	watcher = [ ]
+logDownload = (packageName, version) ->
+	return unless config.enableStatistics
 	
-	watcher.push fs.watch config.packageFolder, (event, filename) ->
-		logger.log "notice", "The package folder was changed (#{config.packageFolder}#{filename}: #{event})"
-		clearTimeout updateTimeout if updateTimeout?
-		updateTimeout = setTimeout readPackages, 1e3
+	version = version.toLowerCase().replace (new RegExp ' ', 'g'), '_'
+	unless downloadCounterFiles[packageName]?[version]?
+		downloadCounterFiles[packageName] = { } unless downloadCounterFiles[packageName]?
+		downloadCounterFiles[packageName][version] = 
+			ready: no
+			downloads: 0
 		
-	fs.readdir config.packageFolder, (err, files) ->
-		async.each files, (file, callback) ->
-			fs.stat config.packageFolder + file, (err, stat) ->
-				callback err
-				return unless do stat.isDirectory
-				
-				watcher.push fs.watch config.packageFolder + file, (event, filename) ->
-					logger.log "notice", "The package folder was changed (#{config.packageFolder}#{file}/#{filename}: #{event})"
-					clearTimeout updateTimeout if updateTimeout?
-					updateTimeout = setTimeout readPackages, 1e3
+		fs.readFile "#{config.packageFolder}#{packageName}/#{version}.txt", (err, data) ->
+			try
+				if err
+					downloadCounterFiles[packageName][version].ready = yes
+					return
+					
+				downloads = parseInt data.toString()
+				downloadCounterFiles[packageName][version].downloads += downloads
+				downloadCounterFiles[packageName][version].ready = yes
+			finally
+				logDownload packageName, version
+		return
+		
+	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version].downloads
+	
+# Creates watchers for every relevant file in the package folder
+do ->
+	watchr.watch
+		path: config.packageFolder
+		ignoreCustomPatterns: /\.txt$/
+		listeners:
+			watching: (err,watcherInstance,isWatching) ->
+				if err
+					console.log("watching the path " + watcherInstance.path + " failed with error", err);
+				else
+					console.log("watching the path " + watcherInstance.path + " completed");
+			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
+				logger.log "notice", "The package folder was changed (#{filePath}: #{changeType})"
+				clearTimeout updateTimeout if updateTimeout?
+				updateTimeout = setTimeout readPackages, 1e3
 
 createComparator = (comparison) ->
 	# simply return true if versions are *
@@ -291,6 +313,9 @@ readPackages = (callback) ->
 									logger.log "notice", "Skipping dotfile #{packageFolder}/#{versionFile}"
 									versionsCallback null
 									return
+								if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
+									versionsCallback null
+									return
 								unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
 									logger.log "notice", "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
 									versionsCallback null
@@ -336,8 +361,6 @@ readPackages = (callback) ->
 								else
 									do parsingFinished
 		, (err) ->
-			do updateWatcher
-			
 			if err?
 				logger.log "crit", "Error reading package list: #{err}"
 				updating = no
@@ -478,6 +501,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 			if packageExists
 				if isAccessible username, req.params[0], req.params[1]
 					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
+					logDownload req.params[0], req.params[1]
 					res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
 					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
