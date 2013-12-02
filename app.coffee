@@ -347,11 +347,11 @@ readPackages = (callback) ->
 										currentVersion.versionnumber = versionNumber
 										currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
 										currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
+										currentVersion.optionalpackages = versionPackageXml.package?.optionalpackages?[0]
 										currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
 										currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
 										currentVersion.timestamp = versionFileStat.mtime
 										currentPackage.versions[versionNumber] = currentVersion
-										# TODO: optionals
 										
 										logger.log "debug", "Finished parsing #{versionFile}"
 										versionsCallback null
@@ -430,6 +430,15 @@ app.all '/', (req, res) ->
 					writer.startElement 'fromversions'
 					for fromVersion in version.fromversions
 						writer.writeElement 'fromversion', fromVersion
+					do writer.endElement
+				
+				# write <optionalpackages>
+				if version.optionalpackages?.optionalpackage?.length
+					writer.startElement 'optionalpackages'
+					for optionalpackage in version.optionalpackages.optionalpackage
+						writer.startElement 'optionalpackage'
+						writer.text optionalpackage._ ? optionalpackage
+						do writer.endElement
 					do writer.endElement
 				
 				# write <requiredpackages>
