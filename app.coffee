@@ -511,7 +511,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if isAccessible username, req.params[0], req.params[1]
 					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
-					res.attachment "#{req.params[0]}_#{req.params[1]}.tar"
+					res.attachment "#{req.params[0]}_v#{req.params[1]}.tar"
 					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
 					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
