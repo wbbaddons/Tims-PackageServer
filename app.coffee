@@ -485,7 +485,7 @@ app.all '/', (req, res) ->
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>"
 		do writer.endElement
 		do writer.endDocument
-		res.end (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
+		res.send 200, (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
 	
 	if req.auth?
 		if auth?.users?[req.auth.username]?
