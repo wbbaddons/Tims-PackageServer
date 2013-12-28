@@ -378,6 +378,11 @@ readPackages = (callback) ->
 			# and finally call the callback
 			(callback true) if callback?
 			
+askForCredentials = (req, res) ->
+	res.type 'txt'
+	res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
+	res.send 401, 'Please provide proper username and password to access this package'
+	
 app.all '/', (req, res) ->
 	callback = (username) ->
 		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
@@ -495,11 +500,9 @@ app.all '/', (req, res) ->
 				else if result
 					callback req.auth.username
 				else
-					res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
-					res.send 401, 'Invalid password or username'
+					askForCredentials req, res
 		else
-			res.setHeader 'WWW-Authenticate', 'Basic realm="Invalid password or username"'
-			res.send 401, 'Invalid password or username'
+			askForCredentials req, res
 	else
 		callback ''
 
@@ -515,8 +518,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
 					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
-					res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-					res.send 401, 'Please provide proper username and password to access this package'
+					askForCredentials req, res
 			else
 				res.send 404, '404 Not Found'
 		
@@ -529,13 +531,9 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if result
 					callback req.auth.username
 				else
-					res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-					res.send 401, 'Please provide proper username and password to access this package'
-					return
+					askForCredentials req, res
 		else
-			res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-			res.send 401, 'Please provide proper username and password to access this package'
-			return
+			askForCredentials req, res
 	else
 		callback ''
 
