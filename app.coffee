@@ -370,7 +370,7 @@ readPackages = (callback) ->
 										versionNumber = versionPackageXml.package.packageinformation[0].version[0]
 										# the tar file is incorrectly named -> abort
 										if (versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
-											fileCallback "version number does not match file (#{versionNumber.replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
+											fileCallback "version number does not match file (#{versionNumber.toLowerCase().replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
 											return
 										
 										currentVersion = { }
