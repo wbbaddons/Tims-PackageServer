@@ -1,5 +1,5 @@
 ###
-Copyright (c) 2013, Tim Düsterhus
+Copyright (c) 2013 - 2014, Tim Düsterhus
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -335,6 +335,8 @@ readPackages = (callback) ->
 							if err?
 								fileCallback err
 								return
+							
+							versions.sort (a, b) -> a.replace(/(\d\.\d\.\d)\./, '$1_') > b.replace(/(\d\.\d\.\d)\./, '$1_')
 							async.eachSeries versions, (versionFile, versionsCallback) ->
 								if versionFile is 'latest'
 									versionsCallback null
