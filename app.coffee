@@ -336,7 +336,7 @@ readPackages = (callback) ->
 								fileCallback err
 								return
 							
-							versions.sort (a, b) -> a.replace(/(\d\.\d\.\d)\./, '$1_') > b.replace(/(\d\.\d\.\d)\./, '$1_')
+							versions.sort (a, b) -> a.replace(/(\d\.\d\.\d)\./, '$1_').localeCompare b.replace(/(\d\.\d\.\d)\./, '$1_')
 							async.eachSeries versions, (versionFile, versionsCallback) ->
 								if versionFile is 'latest'
 									versionsCallback null
