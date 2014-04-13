@@ -137,7 +137,7 @@ createComparator = (comparison) ->
 	(return -> true) if comparison is '*'
 	
 	# normalize comparison string
-	comparison = comparison.replace /([0-9]+\.[0-9]+\.[0-9]+(?: (?:a|alpha|b|beta|d|dev|rc|pl) [0-9]+)?)/ig, (version) ->
+	comparison = comparison.replace /([0-9]+\.[0-9]+\.[0-9]+(?:([ _])(?:a|alpha|b|beta|d|dev|rc|pl)([ _])[0-9]+)?)/ig, (version) ->
 		version = version.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
 		version[0] ?= 0
 		version[1] ?= 0
@@ -147,7 +147,6 @@ createComparator = (comparison) ->
 		version = version.join '.'
 		
 	comparison = comparison.replace /[ ]/g, ''
-	
 	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) ->
 		# build comparison function
 		return """
@@ -336,23 +335,24 @@ readPackages = (callback) ->
 								fileCallback err
 								return
 							
-							versions.sort (a, b) -> a.replace(/(\d\.\d\.\d)\./, '$1_').localeCompare b.replace(/(\d\.\d\.\d)\./, '$1_')
-							async.eachSeries versions, (versionFile, versionsCallback) ->
+							versions = versions.filter (versionFile) ->
 								if versionFile is 'latest'
-									versionsCallback null
-									return
-								if (versionFile.substring 0, 1) is '.'
+									false
+								else if (versionFile.substring 0, 1) is '.'
 									logger.log "notice", "Skipping dotfile #{packageFolder}/#{versionFile}"
-									versionsCallback null
-									return
-								if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
-									versionsCallback null
-									return
-								unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
+									false
+								else if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
+									false
+								else unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
 									logger.log "notice", "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
-									versionsCallback null
-									return
-									
+									false
+								else
+									true
+							versions.sort (a, b) ->
+								return 0 if a is b
+								return 1 if (createComparator "$v > #{b.replace(/\.tar$/, '')}")(a.replace(/\.tar$/, ''))
+								return -1
+							async.eachSeries versions, (versionFile, versionsCallback) ->
 								versionFile = packageFolder + '/' + versionFile
 								logger.log "debug", "Parsing #{versionFile}"
 								fs.stat versionFile, (err, versionFileStat) ->
