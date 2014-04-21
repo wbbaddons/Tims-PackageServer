@@ -51,11 +51,7 @@ try
 	filename = "#{__dirname}/config.js"
 
 	# configuration file was passed via `process.argv`
-	if process.argv[2]
-		if process.argv[2].substring(0, 1) is '/'
-			filename = process.argv[2]
-		else
-			filename = "#{__dirname}/../#{process.argv[2]}"
+	filename = (require 'path').resolve process.argv[2] if process.argv[2]?
 	
 	filename = fs.realpathSync filename
 	
