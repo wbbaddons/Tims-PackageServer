@@ -97,24 +97,20 @@ logDownload = (packageName, version) ->
 	version = version.toLowerCase().replace (new RegExp ' ', 'g'), '_'
 	unless downloadCounterFiles[packageName]?[version]?
 		downloadCounterFiles[packageName] = { } unless downloadCounterFiles[packageName]?
-		downloadCounterFiles[packageName][version] = 
-			ready: no
-			downloads: 0
+		downloadCounterFiles[packageName][version] = 0
 		
 		fs.readFile "#{config.packageFolder}#{packageName}/#{version}.txt", (err, data) ->
 			try
 				if err
-					downloadCounterFiles[packageName][version].ready = yes
 					return
 					
 				downloads = parseInt data.toString()
-				downloadCounterFiles[packageName][version].downloads += downloads
-				downloadCounterFiles[packageName][version].ready = yes
+				downloadCounterFiles[packageName][version] += downloads
 			finally
 				logDownload packageName, version
 		return
 		
-	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version].downloads
+	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version]
 	
 # Creates watchers for every relevant file in the package folder
 do ->
