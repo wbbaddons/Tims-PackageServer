@@ -114,11 +114,11 @@ do ->
 		path: config.packageFolder
 		ignoreCustomPatterns: /\.txt$/
 		listeners:
-			watching: (err,watcherInstance,isWatching) ->
+			watching: (err, watcherInstance, isWatching) ->
 				if err
-					console.log("watching the path " + watcherInstance.path + " failed with error", err);
+					console.log "watching the path #{watcherInstance.path} failed with error:", err
 				else
-					console.log("watching the path " + watcherInstance.path + " completed");
+					console.log "watching the path #{watcherInstance.path} completed"
 			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
 				logger.log "notice", "The package folder was changed (#{filePath}: #{changeType})"
 				clearTimeout updateTimeout if updateTimeout?
@@ -250,7 +250,7 @@ readPackages = (callback) ->
 				logger.log "notice", "Updated auth"
 			catch err
 				logger.log "error", "error parsing auth.json. Denying access to all packages: #{err}"
-				auth = {}
+				auth = { }
 	
 	fs.readdir config.packageFolder, (err, files) ->
 		logger.log "info", "Starting update"
@@ -388,7 +388,7 @@ readPackages = (callback) ->
 			if err?
 				logger.log "crit", "Error reading package list: #{err}"
 				updating = no
-				callback false if callback?
+				callback? false
 				return
 			
 			# overwrite packageList once everything succeeded
@@ -400,7 +400,7 @@ readPackages = (callback) ->
 			updating = no
 			
 			# and finally call the callback
-			(callback true) if callback?
+			callback? true
 			
 askForCredentials = (req, res) ->
 	res.type 'txt'
