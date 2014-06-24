@@ -189,6 +189,24 @@ isAccessible = (username, testPackage, testVersion) ->
 					return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 	false
 
+checkAuth = (req, res, callback) ->
+	if req.auth?
+		if auth?.users?[req.auth.username]?
+			# hash first because Woltlab Community Framework uses double salted hashes
+			bcrypt.hash req.auth.password, auth.users[req.auth.username].passwd, (err, hash) ->
+				bcrypt.compare hash, auth.users[req.auth.username].passwd, (err, result) ->
+					if err?
+						res.send 500, '500 Internal Server Error'
+						return
+					if result
+						callback req.auth.username
+					else
+						askForCredentials req, res
+		else
+			askForCredentials req, res
+	else
+		callback ''
+
 # extracts and parses the package.xml of the archive given as `filename`
 getPackageXml = (filename, callback) ->
 	stream = fs.createReadStream filename
@@ -516,19 +534,7 @@ app.all '/', (req, res) ->
 		do writer.endDocument
 		res.send 200, (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
 	
-	if req.auth?
-		if auth?.users?[req.auth.username]?
-			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
-				if err?
-					res.send 500, '500 Internal Server Error'
-				else if result
-					callback req.auth.username
-				else
-					askForCredentials req, res
-		else
-			askForCredentials req, res
-	else
-		callback ''
+	checkAuth req, res, callback
 
 # package download requested
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\/?(?:\?.*)?$/i, (req, res) ->
@@ -546,20 +552,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 			else
 				res.send 404, '404 Not Found'
 		
-	if req.auth?
-		if auth?.users?[req.auth.username]?
-			bcrypt.compare req.auth.password, auth.users[req.auth.username].passwd, (err, result) ->
-				if err?
-					res.send 500, '500 Internal Server Error'
-					return
-				if result
-					callback req.auth.username
-				else
-					askForCredentials req, res
-		else
-			askForCredentials req, res
-	else
-		callback ''
+	checkAuth req, res, callback
 
 # allow download without version number
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, res) ->
