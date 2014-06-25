@@ -194,6 +194,9 @@ checkAuth = (req, res, callback) ->
 		if auth?.users?[req.auth.username]?
 			# hash first because Woltlab Community Framework uses double salted hashes
 			bcrypt.hash req.auth.password, auth.users[req.auth.username].passwd, (err, hash) ->
+				if err?
+					res.send 500, '500 Internal Server Error'
+					return
 				bcrypt.compare hash, auth.users[req.auth.username].passwd, (err, result) ->
 					if err?
 						res.send 500, '500 Internal Server Error'
