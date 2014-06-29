@@ -66,8 +66,8 @@ config.port ?= 9001
 config.ip ?= '0.0.0.0'
 config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
-config.enableManualUpdate = on
-config.enableStatistics = on
+config.enableManualUpdate ?= on
+config.enableStatistics ?= on
 
 # initialize express
 app = do express
