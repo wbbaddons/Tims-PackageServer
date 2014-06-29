@@ -37,6 +37,7 @@ async = require 'async'
 tar = require 'tar'
 bcrypt = require 'bcrypt'
 watchr = require 'watchr'
+crypto = require 'crypto'
 
 xml = 
 	parser: (require 'xml2js').Parser
@@ -68,6 +69,7 @@ config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableManualUpdate ?= on
 config.enableStatistics ?= on
+config.enableHash ?= on
 
 # initialize express
 app = do express
@@ -396,10 +398,22 @@ readPackages = (callback) ->
 										currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
 										currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
 										currentVersion.timestamp = versionFileStat.mtime
-										currentPackage.versions[versionNumber] = currentVersion
 										
-										logger.log "debug", "Finished parsing #{versionFile}"
-										versionsCallback null
+										finish = ->
+											currentPackage.versions[versionNumber] = currentVersion
+											
+											logger.log "debug", "Finished parsing #{versionFile}"
+											versionsCallback null
+										
+										if config.enableHash
+											hash = new crypto.Hash 'sha256'
+											fileStream = fs.createReadStream versionFile
+											fileStream.pipe hash
+											fileStream.on 'end', ->
+												currentVersion.hash = do hash.read
+												do finish
+										else
+											setImmediate finish
 							, (err) ->
 								if err?
 									fileCallback err
@@ -474,6 +488,7 @@ app.all '/', (req, res) ->
 				
 				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false"
 				writer.writeAttribute 'critical', if (/pl/i.test versionNumber) then "true" else "false"
+				writer.writeComment "sha256:#{version.hash.toString 'hex'}" if config.enableHash
 				
 				# write <fromversions>
 				if version.fromversions?.length
