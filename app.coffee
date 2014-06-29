@@ -74,12 +74,6 @@ config.enableHash ?= on
 # initialize express
 app = do express
 
-# don't tell anyone we are running express
-app.disable 'x-powered-by'
-
-#app.use do express.logger
-app.use do express.compress
-
 packageList = { }
 updating = no
 updateTimeout = null
