@@ -1,7 +1,7 @@
-Tims-PackageServer
-==================
+Tim’s PackageServer
+===================
 
-Tims PackageServer is a lightweight, node.js based packageserver for [WoltLab Community Framework](https://github.com/WoltLab/WCF).
+Tim’s PackageServer is a lightweight, node.js based packageserver for [WoltLab Community Framework](https://github.com/WoltLab/WCF).
 
 How to use?
 -----------
@@ -52,7 +52,11 @@ module.exports = {
     basePath: null // The base path of the package server. By default it takes the host supplied within the request. Change if you are using a reverse proxy
 };
 ```
+Debugging
+---------
 
+Tim’s PackageServer uses the [debug](https://github.com/visionmedia/debug) package to output
+debug information. You can access it by setting the environment variable `DEBUG` to `PackageServer:*`.
 
 License
 -------

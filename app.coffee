@@ -28,7 +28,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 ###
 
-serverVersion = '1.0.0'
+exec = (require 'child_process').exec
+
+serverVersion = (require './package.json').version
+exec 'git describe --always', (err, stdout, stderr) ->
+	return if err?
+	serverVersion = stdout.trim()
 
 express = require 'express'
 fs = require 'fs'
@@ -38,14 +43,15 @@ tar = require 'tar'
 bcrypt = require 'bcrypt'
 watchr = require 'watchr'
 crypto = require 'crypto'
+debug = (require 'debug')('PackageServer:debug')
+warn = (require 'debug')('PackageServer:warn')
+warn.log = console.warn.bind console
+error = (require 'debug')('PackageServer:error')
+error.log = console.error.bind console
 
 xml = 
 	parser: (require 'xml2js').Parser
 	writer: require 'xml-writer'
-logger = new (require 'caterpillar').Logger
-	level: 6
-
-((logger.pipe new (require('caterpillar-filter').Filter)).pipe new (require('caterpillar-human').Human)).pipe process.stdout
 
 # Try to load config
 try
@@ -56,10 +62,10 @@ try
 	
 	filename = fs.realpathSync filename
 	
-	logger.log "info", "Using config '#{filename}'"
+	debug "Using config '#{filename}'"
 	config = require filename
 catch e
-	logger.log "warn", e.message
+	warn e.message
 	config = { }
 
 # default values for configuration
@@ -112,11 +118,11 @@ do ->
 		listeners:
 			watching: (err, watcherInstance, isWatching) ->
 				if err
-					console.log "watching the path #{watcherInstance.path} failed with error:", err
+					error "watching the path #{watcherInstance.path} failed with error:", err
 				else
-					console.log "watching the path #{watcherInstance.path} completed"
+					debug "watching the path #{watcherInstance.path} completed"
 			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
-				logger.log "notice", "The package folder was changed (#{filePath}: #{changeType})"
+				debug "The package folder was changed (#{filePath}: #{changeType})"
 				clearTimeout updateTimeout if updateTimeout?
 				updateTimeout = setTimeout readPackages, 1e3
 
@@ -244,13 +250,13 @@ readPackages = (callback) ->
 	fs.exists "#{config.packageFolder}auth.json", (authExists) ->
 		# no auth.json was found
 		unless authExists
-			logger.log "warn", "auth.json does not exist. Assuming all packages are free"
+			warn "auth.json does not exist. Assuming all packages are free"
 			auth = null
 			return
 			
 		fs.readFile "#{config.packageFolder}auth.json", (err, contents) ->
 			if err?
-				logger.log "error", "error reading auth.json. Denying access to all packages: #{err}"
+				error "error reading auth.json. Denying access to all packages: #{err}"
 				auth = { }
 				return
 			try
@@ -264,15 +270,15 @@ readPackages = (callback) ->
 				if auth.users?
 					(auth.users[user].packages[_package] = createComparator versions for _package, versions of auth.users[user].packages) for user of auth.users
 				
-				logger.log "notice", "Updated auth"
+				debug "Updated auth"
 			catch err
-				logger.log "error", "error parsing auth.json. Denying access to all packages: #{err}"
+				error "error parsing auth.json. Denying access to all packages: #{err}"
 				auth = { }
 	
 	fs.readdir config.packageFolder, (err, files) ->
-		logger.log "info", "Starting update"
+		debug "Starting update"
 		if err?
-			logger.log "crit", err
+			error err
 			return
 		
 		newPackageList = { }
@@ -281,7 +287,7 @@ readPackages = (callback) ->
 		async.eachSeries files, (file, fileCallback) ->
 			# ignore dotfiles…
 			if (file.substring 0, 1) is '.'
-				logger.log "notice", "Skipping dotfile #{config.packageFolder}#{file}"
+				debug "Skipping dotfile #{config.packageFolder}#{file}"
 				fileCallback null
 				return
 			# … auth.json
@@ -290,24 +296,24 @@ readPackages = (callback) ->
 				return
 			# … and files that don't look like a valid package identifier
 			unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
-				logger.log "notice", "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
+				debug "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
 				fileCallback null
 				return
 			
 			packageFolder = config.packageFolder + file
-			logger.log "debug", "Parsing #{packageFolder}"
+			debug "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
 				if err?
 					fileCallback err
 					return
 					
 				unless do packageFolderStat.isDirectory
-					logger.log "warn", "#{packageFolder} is not a folder"
+					warn "#{packageFolder} is not a folder"
 					do fileCallback
 					return
 				
 				latest = packageFolder + '/latest'
-				logger.log "debug", "Parsing #{latest}"
+				debug "Parsing #{latest}"
 				currentPackage = { }
 				
 				parsingFinished = ->
@@ -317,7 +323,7 @@ readPackages = (callback) ->
 				fs.exists latest, (latestExists) ->
 					# abort if `latest` is missing
 					unless latestExists
-						logger.log "warn", "#{latest} is missing"
+						warn "#{latest} is missing"
 						fileCallback null
 						return
 					
@@ -326,7 +332,7 @@ readPackages = (callback) ->
 						if err?
 							fileCallback "Error parsing package.xml of #{latest}: #{err}"
 							return
-						logger.log "debug", "Finished parsing #{latest}"
+						debug "Finished parsing #{latest}"
 						currentPackage.name = latestPackageXml.package.$.name
 						# either latest does not belong here, or the folder is incorrectly named
 						unless currentPackage.name is path.basename packageFolder
@@ -348,12 +354,12 @@ readPackages = (callback) ->
 								if versionFile is 'latest'
 									false
 								else if (versionFile.substring 0, 1) is '.'
-									logger.log "notice", "Skipping dotfile #{packageFolder}/#{versionFile}"
+									debug "Skipping dotfile #{packageFolder}/#{versionFile}"
 									false
 								else if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
 									false
 								else unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
-									logger.log "notice", "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
+									debug "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
 									false
 								else
 									true
@@ -363,14 +369,14 @@ readPackages = (callback) ->
 								return -1
 							async.eachSeries versions, (versionFile, versionsCallback) ->
 								versionFile = packageFolder + '/' + versionFile
-								logger.log "debug", "Parsing #{versionFile}"
+								debug "Parsing #{versionFile}"
 								fs.stat versionFile, (err, versionFileStat) ->
 									if err?
 										versionsCallback versionFileStat
 										return
 									
 									unless do versionFileStat.isFile
-										logger.log "warn", "#{versionFile} is not a file"
+										warn "#{versionFile} is not a file"
 										return
 									
 									# parse package.xml
@@ -396,7 +402,7 @@ readPackages = (callback) ->
 										finish = ->
 											currentPackage.versions[versionNumber] = currentVersion
 											
-											logger.log "debug", "Finished parsing #{versionFile}"
+											debug "Finished parsing #{versionFile}"
 											versionsCallback null
 										
 										if config.enableHash
@@ -415,7 +421,7 @@ readPackages = (callback) ->
 									do parsingFinished
 		, (err) ->
 			if err?
-				logger.log "crit", "Error reading package list: #{err}"
+				error "Error reading package list: #{err}"
 				updating = no
 				callback? false
 				return
@@ -425,7 +431,7 @@ readPackages = (callback) ->
 			# update scan time and statistics
 			lastUpdate = new Date
 			updateTime = process.hrtime updateStart
-			logger.log "info", "Finished update"
+			debug "Finished update"
 			updating = no
 			
 			# and finally call the callback
@@ -554,12 +560,12 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 		fs.exists "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (packageExists) ->
 			if packageExists
 				if isAccessible username, req.params[0], req.params[1]
-					logger.log "notice", "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
+					debug "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
 					res.attachment "#{req.params[0]}_v#{req.params[1]}.tar"
 					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
-					logger.log "notice", "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
+					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					askForCredentials req, res
 			else
 				res.send 404, '404 Not Found'
@@ -578,7 +584,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 # manual update via {{packageServerHost}}/update
 if config.enableManualUpdate
 	app.get '/update', (req, res) ->
-		logger.log "info", 'Manual update was requested'
+		warn 'Manual update was requested'
 		readPackages -> res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
 
 # throw 404 on any unknown route
