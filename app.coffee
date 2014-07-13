@@ -569,8 +569,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if isAccessible username, req.params[0], req.params[1]
 					debug "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
-					res.attachment "#{req.params[0]}_v#{req.params[1]}.tar"
-					res.sendfile "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", (err) -> res.send 404, '404 Not Found' if err?
+					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					askForCredentials req, res
