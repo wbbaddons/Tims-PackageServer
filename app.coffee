@@ -77,6 +77,7 @@ config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableManualUpdate ?= on
 config.enableStatistics ?= on
 config.enableHash ?= on
+config.deterministic ?= off
 
 # initialize express
 app = do express
@@ -546,13 +547,16 @@ app.all '/', (req, res) ->
 			do writer.endElement
 			do writer.endElement
 		diff = process.hrtime start
-		writer.writeComment "xml generated in #{diff[0] + diff[1] / 1e9} seconds"
-		writer.writeComment "packages scanned in #{updateTime[0] + updateTime[1] / 1e9} seconds"
+		unless config.deterministic
+			writer.writeComment "xml generated in #{diff[0] + diff[1] / 1e9} seconds"
+			writer.writeComment "packages scanned in #{updateTime[0] + updateTime[1] / 1e9} seconds"
+			writer.writeComment "up since #{do process.uptime} seconds"
 		writer.writeComment "last update #{lastUpdate}"
-		writer.writeComment "up since #{do process.uptime} seconds"
+		writer.writeComment "logged in as #{username}" if username
 		writer.writeComment "This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>"
 		do writer.endElement
 		do writer.endDocument
+		res.setHeader 'Last-Modified', lastUpdate.toUTCString()
 		res.send 200, (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
 	
 	checkAuth req, res, callback
