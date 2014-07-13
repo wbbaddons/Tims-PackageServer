@@ -49,6 +49,7 @@ module.exports = {
     enableManualUpdate: true, // Whether to enable `/update` to force an update of the package list
     enableStatistics: true, // Whether to enable download counters
     enableHash: true, // Whether to provide a SHA-256 hash of every version
+    deterministic: false, // Whether to generate deterministic XML output
     basePath: null // The base path of the package server. By default it takes the host supplied within the request. Change if you are using a reverse proxy
 };
 ```
