@@ -43,6 +43,7 @@ tar = require 'tar'
 bcrypt = require 'bcrypt'
 watchr = require 'watchr'
 crypto = require 'crypto'
+basicAuth = require 'basic-auth'
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
@@ -192,19 +193,21 @@ isAccessible = (username, testPackage, testVersion) ->
 	false
 
 checkAuth = (req, res, callback) ->
-	if req.auth?
-		if auth?.users?[req.auth.username]?
+	reqAuth = basicAuth req
+	
+	if reqAuth?
+		if auth?.users?[reqAuth.name]?
 			# hash first because Woltlab Community Framework uses double salted hashes
-			bcrypt.hash req.auth.password, auth.users[req.auth.username].passwd, (err, hash) ->
+			bcrypt.hash reqAuth.pass, auth.users[reqAuth.name].passwd, (err, hash) ->
 				if err?
 					res.send 500, '500 Internal Server Error'
 					return
-				bcrypt.compare hash, auth.users[req.auth.username].passwd, (err, result) ->
+				bcrypt.compare hash, auth.users[reqAuth.name].passwd, (err, result) ->
 					if err?
 						res.send 500, '500 Internal Server Error'
 						return
 					if result
-						callback req.auth.username
+						callback reqAuth.name
 					else
 						askForCredentials req, res
 		else

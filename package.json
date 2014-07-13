@@ -19,7 +19,8 @@
 		"coffee-script": ">=1.4",
 		"bcrypt": "*",
 		"watchr": ">=2.4",
-		"debug": "*"
+		"debug": "*",
+		"basic-auth": "*"
 	},
 	"scripts": {
 		"start": "coffee app.coffee"
