@@ -1,11 +1,11 @@
 {
-	"name": "be.bastelstu.packageServer",
-	"description": "Package Server for WoltLab Community Framework",
-	"homepage": "https://github.com/wbbaddons/PackageServer",
+	"name": "tims-packageserver",
+	"description": "Lightweight Package Server for WoltLab Community Framework",
+	"homepage": "https://github.com/wbbaddons/Tims-PackageServer",
 	"keywords": [
 		"woltlab community framework"
 	],
-	"author": "Tim Düsterhus <timwolla@bastelstu.be>",
+	"author": "Tim Düsterhus <tim@bastelstu.be>",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/wbbaddons/Tims-PackageServer.git"
