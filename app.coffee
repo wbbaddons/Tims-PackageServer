@@ -201,11 +201,11 @@ checkAuth = (req, res, callback) ->
 			# hash first because Woltlab Community Framework uses double salted hashes
 			bcrypt.hash reqAuth.pass, auth.users[reqAuth.name].passwd, (err, hash) ->
 				if err?
-					res.send 500, '500 Internal Server Error'
+					res.status(500).send '500 Internal Server Error'
 					return
 				bcrypt.compare hash, auth.users[reqAuth.name].passwd, (err, result) ->
 					if err?
-						res.send 500, '500 Internal Server Error'
+						res.status(500).send '500 Internal Server Error'
 						return
 					if result
 						callback reqAuth.name
@@ -444,7 +444,7 @@ readPackages = (callback) ->
 askForCredentials = (req, res) ->
 	res.type 'txt'
 	res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-	res.send 401, 'Please provide proper username and password to access this package'
+	res.status(401).send 'Please provide proper username and password to access this package'
 	
 app.all '/', (req, res) ->
 	callback = (username) ->
@@ -557,7 +557,7 @@ app.all '/', (req, res) ->
 		do writer.endElement
 		do writer.endDocument
 		res.setHeader 'Last-Modified', lastUpdate.toUTCString()
-		res.send 200, (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
+		res.status(200).send (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
 	
 	checkAuth req, res, callback
 
@@ -569,12 +569,12 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if isAccessible username, req.params[0], req.params[1]
 					debug "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
-					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.send 404, '404 Not Found' if err?
+					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.status(404).send '404 Not Found' if err?
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					askForCredentials req, res
 			else
-				res.send 404, '404 Not Found'
+				res.status(404).send '404 Not Found'
 		
 	checkAuth req, res, callback
 
@@ -583,7 +583,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	versionNumber = packageList?[req.params[0]]?.packageinformation?.version[0]
 	unless versionNumber?
-		res.send 404, '404 Not Found'
+		res.status(404).send '404 Not Found'
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
 
@@ -594,7 +594,7 @@ if config.enableManualUpdate
 		readPackages -> res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
 
 # throw 404 on any unknown route
-app.all '*', (req, res) -> res.send 404, '404 Not Found'
+app.all '*', (req, res) -> res.status(404).send '404 Not Found'
 
 # Once the package list was successfully scanned once bind to the port
 readPackages -> app.listen config.port, config.ip
