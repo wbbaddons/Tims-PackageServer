@@ -272,7 +272,7 @@ readPackages = (callback) ->
 				if auth.groups?
 					(auth.groups[group][_package] = createComparator versions for _package, versions of packages) for group, packages of auth.groups
 				if auth.users?
-					(auth.users[user].packages[_package] = createComparator versions for _package, versions of userdata.packages) for username, userdata of auth.users when userdata.packages?
+					(auth.users[username].packages[_package] = createComparator versions for _package, versions of userdata.packages) for username, userdata of auth.users when userdata.packages?
 				
 				debug "Updated auth"
 			catch err
