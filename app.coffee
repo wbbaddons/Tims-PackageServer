@@ -74,10 +74,12 @@ config.port ?= 9001
 config.ip ?= '0.0.0.0'
 config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
-config.enableManualUpdate ?= on
 config.enableStatistics ?= on
 config.enableHash ?= on
 config.deterministic ?= off
+
+if config.enableManualUpdate?
+	warn 'config.enableManualUpdate is obsolete and ignored in this version'
 
 # initialize express
 app = do express
@@ -316,7 +318,7 @@ readPackages = (callback) ->
 					
 					versions = versions.filter (versionFile) ->
 						if versionFile is 'latest'
-							debug "The latest symlink is obsolete now. The information are taken from the newest package automatically!"
+							warn "The latest symlink is obsolete now. The information are taken from the newest package automatically!"
 							false
 						else if (versionFile.substring 0, 1) is '.'
 							debug "Skipping dotfile #{packageFolder}/#{versionFile}"
@@ -562,12 +564,6 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 		res.status(404).send '404 Not Found'
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
-
-# manual update via {{packageServerHost}}/update
-if config.enableManualUpdate
-	app.get '/update', (req, res) ->
-		warn 'Manual update was requested'
-		readPackages -> res.redirect 303, config.basePath ? "#{req.protocol}://#{req.header 'host'}/"
 
 # throw 404 on any unknown route
 app.all '*', (req, res) -> res.status(404).send '404 Not Found'
