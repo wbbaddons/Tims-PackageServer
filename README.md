@@ -1,7 +1,7 @@
 Tim’s PackageServer
 ===================
 
-Tim’s PackageServer is a lightweight, node.js based packageserver for [WoltLab Community Framework](https://github.com/WoltLab/WCF).
+Tim’s PackageServer is a lightweight, node.js based package server for [WoltLab Community Framework](https://github.com/WoltLab/WCF).
 
 How to use?
 -----------
@@ -30,13 +30,7 @@ How to use?
     $ cp com.example.wcf.package.tar packages/com.example.wcf.package/1.0.0.tar
     ```
 
-5. Create `latest` in the package folder, pointing towards the newest archive:
-
-    ```sh
-    $ ln -s packages/com.example.wcf.package/1.0.0.tar packages/com.example.wcf.package/latest
-    ```
-
-6. Open the package server in the browser, your package should appear.
+5. Open the package server in the browser, your package should appear.
 
 config.js
 ---------
@@ -46,7 +40,6 @@ module.exports = {
     port: 9001, // the port the package server binds to
     ip: '0.0.0.0' // the ip the package server binds to
     packageFolder: __dirname + "/packages/", // the folder the packages are searched in
-    enableManualUpdate: true, // Whether to enable `/update` to force an update of the package list
     enableStatistics: true, // Whether to enable download counters
     enableHash: true, // Whether to provide a SHA-256 hash of every version
     deterministic: false, // Whether to generate deterministic XML output
