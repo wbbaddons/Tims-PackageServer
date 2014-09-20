@@ -20,7 +20,8 @@
 		"bcrypt": "*",
 		"watchr": ">=2.4",
 		"debug": "*",
-		"basic-auth": "*"
+		"basic-auth": "*",
+		"debounce": "*"
 	},
 	"scripts": {
 		"start": "coffee app.coffee"

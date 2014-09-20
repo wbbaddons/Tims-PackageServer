@@ -111,22 +111,6 @@ logDownload = (packageName, version) ->
 		return
 		
 	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version]
-	
-# Creates watchers for every relevant file in the package folder
-do ->
-	watchr.watch
-		path: config.packageFolder
-		ignoreCustomPatterns: /\.txt$/
-		listeners:
-			watching: (err, watcherInstance, isWatching) ->
-				if err
-					error "watching the path #{watcherInstance.path} failed with error:", err
-				else
-					debug "watching the path #{watcherInstance.path} completed"
-			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
-				debug "The package folder was changed (#{filePath}: #{changeType})"
-				clearTimeout updateTimeout if updateTimeout?
-				updateTimeout = setTimeout readPackages, 1e3
 
 createComparator = (comparison) ->
 	# simply return true if versions are *
@@ -587,6 +571,22 @@ if config.enableManualUpdate
 
 # throw 404 on any unknown route
 app.all '*', (req, res) -> res.status(404).send '404 Not Found'
+
+# Creates watchers for every relevant file in the package folder
+do ->
+	_readPackages = (require 'debounce') readPackages, 3e3
+	watchr.watch
+		path: config.packageFolder
+		ignoreCustomPatterns: /\.txt$/
+		listeners:
+			watching: (err, watcherInstance, isWatching) ->
+				if err
+					error "watching the path #{watcherInstance.path} failed with error:", err
+				else
+					debug "watching the path #{watcherInstance.path} completed"
+			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
+				debug "The package folder was changed (#{filePath}: #{changeType})"
+				do _readPackages
 
 # Once the package list was successfully scanned once bind to the port
 readPackages -> app.listen config.port, config.ip
