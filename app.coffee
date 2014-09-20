@@ -436,7 +436,10 @@ app.all '/', (req, res) ->
 				res.redirect 301, "#{host}/#{req.query.packageName}"
 			return
 		
-		req.accepts 'xml'
+		unless req.accepts 'xml'
+			res.status(406).send 'Not Acceptable'
+			return
+			
 		res.type 'xml'
 		
 		# build the xml structure of the package list
