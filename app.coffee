@@ -316,113 +316,105 @@ readPackages = (callback) ->
 					do fileCallback
 					return
 				
-				latest = packageFolder + '/latest'
-				debug "Parsing #{latest}"
-				currentPackage = { }
+				currentPackage =
+					name: path.basename packageFolder
+					versions: { }
 				
 				parsingFinished = ->
 					newPackageList[currentPackage.name] = currentPackage
 					fileCallback null
-				
-				fs.exists latest, (latestExists) ->
-					# abort if `latest` is missing
-					unless latestExists
-						warn "#{latest} is missing"
-						fileCallback null
+					
+				# read every file in the folder to find the available versions
+				fs.readdir packageFolder, (err, versions) ->
+					if err?
+						fileCallback err
 						return
 					
-					# parse package.xml of `latest`
-					getPackageXml latest, (err, latestPackageXml) ->
-						if err?
-							fileCallback "Error parsing package.xml of #{latest}: #{err}"
-							return
-						debug "Finished parsing #{latest}"
-						currentPackage.name = latestPackageXml.package.$.name
-						# either latest does not belong here, or the folder is incorrectly named
-						unless currentPackage.name is path.basename packageFolder
-							fileCallback "package name does not match folder (#{currentPackage.name} isnt #{path.basename packageFolder})"
-							return
+					versions = versions.filter (versionFile) ->
+						if versionFile is 'latest'
+							debug "The latest symlink is obsolete now. The information are taken from the newest package automatically!"
+							false
+						else if (versionFile.substring 0, 1) is '.'
+							debug "Skipping dotfile #{packageFolder}/#{versionFile}"
+							false
+						else if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
+							false
+						else unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
+							debug "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
+							false
+						else
+							true
+					
+					versions.sort (a, b) ->
+						if a is b
+							0
+						else if (createComparator "$v > #{b.replace(/\.tar$/, '')}")(a.replace(/\.tar$/, ''))
+							1
+						else
+							-1
 						
-						# provide relevant information to the callback
-						currentPackage.packageinformation = latestPackageXml.package.packageinformation[0]
-						currentPackage.authorinformation = latestPackageXml.package.authorinformation[0]
-						currentPackage.versions = { }
-						
-						# read every file in the folder to find the available versions
-						fs.readdir packageFolder, (err, versions) ->
+					async.eachSeries versions, (versionFile, versionsCallback) ->
+						versionFile = packageFolder + '/' + versionFile
+						debug "Parsing #{versionFile}"
+						fs.stat versionFile, (err, versionFileStat) ->
 							if err?
-								fileCallback err
+								versionsCallback versionFileStat
 								return
 							
-							versions = versions.filter (versionFile) ->
-								if versionFile is 'latest'
-									false
-								else if (versionFile.substring 0, 1) is '.'
-									debug "Skipping dotfile #{packageFolder}/#{versionFile}"
-									false
-								else if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
-									false
-								else unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
-									debug "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
-									false
-								else
-									true
-							versions.sort (a, b) ->
-								return 0 if a is b
-								return 1 if (createComparator "$v > #{b.replace(/\.tar$/, '')}")(a.replace(/\.tar$/, ''))
-								return -1
-							async.eachSeries versions, (versionFile, versionsCallback) ->
-								versionFile = packageFolder + '/' + versionFile
-								debug "Parsing #{versionFile}"
-								fs.stat versionFile, (err, versionFileStat) ->
-									if err?
-										versionsCallback versionFileStat
-										return
-									
-									unless do versionFileStat.isFile
-										warn "#{versionFile} is not a file"
-										return
-									
-									# parse package.xml
-									getPackageXml versionFile, (err, versionPackageXml) ->
-										if err?
-											versionsCallback err
-											return
-										versionNumber = versionPackageXml.package.packageinformation[0].version[0]
-										# the tar file is incorrectly named -> abort
-										if (versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
-											fileCallback "version number does not match file (#{versionNumber.toLowerCase().replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
-											return
-										
-										currentVersion = { }
-										currentVersion.versionnumber = versionNumber
-										currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
-										currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
-										currentVersion.optionalpackages = versionPackageXml.package?.optionalpackages?[0]
-										currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
-										currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
-										currentVersion.timestamp = versionFileStat.mtime
-										
-										finish = ->
-											currentPackage.versions[versionNumber] = currentVersion
-											
-											debug "Finished parsing #{versionFile}"
-											versionsCallback null
-										
-										if config.enableHash
-											hash = new crypto.Hash 'sha256'
-											fileStream = fs.createReadStream versionFile
-											fileStream.pipe hash
-											fileStream.on 'end', ->
-												currentVersion.hash = do hash.read
-												do finish
-										else
-											setImmediate finish
-							, (err) ->
+							unless do versionFileStat.isFile
+								warn "#{versionFile} is not a file"
+								return
+							
+							# parse package.xml
+							getPackageXml versionFile, (err, versionPackageXml) ->
 								if err?
-									fileCallback err
+									versionsCallback err
+									return
+								name = versionPackageXml.package.$.name
+								# the tar file does not belong here
+								if name isnt path.basename packageFolder
+									fileCallback "package name does not match folder in #{versionFile} (#{name} != #{path.basename packageFolder})"
+									return
+								
+								versionNumber = versionPackageXml.package.packageinformation[0].version[0]
+								# the tar file is incorrectly named -> abort
+								if (versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
+									fileCallback "version number does not match filename in  #{versionFile} (#{versionNumber.toLowerCase().replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
+									return
+								
+								# set {package,author}information to the ones of the last package found (the newest one)
+								currentPackage.packageinformation = versionPackageXml.package.packageinformation[0]
+								currentPackage.authorinformation = versionPackageXml.package.authorinformation[0]
+								
+								currentVersion = { }
+								currentVersion.versionnumber = versionNumber
+								currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
+								currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
+								currentVersion.optionalpackages = versionPackageXml.package?.optionalpackages?[0]
+								currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
+								currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
+								currentVersion.timestamp = versionFileStat.mtime
+								
+								finish = ->
+									currentPackage.versions[versionNumber] = currentVersion
+									
+									debug "Finished parsing #{versionFile}"
+									versionsCallback null
+								
+								if config.enableHash
+									hash = new crypto.Hash 'sha256'
+									fileStream = fs.createReadStream versionFile
+									fileStream.pipe hash
+									fileStream.on 'end', ->
+										currentVersion.hash = do hash.read
+										do finish
 								else
-									do parsingFinished
+									setImmediate finish
+					, (err) ->
+						if err?
+							fileCallback err
+						else
+							do parsingFinished
 		, (err) ->
 			if err?
 				error "Error reading package list: #{err}"
