@@ -28,6 +28,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 ###
 
+panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
+if process.getuid?() is 0 or process.getgid?() is 0
+	panic()
+	
 exec = (require 'child_process').exec
 
 serverVersion = (require './package.json').version
