@@ -1,31 +1,18 @@
 ###
-Copyright (c) 2013 - 2014, Tim Düsterhus
-All rights reserved.
+Copyright (C) 2013 - 2014 Tim Düsterhus
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-- Redistributions of source code must retain the above copyright notice, this list
-  of conditions and the following disclaimer.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
 
-- Redistributions in binary form must reproduce the above copyright notice, this
-  list of conditions and the following disclaimer in the documentation and/or
-  other materials provided with the distribution.
-
-- Neither the name of wbbaddons nor the names of its contributors may be used to
-  endorse or promote products derived from this software without specific prior
-  written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
 panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
@@ -517,8 +504,8 @@ app.all '/', (req, res) ->
 				
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
 				
-				# e.g. {{packageServerHost}}/com.example.wcf.test/1.0.0_Alpha_15
-				writer.writeElement 'file', "{{packageServerHost}}/#{_package.name}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
+				# e.g. #{host}/com.example.wcf.test/1.0.0_Alpha_15
+				writer.writeElement 'file', "#{host}/#{_package.name}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
 				
 				# try to extract license
 				if version.license
@@ -533,16 +520,22 @@ app.all '/', (req, res) ->
 			do writer.endElement
 		diff = process.hrtime start
 		unless config.deterministic
-			writer.writeComment "xml generated in #{diff[0] + diff[1] / 1e9} seconds"
-			writer.writeComment "packages scanned in #{updateTime[0] + updateTime[1] / 1e9} seconds"
-			writer.writeComment "up since #{do process.uptime} seconds"
+			writer.writeComment """
+				xml generated in #{diff[0] + diff[1] / 1e9} seconds
+				packages scanned in #{updateTime[0] + updateTime[1] / 1e9} seconds
+				up since #{do process.uptime} seconds
+				"""
 		writer.writeComment "last update #{lastUpdate}"
 		writer.writeComment "logged in as #{username}" if username
-		writer.writeComment "This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>"
+		writer.writeComment """
+			This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>
+			Tims Package Server is licensed under the terms of the GNU Affero General Public License v3.
+			You can obtain a copy of the source code of this installation at #{host}/app.coffee.
+			"""
 		do writer.endElement
 		do writer.endDocument
 		res.setHeader 'Last-Modified', lastUpdate.toUTCString()
-		res.status(200).send (do writer.toString).replace /\{\{packageServerHost\}\}/g, host
+		res.status(200).send writer.toString()
 	
 	checkAuth req, res, callback
 
@@ -571,6 +564,8 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 		res.status(404).send '404 Not Found'
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
+
+app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.status(404).send '404' if err?
 
 # throw 404 on any unknown route
 app.all '*', (req, res) -> res.status(404).send '404 Not Found'
