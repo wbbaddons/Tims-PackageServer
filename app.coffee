@@ -268,7 +268,7 @@ readPackages = (callback) ->
 		# loop over each file in the package folder
 		async.eachSeries files, (file, fileCallback) ->
 			# ignore dotfiles…
-			if (file.substring 0, 1) is '.'
+			if file[0] is '.'
 				debug "Skipping dotfile #{config.packageFolder}#{file}"
 				fileCallback null
 				return
