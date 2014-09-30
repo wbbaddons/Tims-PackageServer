@@ -22,7 +22,8 @@
 		"watchr": ">=2.4",
 		"debug": "*",
 		"basic-auth": "*",
-		"debounce": "*"
+		"debounce": "*",
+		"escape-string-regexp": "*"
 	},
 	"scripts": {
 		"start": "coffee app.coffee"

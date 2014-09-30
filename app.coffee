@@ -35,6 +35,7 @@ bcrypt = require 'bcrypt'
 watchr = require 'watchr'
 crypto = require 'crypto'
 basicAuth = require 'basic-auth'
+escapeRegExp = require 'escape-string-regexp'
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
@@ -147,26 +148,26 @@ createComparator = (comparison) ->
 			return result #{operator} 0;
 		})($v))"""
 	new Function '$v', 'return ' + comparison
-	
+
 isAccessible = (username, testPackage, testVersion) ->
 	return true if auth is null
 	
 	# check general packages
 	if auth.packages?
 		for _package, version of auth.packages
-			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+			_package = escapeRegExp(_package).replace /\\\*/, '.*'
 			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 	
 	# check user
 	if auth.users?[username]?.packages?
 		for _package, version of auth.users[username].packages
-			_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+			_package = escapeRegExp(_package).replace /\\\*/, '.*'
 			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 		# check user groups
 		for group in auth.users[username].groups
 			if auth.groups?[group]?
 				for _package, version of auth.groups[group]
-					_package = _package.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/\\\*/, '.*')
+					_package = escapeRegExp(_package).replace /\\\*/, '.*'
 					return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
 	false
 
