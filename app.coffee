@@ -510,11 +510,11 @@ app.all '/', (req, res) ->
 				
 				# try to extract license
 				if version.license
-					result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version.license
-					writer.startElement 'license'
-					writer.writeAttribute 'url', result[2] if result[2]?
-					writer.text result[1]
-					do writer.endElement
+					if result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version.license
+						writer.startElement 'license'
+						writer.writeAttribute 'url', result[2] if result[2]?
+						writer.text result[1]
+						do writer.endElement
 					
 				do writer.endElement
 			do writer.endElement
