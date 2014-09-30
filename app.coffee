@@ -88,7 +88,7 @@ downloadCounterFiles = { }
 logDownload = (packageName, version) ->
 	return unless config.enableStatistics
 	
-	version = version.toLowerCase().replace (new RegExp ' ', 'g'), '_'
+	version = version.toLowerCase().replace /[ ]/g, '_'
 	unless downloadCounterFiles[packageName]?[version]?
 		downloadCounterFiles[packageName] = { } unless downloadCounterFiles[packageName]?
 		downloadCounterFiles[packageName][version] = 0
@@ -356,8 +356,8 @@ readPackages = (callback) ->
 								
 								versionNumber = versionPackageXml.package.packageinformation[0].version[0]
 								# the tar file is incorrectly named -> abort
-								if (versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_') isnt path.basename versionFile, '.tar'
-									fileCallback "version number does not match filename in  #{versionFile} (#{versionNumber.toLowerCase().replace new RegExp(' ', 'g'), '_'} != #{path.basename versionFile, '.tar'})"
+								if (versionNumber.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
+									fileCallback "version number does not match filename in  #{versionFile} (#{versionNumber.toLowerCase().replace /[ ]/g, '_'} != #{path.basename versionFile, '.tar'})"
 									return
 								
 								# set {package,author}information to the ones of the last package found (the newest one)
@@ -423,7 +423,7 @@ app.all '/', (req, res) ->
 		# redirect when ?packageName=com.example.wcf.test[&packageVersion=1.0.0_Alpha_15] was requested
 		if req.query?.packageName?
 			if req.query.packageVersion?
-				res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace (new RegExp ' ', 'g'), '_'}"
+				res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace /[ ]/g, '_'}"
 			else
 				res.redirect 301, "#{host}/#{req.query.packageName}"
 			return
@@ -506,7 +506,7 @@ app.all '/', (req, res) ->
 				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
 				
 				# e.g. #{host}/com.example.wcf.test/1.0.0_Alpha_15
-				writer.writeElement 'file', "#{host}/#{_package.name}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
+				writer.writeElement 'file', "#{host}/#{_package.name}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
 				
 				# try to extract license
 				if version.license
@@ -564,7 +564,7 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 	unless versionNumber?
 		res.sendStatus 404
 		return
-	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
+	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
 
 app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.sendStatus 404 if err?
 
