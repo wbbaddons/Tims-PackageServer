@@ -16,7 +16,7 @@
 		"async": ">=0.2",
 		"tar": ">=0.1",
 		"xml2js": ">=0.2",
-		"xml-writer": ">=1.2",
+		"xml-writer": ">=1.4.1",
 		"coffee-script": ">=1.4",
 		"bcrypt": "*",
 		"watchr": ">=2.4",
