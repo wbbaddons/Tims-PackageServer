@@ -178,11 +178,11 @@ checkAuth = (req, res, callback) ->
 			# hash first because Woltlab Community Framework uses double salted hashes
 			bcrypt.hash reqAuth.pass, auth.users[reqAuth.name].passwd, (err, hash) ->
 				if err?
-					res.status(500).send '500 Internal Server Error'
+					res.sendStatus 500
 					return
 				bcrypt.compare hash, auth.users[reqAuth.name].passwd, (err, result) ->
 					if err?
-						res.status(500).send '500 Internal Server Error'
+						res.sendStatus 500
 						return
 					if result
 						callback reqAuth.name
@@ -428,7 +428,7 @@ app.all '/', (req, res) ->
 			return
 		
 		unless req.accepts 'xml'
-			res.status(406).send 'Not Acceptable'
+			res.sendStatus 406
 			return
 			
 		res.type 'xml'
@@ -547,12 +547,12 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if isAccessible username, req.params[0], req.params[1]
 					debug "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
-					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.status(404).send '404 Not Found' if err?
+					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.sendStatus 404 if err?
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					askForCredentials req, res
 			else
-				res.status(404).send '404 Not Found'
+				res.sendStatus 404
 		
 	checkAuth req, res, callback
 
@@ -561,14 +561,14 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	versionNumber = packageList?[req.params[0]]?.packageinformation?.version[0]
 	unless versionNumber?
-		res.status(404).send '404 Not Found'
+		res.sendStatus 404
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace (new RegExp ' ', 'g'), '_'}"
 
-app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.status(404).send '404' if err?
+app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.sendStatus 404 if err?
 
 # throw 404 on any unknown route
-app.all '*', (req, res) -> res.status(404).send '404 Not Found'
+app.all '*', (req, res) -> res.sendStatus 404
 
 # Creates watchers for every relevant file in the package folder
 do ->
