@@ -36,6 +36,7 @@ watchr = require 'watchr'
 crypto = require 'crypto'
 basicAuth = require 'basic-auth'
 escapeRegExp = require 'escape-string-regexp'
+coffeescript = require 'coffee-script'
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
@@ -121,33 +122,32 @@ createComparator = (comparison) ->
 		version = version.join '.'
 		
 	comparison = comparison.replace /[ ]/g, ''
-	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) ->
-		# build comparison function
-		return """
-		((function($v) {
-			$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./)
-			if ($v[0] == null) $v[0] = 0
-			if ($v[1] == null) $v[1] = 0
-			if ($v[2] == null) $v[2] = 0
-			if ($v[3] == null) $v[3] = 0
-			if ($v[4] == null) $v[4] = 0
-			v2 = "#{v2}".split(/\\./)
-			
-			result = 0
-			for (var i = 0; i < 5; i++) {
-				if (parseInt($v[i]) == parseInt(v2[i])) continue;
-				if (parseInt($v[i]) < parseInt(v2[i])) {
-					result = -1;
-					break;
-				}
-				if (parseInt($v[i]) > parseInt(v2[i])) {
-					result = 1;
-					break;
-				}
-			}
-			return result #{operator} 0;
-		})($v))"""
-	new Function '$v', 'return ' + comparison
+	
+	comparatorHelper = ($v, v2) ->
+		v2 = v2.split /\\./
+		$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./)
+		$v[0] ?= 0
+		$v[1] ?= 0
+		$v[2] ?= 0
+		$v[3] ?= 0
+		$v[4] ?= 0
+		
+		result = 0
+		for i in [0...5]
+			continue if (parseInt $v[i]) is parseInt(v2[i])
+			if (parseInt $v[i]) < parseInt(v2[i])
+				result = -1
+				break
+			if (parseInt $v[i]) > parseInt(v2[i])
+				result = 1
+				break
+		result
+		
+	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) -> """(comparatorHelper($v, "#{v2}") #{operator} 0)"""
+	
+	comparator = new Function '$v', 'comparatorHelper', 'return ' + coffeescript.compile comparison, bare: yes
+	
+	($v) ->	comparator $v, comparatorHelper
 
 isAccessible = (username, testPackage, testVersion) ->
 	return true if auth is null
