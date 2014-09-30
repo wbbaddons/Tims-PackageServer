@@ -124,7 +124,7 @@ createComparator = (comparison) ->
 	comparison = comparison.replace /[ ]/g, ''
 	
 	comparatorHelper = ($v, v2) ->
-		v2 = v2.split /\\./
+		v2 = v2.split /\./
 		$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
 		$v[0] ?= 0
 		$v[1] ?= 0
