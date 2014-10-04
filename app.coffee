@@ -221,8 +221,8 @@ getPackageXml = (filename, callback) ->
 				# push the parsed contents to the callback
 				callback null, contents
 	
-	tarStream.on 'error', -> callback "Error while extracting #{filename}", null
-
+	tarStream.on 'error', (e) -> callback "Error while extracting #{filename}: #{e}", null
+		
 # Updates package list.
 readPackages = (callback) ->
 	return if updating
@@ -444,19 +444,27 @@ app.all '/', (req, res) ->
 		writer.writeAttributeNS 'xmlns', 'xsi', 'http://www.w3.org/2001/XMLSchema-instance'
 		writer.writeAttributeNS 'xsi', 'schemaLocation', 'http://www.woltlab.com https://www.woltlab.com/XSD/packageUpdateServer.xsd'
 		for packageName, _package of packageList
+			if Object.keys(_package.versions).length is 0
+				warn "Skipping package: “#{_package.name}” has no valid versions"
+				continue
+				
 			writer.startElement 'package'
 			writer.writeAttribute 'name', _package.name
 			writer.startElement 'packageinformation'
-			writer.writeElement 'packagename', _package.packageinformation.packagename[0]._ ? _package.packageinformation.packagename[0]
-			writer.writeElement 'packagedescription', _package.packageinformation.packagedescription[0]._ ? _package.packageinformation.packagedescription[0]
+			
+			packageName = _package.packageinformation.packagename[0]._ ? _package.packageinformation.packagename[0] if _package.packageinformation.packagename?
+			packageDescription = _package.packageinformation.packagedescription[0]._ ? _package.packageinformation.packagedescription[0] if _package.packageinformation.packagedescription?
+			
+			writer.writeElement 'packagename', packageName if typeof packageName is 'string' and packageName.trim() isnt ''
+			writer.writeElement 'packagedescription', packageDescription if typeof packageDescription is 'string' and packageDescription.trim() isnt ''
 			writer.writeElement 'isapplication', String(_package.packageinformation.isapplication ? 0)
 			do writer.endElement
 			
 			# write <authorinformation>
 			if _package.authorinformation?
 				writer.startElement 'authorinformation'
-				writer.writeElement 'author', _package.authorinformation.author[0] if _package.authorinformation.author[0]?
-				writer.writeElement 'authorurl', _package.authorinformation.authorurl[0] if _package.authorinformation.authorurl[0]?
+				writer.writeElement 'author', _package.authorinformation.author[0] if _package.authorinformation.author?[0]?
+				writer.writeElement 'authorurl', _package.authorinformation.authorurl[0] if _package.authorinformation.authorurl?[0]?
 				do writer.endElement
 			writer.startElement 'versions'
 			for versionNumber, version of _package.versions
