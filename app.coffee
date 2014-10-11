@@ -39,7 +39,6 @@ watchr = require 'watchr'
 crypto = require 'crypto'
 basicAuth = require 'basic-auth'
 escapeRegExp = require 'escape-string-regexp'
-coffeescript = require 'coffee-script'
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
@@ -144,7 +143,7 @@ createComparator = (comparison) ->
 		
 	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) -> """(comparatorHelper($v, "#{v2}") #{operator} 0)"""
 	
-	comparator = new Function '$v', 'comparatorHelper', 'return ' + coffeescript.compile comparison, bare: yes
+	comparator = new Function '$v', 'comparatorHelper', 'return ' + comparison
 	
 	($v) ->	comparator $v, comparatorHelper
 
