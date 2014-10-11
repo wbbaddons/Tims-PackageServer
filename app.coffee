@@ -323,22 +323,8 @@ readPackages = (callback) ->
 										time: versionFileStat.mtime
 									
 									listeners = 
-										'startElement: package': (data) ->
-											if data.$.name isnt path.basename packageFolder
-												debug "Boom"
-												callback "package name does not match folder in #{versionFile} (#{data.$.name} isnt #{path.basename packageFolder})"
-												return
-											
-											# we discovered the root node, save package name
-											packageData.package = data.$.name
-										'text: package > packageinformation > version':  (data) ->
-											if (data.$text.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
-												debug "Boom"
-												callback "version number does not match filename in #{versionFile} (#{data.$text} isnt #{path.basename versionFile, '.tar'})"
-												return
-											
-											# save package version
-											packageData.version = data.$text
+										'startElement: package': (data) -> packageData.package = data.$.name
+										'text: package > packageinformation > version':  (data) -> packageData.version = data.$text
 										'text: package > packageinformation > license': (data) -> packageData.license = data.$text
 										'text: package > packageinformation > isapplication': (data) -> packageData.isapplication = data.$text
 										'text: package > packageinformation > packagename': (data) ->
@@ -375,8 +361,15 @@ readPackages = (callback) ->
 											unless packageData.package?
 												callback "Package name missing in #{versionFile}"
 												return
+											if packageData.package isnt path.basename packageFolder
+												callback "package name does not match folder in #{versionFile} (#{packageData.package} isnt #{path.basename packageFolder})"
+												return
 											unless packageData.version?
 												callback "Version missing in #{versionFile}"
+												return
+											if (packageData.version.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
+												debug "Boom"
+												callback "version number does not match filename in #{versionFile} (#{packageData.version} isnt #{path.basename versionFile, '.tar'})"
 												return
 													
 											callback null, packageData
