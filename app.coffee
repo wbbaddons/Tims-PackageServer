@@ -26,19 +26,19 @@ exec 'git describe --always', (err, stdout, stderr) ->
 	return if err?
 	serverVersion = stdout.trim()
 
+async = require 'async'
+basicAuth = require 'basic-auth'
+bcrypt = require 'bcrypt'
+crypto = require 'crypto'
+escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 fs = require 'fs'
-stream = require 'stream'
-xmlstream = require 'xml-stream'
 path = require 'path'
-async = require 'async'
 tarstream = require 'tar-stream'
-xmlwriter = require 'xml-writer'
-bcrypt = require 'bcrypt'
 watchr = require 'watchr'
-crypto = require 'crypto'
-basicAuth = require 'basic-auth'
-escapeRegExp = require 'escape-string-regexp'
+xmlstream = require 'xml-stream'
+xmlwriter = require 'xml-writer'
+
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
