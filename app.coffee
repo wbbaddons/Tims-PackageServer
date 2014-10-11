@@ -493,9 +493,7 @@ app.all '/', (req, res) ->
 				if version[0].optionalpackages?.length
 					writer.startElement 'optionalpackages'
 					for optionalpackage in version[0].optionalpackages
-						writer.startElement 'optionalpackage'
-						writer.text optionalpackage
-						do writer.endElement
+						writer.writeElement 'optionalpackage', optionalpackage
 					do writer.endElement
 				
 				# write <requiredpackages>
