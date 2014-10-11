@@ -16,15 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
 panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
-if process.getuid?() is 0 or process.getgid?() is 0
-	panic()
+panic() if process.getuid?() is 0 or process.getgid?() is 0
 	
-exec = (require 'child_process').exec
-
 serverVersion = (require './package.json').version
-exec 'git describe --always', (err, stdout, stderr) ->
-	return if err?
-	serverVersion = stdout.trim()
+(require 'child_process').exec 'git describe --always', (err, stdout, stderr) -> serverVersion = stdout.trim() unless err?
 
 async = require 'async'
 basicAuth = require 'basic-auth'
