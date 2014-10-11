@@ -311,6 +311,7 @@ readPackages = (callback) ->
 									debug "Found #{entryHeader.name} in #{versionFile}"
 									if entryHeader.name isnt 'package.xml' or entryHeader.type isnt 'file'
 										entryStream.on 'end', -> do entryCallback
+										# we have to consume the entire stream, before parsing continues
 										do entryStream.resume
 										return
 									packageXmlFound = yes
