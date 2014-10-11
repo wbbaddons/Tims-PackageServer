@@ -480,7 +480,7 @@ app.all '/', (req, res) ->
 				
 				writer.writeAttribute 'accessible', if (isAccessible username, version[0].package, version[0].version) then "true" else "false"
 				writer.writeAttribute 'critical', if (/pl/i.test version[0].version) then "true" else "false"
-				writer.writeComment "sha256:#{version[1].toString 'hex'}" if config.enableHash
+				writer.writeComment "sha256:#{version[1].toString 'hex'}" if version[1]?
 				
 				# write <fromversions>
 				if version[0].fromversions?.length
