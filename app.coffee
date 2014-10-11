@@ -234,11 +234,11 @@ readPackages = (callback) ->
 			return
 		
 		# ignore dotfiles, auth.json and invalid package identifiers
-		files.filter (file) ->
+		files = files.filter (file) ->
 			if file[0] is '.'
 				debug "Skipping dotfile #{config.packageFolder}#{file}"
 				false
-			else if file is 'auth.json'
+			else if file in [ 'auth.json', 'auth.json.example' ]
 				false
 			else unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
 				debug "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
