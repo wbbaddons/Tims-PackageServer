@@ -16,36 +16,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
 panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
-if process.getuid?() is 0 or process.getgid?() is 0
-	panic()
+panic() if process.getuid?() is 0 or process.getgid?() is 0
 	
-exec = (require 'child_process').exec
-
 serverVersion = (require './package.json').version
-exec 'git describe --always', (err, stdout, stderr) ->
-	return if err?
-	serverVersion = stdout.trim()
+(require 'child_process').exec 'git describe --always', (err, stdout, stderr) -> serverVersion = stdout.trim() unless err?
 
+async = require 'async'
+basicAuth = require 'basic-auth'
+bcrypt = require 'bcrypt'
+crypto = require 'crypto'
+escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 fs = require 'fs'
 path = require 'path'
-async = require 'async'
-tar = require 'tar'
-bcrypt = require 'bcrypt'
+tarstream = require 'tar-stream'
 watchr = require 'watchr'
-crypto = require 'crypto'
-basicAuth = require 'basic-auth'
-escapeRegExp = require 'escape-string-regexp'
-coffeescript = require 'coffee-script'
+xmlstream = require 'xml-stream'
+xmlwriter = require 'xml-writer'
+
 debug = (require 'debug')('PackageServer:debug')
 warn = (require 'debug')('PackageServer:warn')
 warn.log = console.warn.bind console
 error = (require 'debug')('PackageServer:error')
 error.log = console.error.bind console
-
-xml = 
-	parser: (require 'xml2js').Parser
-	writer: require 'xml-writer'
 
 # Try to load config
 try
@@ -145,7 +138,7 @@ createComparator = (comparison) ->
 		
 	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) -> """(comparatorHelper($v, "#{v2}") #{operator} 0)"""
 	
-	comparator = new Function '$v', 'comparatorHelper', 'return ' + coffeescript.compile comparison, bare: yes
+	comparator = new Function '$v', 'comparatorHelper', 'return ' + comparison
 	
 	($v) ->	comparator $v, comparatorHelper
 
@@ -194,39 +187,16 @@ checkAuth = (req, res, callback) ->
 	else
 		callback ''
 
-# extracts and parses the package.xml of the archive given as `filename`
-getPackageXml = (filename, callback) ->
-	stream = fs.createReadStream filename
-	tarStream = stream.pipe do tar.Parse
-	
-	packageXmlFound = no
-	
-	# no more data, but no package.xml was found
-	stream.on 'end', -> callback "package.xml is missing in #{filename}", null unless packageXmlFound
-	
-	tarStream.on 'entry', (e) ->
-		# we are searching for the package.xml
-		return unless e.props.path is 'package.xml'
-		
-		packageXmlFound = yes
-		packageXml = ''
-		e.on 'data', (chunk) -> packageXml += do chunk.toString
-		e.on 'end', ->
-			# we received the full package.xml -> parse it
-			(new xml.parser()).parseString packageXml, (err, contents) ->
-				if err?
-					callback "Error parsing package.xml of #{filename}: #{err}", null
-					return
-					
-				# push the parsed contents to the callback
-				callback null, contents
-	
-	tarStream.on 'error', (e) -> callback "Error while extracting #{filename}: #{e}", null
-		
+hashStream = (stream, callback) ->
+	hasher = new crypto.Hash 'sha256'
+	stream.pipe hasher
+	stream.on 'end', ->
+		hash = do hasher.read
+		debug "Hashed stream: #{hash.toString 'hex'}"
+		callback null, hash
+
 # Updates package list.
 readPackages = (callback) ->
-	return if updating
-	updating = yes
 	updateStart = do process.hrtime
 	
 	fs.exists "#{config.packageFolder}auth.json", (authExists) ->
@@ -263,25 +233,21 @@ readPackages = (callback) ->
 			error err
 			return
 		
-		newPackageList = { }
-		
-		# loop over each file in the package folder
-		async.eachSeries files, (file, fileCallback) ->
-			# ignore dotfiles…
+		# ignore dotfiles, auth.json and invalid package identifiers
+		files = files.filter (file) ->
 			if file[0] is '.'
 				debug "Skipping dotfile #{config.packageFolder}#{file}"
-				fileCallback null
-				return
-			# … auth.json
-			if file is 'auth.json'
-				fileCallback null
-				return
-			# … and files that don't look like a valid package identifier
-			unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
+				false
+			else if file in [ 'auth.json', 'auth.json.example' ]
+				false
+			else unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
 				debug "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
-				fileCallback null
-				return
-			
+				false
+			else
+				true
+		
+		# loop over each file in the package folder
+		async.map files, (file, fileCallback) ->
 			packageFolder = config.packageFolder + file
 			debug "Parsing #{packageFolder}"
 			fs.stat packageFolder, (err, packageFolderStat) ->
@@ -290,18 +256,9 @@ readPackages = (callback) ->
 					return
 					
 				unless do packageFolderStat.isDirectory
-					warn "#{packageFolder} is not a folder"
-					do fileCallback
+					fileCallback "#{packageFolder} is not a folder"
 					return
 				
-				currentPackage =
-					name: path.basename packageFolder
-					versions: { }
-				
-				parsingFinished = ->
-					newPackageList[currentPackage.name] = currentPackage
-					fileCallback null
-					
 				# read every file in the folder to find the available versions
 				fs.readdir packageFolder, (err, versions) ->
 					if err?
@@ -323,90 +280,139 @@ readPackages = (callback) ->
 						else
 							true
 					
-					versions.sort (a, b) ->
-						if a is b
-							0
-						else if (createComparator "$v > #{b.replace(/\.tar$/, '')}")(a.replace(/\.tar$/, ''))
-							1
-						else
-							-1
-						
-					async.eachSeries versions, (versionFile, versionsCallback) ->
+					async.map versions, (versionFile, versionsCallback) ->
 						versionFile = packageFolder + '/' + versionFile
 						debug "Parsing #{versionFile}"
 						fs.stat versionFile, (err, versionFileStat) ->
+							debug "Got #{versionFile} stat"
 							if err?
-								versionsCallback versionFileStat
+								versionsCallback err
 								return
 							
 							unless do versionFileStat.isFile
-								warn "#{versionFile} is not a file"
+								versionsCallback "#{versionFile} is not a file"
 								return
 							
-							# parse package.xml
-							getPackageXml versionFile, (err, versionPackageXml) ->
-								if err?
-									versionsCallback err
-									return
-								name = versionPackageXml.package.$.name
-								# the tar file does not belong here
-								if name isnt path.basename packageFolder
-									fileCallback "package name does not match folder in #{versionFile} (#{name} != #{path.basename packageFolder})"
-									return
+							archiveStream = fs.createReadStream versionFile
+							tasks = [ ]
+							
+							if config.enableHash
+								tasks.push (callback) -> hashStream archiveStream, callback
+							
+							tasks.unshift (callback) ->
+								extract = tarstream.extract()
 								
-								versionNumber = versionPackageXml.package.packageinformation[0].version[0]
-								# the tar file is incorrectly named -> abort
-								if (versionNumber.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
-									fileCallback "version number does not match filename in  #{versionFile} (#{versionNumber.toLowerCase().replace /[ ]/g, '_'} != #{path.basename versionFile, '.tar'})"
-									return
+								packageXmlFound = no
 								
-								# set {package,author}information to the ones of the last package found (the newest one)
-								currentPackage.packageinformation = versionPackageXml.package.packageinformation[0]
-								currentPackage.authorinformation = versionPackageXml.package.authorinformation[0]
+								# no more data, but no package.xml was found
+								extract.on 'finish', -> callback "package.xml is missing in #{versionFile}" unless packageXmlFound
 								
-								currentVersion = { }
-								currentVersion.versionnumber = versionNumber
-								currentVersion.license = versionPackageXml.package.packageinformation[0].license?[0]
-								currentVersion.fromversions = (instruction.$.fromversion for instruction in versionPackageXml.package.instructions when instruction.$.fromversion?)
-								currentVersion.optionalpackages = versionPackageXml.package?.optionalpackages?[0]
-								currentVersion.requiredpackages = versionPackageXml.package?.requiredpackages?[0]
-								currentVersion.excludedpackages = versionPackageXml.package?.excludedpackages?[0]
-								currentVersion.timestamp = versionFileStat.mtime
-								
-								finish = ->
-									currentPackage.versions[versionNumber] = currentVersion
+								extract.on 'entry', (entryHeader, entryStream, entryCallback) ->
+									debug "Found #{entryHeader.name} in #{versionFile}"
+									if entryHeader.name isnt 'package.xml' or entryHeader.type isnt 'file'
+										entryStream.on 'end', -> do entryCallback
+										# we have to consume the entire stream, before parsing continues
+										do entryStream.resume
+										return
+									packageXmlFound = yes
 									
-									debug "Finished parsing #{versionFile}"
-									versionsCallback null
-								
-								if config.enableHash
-									hash = new crypto.Hash 'sha256'
-									fileStream = fs.createReadStream versionFile
-									fileStream.pipe hash
-									fileStream.on 'end', ->
-										currentVersion.hash = do hash.read
-										do finish
-								else
-									setImmediate finish
-					, (err) ->
-						if err?
-							fileCallback err
+									# set up xml parser
+									packageXmlXmlStream = new xmlstream entryStream
+									
+									packageData = 
+										time: versionFileStat.mtime
+									
+									listeners = 
+										'startElement: package': (data) -> packageData.package = data.$.name
+										'text: package > packageinformation > version':  (data) -> packageData.version = data.$text
+										'text: package > packageinformation > license': (data) -> packageData.license = data.$text
+										'text: package > packageinformation > isapplication': (data) -> packageData.isapplication = data.$text
+										'text: package > packageinformation > packagename': (data) ->
+											if not packageData.packagename? or not data.$?.language?
+												packageData.packagename = data.$text
+										'text: package > packageinformation > packagedescription': (data) ->
+											if not packageData.packagedescription? or not data.$?.language?
+												packageData.packagedescription = data.$text
+										'text: package > authorinformation > author': (data) -> packageData.author = data.$text
+										'text: package > authorinformation > authorurl': (data) -> packageData.authorurl = data.$text
+										'text: package > requiredpackages > requiredpackage': (data) ->
+											packageData.requiredpackages ?= []
+											packageData.requiredpackages.push
+												package: data.$text
+												minversion: data.$?.minversion
+										'text: package > excludedpackages > excludedpackage': (data) ->
+											packageData.excludedpackages ?= []
+											packageData.excludedpackages.push
+												package: data.$text
+												version: data.$?.version
+										'text: package > optionalpackages > optionalpackage': (data) ->
+											packageData.optionalpackages ?= []
+											packageData.optionalpackages.push data.$text
+										'startElement: package > instructions': (data) ->
+											return if data.$?.type isnt 'update'
+											return unless data.$?.fromversion?
+											
+											packageData.fromversions ?= []
+											packageData.fromversions.push data.$.fromversion
+										'end': ->
+											debug "Finished parsing package.xml in #{versionFile}"
+											
+											do entryCallback
+											unless packageData.package?
+												callback "Package name missing in #{versionFile}"
+												return
+											if packageData.package isnt path.basename packageFolder
+												callback "package name does not match folder in #{versionFile} (#{packageData.package} isnt #{path.basename packageFolder})"
+												return
+											unless packageData.version?
+												callback "Version missing in #{versionFile}"
+												return
+											if (packageData.version.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
+												debug "Boom"
+												callback "version number does not match filename in #{versionFile} (#{packageData.version} isnt #{path.basename versionFile, '.tar'})"
+												return
+													
+											callback null, packageData
+									
+									for event, listener of listeners
+										packageXmlXmlStream.on event, listener
+										
+								archiveStream.pipe extract
+									
+							async.parallel tasks, (err, data) ->
+								versionsCallback err, data
+					, (err, data) ->
+						# data = [ packageData, hash? ]
+						
+						data = data.filter (item) -> item?
+						data.sort (a, b) ->
+							a = a[0].version
+							b = b[0].version
+							
+							if a is b
+								0
+							else if (createComparator "$v > #{b}")(a)
+								1
+							else
+								-1
+						if data.length is 0
+							fileCallback "Could not find valid versions for #{packageFolder}"
 						else
-							do parsingFinished
-		, (err) ->
+							fileCallback err, data
+		, (err, data) ->
 			if err?
 				error "Error reading package list: #{err}"
-				updating = no
 				callback? false
 				return
 			
+			data = data.filter (item) -> item?
+			
 			# overwrite packageList once everything succeeded
-			packageList = newPackageList
+			packageList = data
 			# update scan time and statistics
 			lastUpdate = new Date
 			updateTime = process.hrtime updateStart
 			debug "Finished update"
-			updating = no
 			
 			# and finally call the callback
 			callback? true
@@ -436,95 +442,89 @@ app.all '/', (req, res) ->
 		
 		# build the xml structure of the package list
 		start = do process.hrtime
-		writer = new xml.writer true
+		writer = new xmlwriter true
 		writer.startDocument '1.0', 'UTF-8'
 		writer.startElement 'section'
 		writer.writeAttribute 'name', 'packages'
 		writer.writeAttribute 'xmlns', 'http://www.woltlab.com'
 		writer.writeAttributeNS 'xmlns', 'xsi', 'http://www.w3.org/2001/XMLSchema-instance'
 		writer.writeAttributeNS 'xsi', 'schemaLocation', 'http://www.woltlab.com https://www.woltlab.com/XSD/packageUpdateServer.xsd'
-		for packageName, _package of packageList
-			if Object.keys(_package.versions).length is 0
-				warn "Skipping package: “#{_package.name}” has no valid versions"
-				continue
-				
+		for _package in packageList
+			newestVersion = _package[-1..][0]
 			writer.startElement 'package'
-			writer.writeAttribute 'name', _package.name
+			writer.writeAttribute 'name', newestVersion[0].package
 			writer.startElement 'packageinformation'
 			
-			packageName = _package.packageinformation.packagename[0]._ ? _package.packageinformation.packagename[0] if _package.packageinformation.packagename?
-			packageDescription = _package.packageinformation.packagedescription[0]._ ? _package.packageinformation.packagedescription[0] if _package.packageinformation.packagedescription?
-			
-			writer.writeElement 'packagename', packageName if typeof packageName is 'string' and packageName.trim() isnt ''
-			writer.writeElement 'packagedescription', packageDescription if typeof packageDescription is 'string' and packageDescription.trim() isnt ''
-			writer.writeElement 'isapplication', String(_package.packageinformation.isapplication ? 0)
+			writer.writeElement 'packagename', newestVersion[0].packagename ? ''
+			writer.writeElement 'packagedescription', newestVersion[0].packagedescription ? ''
+			writer.writeElement 'isapplication', String(newestVersion[0].isapplication ? 0)
 			do writer.endElement
 			
 			# write <authorinformation>
-			if _package.authorinformation?
+			if newestVersion[0].author? or _package.authorurl?
 				writer.startElement 'authorinformation'
-				writer.writeElement 'author', _package.authorinformation.author[0] if _package.authorinformation.author?[0]?
-				writer.writeElement 'authorurl', _package.authorinformation.authorurl[0] if _package.authorinformation.authorurl?[0]?
+				writer.writeElement 'author', newestVersion[0].author if newestVersion[0].author?
+				writer.writeElement 'authorurl', newestVersion[0].authorurl if newestVersion[0].authorurl?
 				do writer.endElement
 			writer.startElement 'versions'
-			for versionNumber, version of _package.versions
+			
+			for version in _package
 				writer.startElement 'version'
-				writer.writeAttribute 'name', versionNumber
+				writer.writeAttribute 'name', version[0].version
 				
-				writer.writeAttribute 'accessible', if (isAccessible username, _package.name, versionNumber) then "true" else "false"
-				writer.writeAttribute 'critical', if (/pl/i.test versionNumber) then "true" else "false"
-				writer.writeComment "sha256:#{version.hash.toString 'hex'}" if config.enableHash
+				writer.writeAttribute 'accessible', if (isAccessible username, version[0].package, version[0].version) then "true" else "false"
+				writer.writeAttribute 'critical', if (/pl/i.test version[0].version) then "true" else "false"
+				writer.writeComment "sha256:#{version[1].toString 'hex'}" if version[1]?
 				
 				# write <fromversions>
-				if version.fromversions?.length
+				if version[0].fromversions?.length
 					writer.startElement 'fromversions'
-					for fromVersion in version.fromversions
+					for fromVersion in version[0].fromversions
 						writer.writeElement 'fromversion', fromVersion
 					do writer.endElement
 				
 				# write <optionalpackages>
-				if version.optionalpackages?.optionalpackage?.length
+				if version[0].optionalpackages?.length
 					writer.startElement 'optionalpackages'
-					for optionalpackage in version.optionalpackages.optionalpackage
-						writer.startElement 'optionalpackage'
-						writer.text optionalpackage._ ? optionalpackage
-						do writer.endElement
+					for optionalpackage in version[0].optionalpackages
+						writer.writeElement 'optionalpackage', optionalpackage
 					do writer.endElement
 				
 				# write <requiredpackages>
-				if version.requiredpackages?.requiredpackage?.length
+				if version[0].requiredpackages?.length
 					writer.startElement 'requiredpackages'
-					for requiredPackage in version.requiredpackages.requiredpackage
+					for requiredPackage in version[0].requiredpackages
 						writer.startElement 'requiredpackage'
-						writer.writeAttribute 'minversion', requiredPackage.$.minversion if requiredPackage.$?.minversion?
-						writer.text requiredPackage._ ? requiredPackage
+						writer.writeAttribute 'minversion', requiredPackage.minversion if requiredPackage.minversion?
+						writer.text requiredPackage.package
 						do writer.endElement
 					do writer.endElement
 				
 				# write <excludedpackages>
-				if version.excludedpackages?.excludedpackage?.length
+				if version[0].excludedpackages?.length
 					writer.startElement 'excludedpackages'
-					for excludedPackage in version.excludedpackages.excludedpackage
+					for excludedPackage in version[0].excludedpackages
 						writer.startElement 'excludedpackage'
-						writer.writeAttribute 'version', excludedPackage.$.version if excludedPackage.$?.version?
-						writer.text excludedPackage._ ? excludedPackage
+						writer.writeAttribute 'version', excludedPackage.version if excludedPackage.version?
+						writer.text excludedPackage.package
 						do writer.endElement
 					do writer.endElement
 				
-				writer.writeElement 'timestamp', String(Math.floor (do version.timestamp.getTime) / 1000)
+				writer.writeElement 'timestamp', String(Math.floor (do version[0].time.getTime) / 1000)
 				
 				# e.g. #{host}/com.example.wcf.test/1.0.0_Alpha_15
-				writer.writeElement 'file', "#{host}/#{_package.name}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
+				writer.writeElement 'file', "#{host}/#{version[0].package}/#{version[0].version.toLowerCase().replace /[ ]/g, '_'}"
 				
 				# try to extract license
-				if version.license
-					if result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version.license
+				if version[0].license
+					if result = /^(.*?)(?:\s<(https?:\/\/.*)>)?$/.exec version[0].license
 						writer.startElement 'license'
 						writer.writeAttribute 'url', result[2] if result[2]?
 						writer.text result[1]
 						do writer.endElement
 					
 				do writer.endElement
+			
 			do writer.endElement
 			do writer.endElement
 		diff = process.hrtime start
