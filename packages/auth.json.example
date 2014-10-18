@@ -28,6 +28,7 @@
 	},
 	"packages": {
 		"be.bastelstu.wcf.freePackage": "*",
-		"be.bastelstu.wcf.openBeta": "$v >= 1.0.0 Beta 1 && $v < 1.0.0 RC 1"
+		"be.bastelstu.wcf.openBeta": "$v >= 1.0.0 Beta 1 && $v < 1.0.0 RC 1",
+		"*": "$v ~ /alpha/i"
 	}
 }
