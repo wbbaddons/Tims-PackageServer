@@ -137,8 +137,8 @@ createComparator = (comparison) ->
 		result
 		
 	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) -> """(comparatorHelper($v, "#{v2}") #{operator} 0)"""
-	comparison = comparison.replace /\$v~(\/(?:[^/\\]|\\.)+\/i?)/, (comparison, regex) -> """(#{regex}.test($v))"""
-	comparison = comparison.replace /\$v!~(\/(?:[^/\\]|\\.)+\/i?)/, (comparison, regex) -> """(!#{regex}.test($v))"""
+	comparison = comparison.replace /\$v~(\/(?:[^/\\]|\\.)+\/i?)/g, (comparison, regex) -> """(#{regex}.test($v))"""
+	comparison = comparison.replace /\$v!~(\/(?:[^/\\]|\\.)+\/i?)/g, (comparison, regex) -> """(!#{regex}.test($v))"""
 	
 	comparator = new Function '$v', 'comparatorHelper', 'return ' + comparison
 	
