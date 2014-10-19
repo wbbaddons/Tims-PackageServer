@@ -604,7 +604,7 @@ app.get '/app.coffee', (req, res) ->
 			do res.end
 			
 app.get /\/style\/.*/, (req, res) ->
-	res.type('xml').render 'main',
+	res.type('text/xsl').render 'main',
 		title: config.pageTitle || 'Tim’s PackageServer'
 		serverVersion: serverVersion
 		host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"

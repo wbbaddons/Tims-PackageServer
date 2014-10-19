@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:ns="http://www.woltlab.com" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
-	<xsl:output method="html" version="5" encoding="UTF-8"/>
+<xsl:stylesheet xmlns:ns="http://www.woltlab.com" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+	<xsl:output method="html" doctype-system="about:legacy-compat"/>
 	
 	<xsl:template match="/">
 		<html>
@@ -22,8 +21,17 @@
 						margin-top: 50px;
 					}
 					
+					#main {
+						padding: 40px 15px;
+					}
+					
 					.main > .row {
 						poisition: relative;
+					}
+					
+					#sidebarNav {
+						padding-top: 40px;
+						padding-bottom: 40px;
 					}
 					
 					.sidebar {
@@ -32,15 +40,6 @@
 						top: 0;
 						left: 0;
 						bottom: 0;
-					}
-					
-					#main {
-						padding: 40px 15px;
-					}
-					
-					#sidebarNav {
-						padding-top: 40px;
-						padding-bottom: 40px;
 					}
 					
 					.jsOnly {
@@ -169,7 +168,7 @@
 													<th class="col-md-2">{{lang.version}}</th>
 													<th class="col-md-4">{{lang.license}}</th>
 													<th class="col-md-4">{{lang.requirements}}</th>
-													<th class="col-md-2 jsOnly">{{lang.date}}</th> <!-- This date seems to be the file creation date, not the release date -->
+													<th class="col-md-2 jsOnly">{{lang.date}}</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -262,8 +261,6 @@
 					</div>
 				</div>
 				
-				<a id="bottom"></a>
-				
 				<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 				<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 				
@@ -286,7 +283,7 @@
 						
 						$('.jsOnly').show();
 						
-						$("body").scrollspy({
+						$('body').scrollspy({
 							target: "#sidebarNav",
 							offset: 50
 						});
