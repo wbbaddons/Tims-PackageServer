@@ -10,7 +10,7 @@
 				
 				<!-- <link rel="icon" href="favicon.ico" /> -->
 				
-				<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+				<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/css/bootstrap.min.css" />
 				
 				<style>
 					body {
@@ -261,24 +261,16 @@
 					</div>
 				</div>
 				
-				<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-				<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment-with-locales.min.js"></script>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
 				
 				<script>
 					$(document).ready(function () {
-						var formatDate = function(date) {
-							if (typeof Date.prototype.toLocaleDateString === 'function') {
-								return date.toLocaleDateString();
-							}
-							else {
-								return date.getFullYear() + '-' + (getMonth() + 1) + '-' + date.getDate();
-							}
-						};
+						moment.locale(window.navigator.userLanguage || window.navigator.language);
 						
 						$('time').each(function(k, v) {
-							timestamp = parseInt($(v).text()) * 1000;
-							
-							$(v).html(formatDate(new Date(timestamp)));
+							$(v).html(moment.unix($(v).text()).format('LL'));
 						});
 						
 						$('.jsOnly').show();
