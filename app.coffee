@@ -571,13 +571,17 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 				if isAccessible username, req.params[0], req.params[1]
 					debug "#{username} downloaded #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					logDownload req.params[0], req.params[1]
-					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) -> res.sendStatus 404 if err?
+					res.download "#{config.packageFolder}/#{req.params[0]}/#{req.params[1].toLowerCase()}.tar", "#{req.params[0]}_v#{req.params[1]}.tar", (err) ->
+						if err?
+							res.sendStatus 404 unless res.headersSent
+							
+							do res.end
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
 					askForCredentials req, res
 			else
 				res.sendStatus 404
-		
+				
 	checkAuth req, res, callback
 
 # allow download without version number
@@ -589,8 +593,16 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 		return
 	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
 
-app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.sendStatus 404 if err?
-
+app.get '/app.coffee', (req, res) ->
+	res.type('txt').sendFile "#{__dirname}/app.coffee", (err) ->
+		if err
+			if err.code is 'ECONNABORT' and res.statusCode is 304
+				debug 'Request aborted, cached'
+			else
+				res.sendStatus 404 unless res.headersSent
+				
+			do res.end
+			
 app.get /\/style\/.*/, (req, res) ->
 	res.type('xml').render 'main',
 		title: config.pageTitle || 'Tim’s PackageServer'
