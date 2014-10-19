@@ -42,28 +42,6 @@
 						-webkit-background-clip: content-box;
 						background-clip: content-box;
 					}
-					
-					@media (max-width: 767px) {
-						#sidebarNav {
-							display: none;
-						}
-					}
-					
-					@media (min-width: 768px) {
-						#sidebarNav.affix-bottom {
-							position: absolute;
-						}
-					}
-					
-					/* Maybe temporary */
-					#sidebarNav {
-						position: relative;
-					}
-					
-					/* Maybe temporary */
-					#sidebarNav > ul.nav {
-						position: absolute;
-					}
 				</style>
 				
 				<title>{{title}}</title>
@@ -96,6 +74,8 @@
 					<div class="row">
 						<div class="col-sm-9 col-md-10" role="main">
 							<xsl:for-each select="ns:section/ns:package">
+								<xsl:sort select="ns:packageinformation/ns:packagename" />
+								
 								<div class="anchorFix">
 									<xsl:attribute name="id"><xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
 									
@@ -188,7 +168,24 @@
 																<xsl:when test="ns:requiredpackages/ns:requiredpackage">
 																	<ul>
 																		<xsl:for-each select="ns:requiredpackages/ns:requiredpackage">
-																			<li><xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)</li>
+																			<xsl:choose>
+																				<xsl:when test="/ns:section/ns:package[@name=current()]">
+																					<li>
+																						<a>
+																							<xsl:attribute name="href">
+																								#<xsl:value-of select="translate(., '.', '-')" />
+																							</xsl:attribute>
+																							
+																							<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
+																						</a>
+																					</li>
+																				</xsl:when>
+																				<xsl:otherwise>
+																					<li>
+																						<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
+																					</li>
+																				</xsl:otherwise>
+																			</xsl:choose>
 																		</xsl:for-each>
 																	</ul>
 																</xsl:when>
@@ -213,6 +210,8 @@
 							<div id="sidebarNav">
 								<ul class="nav nav-pills nav-stacked">
 									<xsl:for-each select="ns:section/ns:package">
+										<xsl:sort select="ns:packageinformation/ns:packagename" />
+										
 										<li>
 											<a>
 												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
@@ -250,44 +249,6 @@
 						});
 						
 						$('.jsOnly').show();
-						
-						$("body").scrollspy({
-							target: "#sidebarNav",
-							offset: 50
-						});
-						
-						// temporary
-						$('ul.nav li').on('activate.bs.scrollspy', function () {
-							packageTop = $($(this).find('a').attr('href')).position().top;
-							siblingsHeight = (function() {
-								height = 0;
-								$(this).prevAll().each(function(k, v) {
-									height += $(v).outerHeight(true);
-								})
-								return height;
-							}).call(this);
-							
-							console.log(siblingsHeight);
-							
-							$('#sidebarNav').find('> ul.nav').css('top', packageTop - siblingsHeight + 'px');
-						});
-						
-						/*
-						var $sideBar = $('#sidebarNav');
-						$sideBar.affix({
-							offset: {
-								top: function () {
-									var offsetTop = $sideBar.offset().top;
-									var sideBarMargin = parseInt($sideBar.children(0).css('margin-top'), 10);
-									var navOuterHeight = $('#sidebarNav > ul.nav').height();
-									
-									return (this.top = offsetTop - navOuterHeight - sideBarMargin);
-								},
-								bottom: function () {
-									return (this.bottom = 100);
-								}
-							}
-						});*/
 					});
 				</script>
 			</body>
