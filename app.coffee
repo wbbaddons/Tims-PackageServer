@@ -552,8 +552,8 @@ app.all '/', (req, res) ->
 		writer.writeComment "last update #{lastUpdate}"
 		writer.writeComment "logged in as #{username}" if username
 		writer.writeComment """
-			This list was presented by Tims Package Server #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>
-			Tims Package Server is licensed under the terms of the GNU Affero General Public License v3.
+			This list was presented by Tim’s PackageServer #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>
+			Tim’s PackageServer is licensed under the terms of the GNU Affero General Public License v3 <https://gnu.org/licenses/agpl-3.0.html>.
 			You can obtain a copy of the source code of this installation at #{host}/app.coffee.
 			"""
 		do writer.endElement
