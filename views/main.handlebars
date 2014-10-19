@@ -18,9 +18,29 @@
 						position: relative;
 					}
 					
-					#main {
+					#main, .sidebar {
 						margin-top: 50px;
+					}
+					
+					.main > .row {
+						poisition: relative;
+					}
+					
+					.sidebar {
+						overflow-y: auto;
+						position: fixed;
+						top: 0;
+						left: 0;
+						bottom: 0;
+					}
+					
+					#main {
 						padding: 40px 15px;
+					}
+					
+					#sidebarNav {
+						padding-top: 40px;
+						padding-bottom: 40px;
 					}
 					
 					.jsOnly {
@@ -41,6 +61,12 @@
 						margin-top: -60px;
 						-webkit-background-clip: content-box;
 						background-clip: content-box;
+					}
+					
+					@media (max-width: 767px) {
+						#sidebarNav {
+							display: none;
+						}
 					}
 				</style>
 				
@@ -70,9 +96,27 @@
 					</div>
 				</div>
 				
-				<div id="main" class="container-fluid">
+				<div class="main container-fluid">
 					<div class="row">
-						<div class="col-sm-9 col-md-10" role="main">
+						<div class="col-md-2 sidebar">
+							<div id="sidebarNav">
+								<ul class="nav nav-pills nav-stacked">
+									<xsl:for-each select="ns:section/ns:package">
+										<xsl:sort select="ns:packageinformation/ns:packagename" />
+										
+										<li>
+											<a>
+												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+												
+												<xsl:value-of select="./ns:packageinformation/ns:packagename" />
+											</a>
+										</li>
+									</xsl:for-each>
+								</ul>
+							</div>
+						</div>
+						
+						<div id="main" class="col-md-10 col-md-offset-2" role="main">
 							<xsl:for-each select="ns:section/ns:package">
 								<xsl:sort select="ns:packageinformation/ns:packagename" />
 								
@@ -205,24 +249,6 @@
 								</div>
 							</xsl:for-each>
 						</div>
-						
-						<div class="col-sm-3 col-md-2 sidebar">
-							<div id="sidebarNav">
-								<ul class="nav nav-pills nav-stacked">
-									<xsl:for-each select="ns:section/ns:package">
-										<xsl:sort select="ns:packageinformation/ns:packagename" />
-										
-										<li>
-											<a>
-												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
-												
-												<xsl:value-of select="./ns:packageinformation/ns:packagename" />
-											</a>
-										</li>
-									</xsl:for-each>
-								</ul>
-							</div>
-						</div>
 					</div>
 				</div>
 				
@@ -243,12 +269,32 @@
 						};
 						
 						$('time').each(function(k, v) {
-							timestamp = Number.parseInt($(v).text()) * 1000;
+							timestamp = parseInt($(v).text()) * 1000;
 							
 							$(v).html(formatDate(new Date(timestamp)));
 						});
 						
 						$('.jsOnly').show();
+						
+						$("body").scrollspy({
+							target: "#sidebarNav",
+							offset: 50
+						});
+						
+						var sidebar = $('#sidebarNav').parent();
+						
+						$('ul.nav li').on('activate.bs.scrollspy', function () {
+							siblingsHeight = (function() {
+								height = 0;
+								$(this).prevAll().each(function(k, v) {
+									height += $(v).outerHeight(true);
+								});
+								
+								return height;
+							}).call(this);
+							
+							sidebar.scrollTop(siblingsHeight);
+						});
 					});
 				</script>
 			</body>
