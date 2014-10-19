@@ -594,6 +594,8 @@ app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.
 app.get /\/style\/.*/, (req, res) ->
 	res.type('xml').render 'main',
 		title: config.pageTitle || 'Tim’s PackageServer'
+		serverVersion: serverVersion
+		host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 		lang:
 			version: config.lang.version || 'Version'
 			license: config.lang.license || 'License'
