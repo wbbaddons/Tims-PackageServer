@@ -23,7 +23,8 @@
 		"basic-auth": "*",
 		"debounce": "*",
 		"escape-string-regexp": "*",
-		"xml-stream": "*"
+		"xml-stream": "*",
+		"express-handlebars": "~1.1.0"
 	},
 	"scripts": {
 		"start": "coffee app.coffee"

@@ -27,6 +27,8 @@ bcrypt = require 'bcrypt'
 crypto = require 'crypto'
 escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
+expresshb  = require 'express-handlebars'
+
 fs = require 'fs'
 path = require 'path'
 tarstream = require 'tar-stream'
@@ -63,12 +65,17 @@ config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableStatistics ?= on
 config.enableHash ?= on
 config.deterministic ?= off
+config.lang ?= {}
 
 if config.enableManualUpdate?
 	warn 'config.enableManualUpdate is obsolete and ignored in this version'
 
 # initialize express
 app = do express
+
+app.engine 'handlebars', expresshb()
+app.set 'view engine', 'handlebars'
+# app.enable 'view cache'
 
 packageList = { }
 updating = no
@@ -446,6 +453,12 @@ app.all '/', (req, res) ->
 		start = do process.hrtime
 		writer = new xmlwriter true
 		writer.startDocument '1.0', 'UTF-8'
+		
+		writer.startPI 'xml-stylesheet'
+		writer.writeAttribute 'type', 'text/xsl'
+		writer.writeAttribute 'href', "#{host}/style/main.xslt"
+		do writer.endPI
+		
 		writer.startElement 'section'
 		writer.writeAttribute 'name', 'packages'
 		writer.writeAttribute 'xmlns', 'http://www.woltlab.com'
@@ -578,6 +591,19 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 
 app.get '/app.coffee', (req, res) -> res.type('txt').sendFile "#{__dirname}/app.coffee", (err) -> res.sendStatus 404 if err?
 
+app.get /\/style\/.*/, (req, res) ->
+	res.type('xml').render 'main',
+		title: config.pageTitle || 'Tim’s PackageServer'
+		lang:
+			version: config.lang.version || 'Version'
+			license: config.lang.license || 'License'
+			requirements: config.lang.noRequirements || 'Requirements'
+			date: config.lang.date || 'Date'
+			by: config.lang.by || 'by'
+			noRequirements: config.lang.noRequirements || 'No requirements found'
+			missingLicenseInformation: config.lang.missingLicenseInformation || 'No license information'
+			search: config.lang.search || 'Search…'
+			
 # throw 404 on any unknown route
 app.all '*', (req, res) -> res.sendStatus 404
 

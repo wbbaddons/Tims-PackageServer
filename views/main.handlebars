@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet xmlns:ns="http://www.woltlab.com" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
+	<xsl:output method="html" version="5" encoding="UTF-8"/>
+	
+	<xsl:template match="/">
+		<html>
+			<head>
+				<meta charset="utf-8" />
+				<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				
+				<!-- <link rel="icon" href="favicon.ico" /> -->
+				
+				<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+				
+				<style>
+					body {
+						position: relative;
+					}
+					
+					#main {
+						margin-top: 50px;
+						padding: 40px 15px;
+					}
+					
+					.jsOnly {
+						display: none;
+					}
+					
+					a.authorURL {
+						text-decoration: underline;
+					}
+					
+					a.authorURL:hover {
+						text-decoration: none;
+					}
+					
+					/* http://nicolasgallagher.com/jump-links-and-viewport-positioning/demo/#method-C */
+					.anchorFix {
+						padding-top: 60px;
+						margin-top: -60px;
+						-webkit-background-clip: content-box;
+						background-clip: content-box;
+					}
+					
+					@media (max-width: 767px) {
+						#sidebarNav {
+							display: none;
+						}
+					}
+					
+					@media (min-width: 768px) {
+						#sidebarNav.affix-bottom {
+							position: absolute;
+						}
+					}
+					
+					/* Maybe temporary */
+					#sidebarNav {
+						position: relative;
+					}
+					
+					/* Maybe temporary */
+					#sidebarNav > ul.nav {
+						position: absolute;
+					}
+				</style>
+				
+				<title>{{title}}</title>
+			</head>
+			<body>
+				<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+					<div class="container-fluid">
+						<div class="navbar-header">
+							<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+								<span class="sr-only">Toggle navigation</span>
+								<span class="icon-bar"></span>
+								<span class="icon-bar"></span>
+								<span class="icon-bar"></span>
+							</button>
+							<a class="navbar-brand" href="#">{{title}}</a>
+						</div>
+						<div class="navbar-collapse collapse">
+							<ul style="display: none;" class="nav navbar-nav navbar-right">
+								<li><a href="#">Main</a></li>
+							</ul>
+							
+							<form class="navbar-form navbar-right">
+								<input type="text" class="form-control" placeholder="{{lang.search}}" />
+							</form>
+						</div>
+					</div>
+				</div>
+				
+				<div id="main" class="container-fluid">
+					<div class="row">
+						<div class="col-sm-9 col-md-10" role="main">
+							<xsl:for-each select="ns:section/ns:package">
+								<div class="anchorFix">
+									<xsl:attribute name="id"><xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+									
+									<div class="panel panel-default">
+										<xsl:if test="ns:packageinformation/ns:isapplication='1'">
+											<xsl:attribute name="class">panel panel-primary packagePanel</xsl:attribute>
+										</xsl:if>
+										
+										<div class="panel-heading">
+											<h3 class="panel-title">
+												<xsl:value-of select="ns:packageinformation/ns:packagename" /> (<xsl:value-of select="@name" />)
+												
+												<xsl:if test="ns:authorinformation">
+													<xsl:choose>
+														<xsl:when test="ns:authorinformation/ns:authorurl">
+															{{lang.by}}
+															<a class="authorURL">
+																<xsl:attribute name="href"><xsl:value-of select="ns:authorinformation/ns:authorurl" /></xsl:attribute>
+																
+																<xsl:choose>
+																	<xsl:when test="ns:authorinformation/ns:author">
+																		<xsl:value-of select="ns:authorinformation/ns:author" />
+																	</xsl:when>
+																	<xsl:otherwise>
+																		<xsl:value-of select="ns:authorinformation/ns:authorurl" />
+																	</xsl:otherwise>
+																</xsl:choose>
+															</a>
+														</xsl:when>
+														<xsl:otherwise>
+															<xsl:if test="ns:authorinformation/ns:author">
+																{{lang.by}} <xsl:value-of select="ns:authorinformation/ns:author" />
+															</xsl:if>
+														</xsl:otherwise>
+													</xsl:choose>
+												</xsl:if>
+											</h3>
+										</div>
+										<xsl:if test="ns:packageinformation/ns:packagedescription!=''">
+											<div class="panel-body">
+												<xsl:value-of select="ns:packageinformation/ns:packagedescription" />
+											</div>
+										</xsl:if>
+										<table class="table">
+											<thead>
+												<tr>
+													<th class="col-md-2">{{lang.version}}</th>
+													<th class="col-md-4">{{lang.license}}</th>
+													<th class="col-md-4">{{lang.requirements}}</th>
+													<th class="col-md-2 jsOnly">{{lang.date}}</th> <!-- This date seems to be the file creation date, not the release date -->
+												</tr>
+											</thead>
+											<tbody>
+												<xsl:for-each select="ns:versions/ns:version">
+													<tr>
+														<td>
+															<xsl:choose>
+																<xsl:when test="@accessible='true'">
+																	<a>
+																		<xsl:attribute name="href"><xsl:value-of select="ns:file" /></xsl:attribute>
+																		
+																		<xsl:value-of select="@name" />
+																	</a>
+																</xsl:when>
+																<xsl:otherwise>
+																	<xsl:value-of select="@name" />
+																</xsl:otherwise>
+															</xsl:choose>
+														</td>
+														<td>
+															<xsl:choose>
+																<xsl:when test="ns:license">
+																	<xsl:choose>
+																		<xsl:when test="ns:license/@url">
+																			<a>
+																				<xsl:attribute name="href"><xsl:value-of select="ns:license/@url" /></xsl:attribute>
+																				<xsl:value-of select="ns:license" />
+																			</a>
+																		</xsl:when>
+																		<xsl:otherwise>
+																			<xsl:value-of select="ns:license" />
+																		</xsl:otherwise>
+																	</xsl:choose>
+																</xsl:when>
+																<xsl:otherwise>{{lang.missingLicenseInformation}}</xsl:otherwise>
+															</xsl:choose>
+														</td>
+														<td>
+															<xsl:choose>
+																<xsl:when test="ns:requiredpackages/ns:requiredpackage">
+																	<ul>
+																		<xsl:for-each select="ns:requiredpackages/ns:requiredpackage">
+																			<li><xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)</li>
+																		</xsl:for-each>
+																	</ul>
+																</xsl:when>
+																<xsl:otherwise>{{lang.noRequirements}}</xsl:otherwise>
+															</xsl:choose>
+														</td>
+														<td class="jsOnly">
+															<time>
+																<xsl:value-of select="ns:timestamp" />
+															</time>
+														</td>
+													</tr>
+												</xsl:for-each>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</xsl:for-each>
+						</div>
+						
+						<div class="col-sm-3 col-md-2 sidebar">
+							<div id="sidebarNav">
+								<ul class="nav nav-pills nav-stacked">
+									<xsl:for-each select="ns:section/ns:package">
+										<li>
+											<a>
+												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+												
+												<xsl:value-of select="./ns:packageinformation/ns:packagename" />
+											</a>
+										</li>
+									</xsl:for-each>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<a id="bottom"></a>
+				
+				<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+				<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+				
+				<script>
+					$(document).ready(function () {
+						var formatDate = function(date) {
+							if (typeof Date.prototype.toLocaleDateString === 'function') {
+								return date.toLocaleDateString();
+							}
+							else {
+								return date.getFullYear() + '-' + (getMonth() + 1) + '-' + date.getDate();
+							}
+						};
+						
+						$('time').each(function(k, v) {
+							timestamp = Number.parseInt($(v).text()) * 1000;
+							
+							$(v).html(formatDate(new Date(timestamp)));
+						});
+						
+						$('.jsOnly').show();
+						
+						$("body").scrollspy({
+							target: "#sidebarNav",
+							offset: 50
+						});
+						
+						// temporary
+						$('ul.nav li').on('activate.bs.scrollspy', function () {
+							packageTop = $($(this).find('a').attr('href')).position().top;
+							siblingsHeight = (function() {
+								height = 0;
+								$(this).prevAll().each(function(k, v) {
+									height += $(v).outerHeight(true);
+								})
+								return height;
+							}).call(this);
+							
+							console.log(siblingsHeight);
+							
+							$('#sidebarNav').find('> ul.nav').css('top', packageTop - siblingsHeight + 'px');
+						});
+						
+						/*
+						var $sideBar = $('#sidebarNav');
+						$sideBar.affix({
+							offset: {
+								top: function () {
+									var offsetTop = $sideBar.offset().top;
+									var sideBarMargin = parseInt($sideBar.children(0).css('margin-top'), 10);
+									var navOuterHeight = $('#sidebarNav > ul.nav').height();
+									
+									return (this.top = offsetTop - navOuterHeight - sideBarMargin);
+								},
+								bottom: function () {
+									return (this.bottom = 100);
+								}
+							}
+						});*/
+					});
+				</script>
+			</body>
+		</html>
+	</xsl:template>
+</xsl:stylesheet>
