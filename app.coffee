@@ -586,12 +586,25 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 
 # allow download without version number
 app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, res) ->
-	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
-	versionNumber = packageList?[req.params[0]]?.packageinformation?.version[0]
-	unless versionNumber?
-		res.sendStatus 404
-		return
-	res.redirect 301, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
+	checkAuth req, res, (username) ->
+		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+		
+		versionNumber = do ->
+			# We have to check the whole package list here
+			for _package in packageList
+				# Check if current package is the wanted package
+				if _package[-1..][0][0].package is req.params[0]
+					# Check each version for accessibility, starting with the latest
+					for version in _package by -1
+						return version[0].version if isAccessible username, req.params[0], version[0].version
+						
+					return # No version for this package found
+					
+		unless versionNumber?
+			res.sendStatus 404
+			return
+			
+		res.redirect 303, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
 
 app.get '/app.coffee', (req, res) ->
 	res.type('txt').sendFile "#{__dirname}/app.coffee", (err) ->
@@ -604,19 +617,22 @@ app.get '/app.coffee', (req, res) ->
 			do res.end
 			
 app.get /\/style\/.*/, (req, res) ->
-	res.type('text/xsl').render 'main',
-		title: config.pageTitle || 'Tim’s PackageServer'
-		serverVersion: serverVersion
-		host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
-		lang:
-			version: config.lang.version || 'Version'
-			license: config.lang.license || 'License'
-			requirements: config.lang.noRequirements || 'Requirements'
-			date: config.lang.date || 'Date'
-			by: config.lang.by || 'by'
-			noRequirements: config.lang.noRequirements || 'No requirements found'
-			missingLicenseInformation: config.lang.missingLicenseInformation || 'No license information'
-			search: config.lang.search || 'Search…'
+	checkAuth req, res, (username) ->
+		res.type('text/xsl').render 'main',
+			title: config.pageTitle || 'Tim’s PackageServer'
+			serverVersion: serverVersion
+			host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+			username: username
+			lang:
+				version: config.lang.version || 'Version'
+				license: config.lang.license || 'License'
+				requirements: config.lang.noRequirements || 'Requirements'
+				date: config.lang.date || 'Date'
+				by: config.lang.by || 'by'
+				noRequirements: config.lang.noRequirements || 'No requirements found'
+				missingLicenseInformation: config.lang.missingLicenseInformation || 'No license information'
+				search: config.lang.search || 'Search…'
+				
 			
 # throw 404 on any unknown route
 app.all '*', (req, res) -> res.sendStatus 404
