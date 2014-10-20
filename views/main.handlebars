@@ -294,10 +294,10 @@
 						<xsl:for-each select="ns:section/ns:package">
 							{
 								id: '<xsl:value-of select="@name" />',
-								name: '<xsl:value-of select="ns:packageinformation/ns:packagename" />',
-								description: '<xsl:value-of select="ns:packageinformation/ns:packagedescription" />',
-								author: '<xsl:value-of select="ns:authorinformation/ns:author" />',
-								authorURL: '<xsl:value-of select="ns:authorinformation/ns:authorurl" />'
+								name: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:packageinformation/ns:packagename" /></xsl:call-template>',
+								description: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:packageinformation/ns:packagedescription" /></xsl:call-template>',
+								author: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:authorinformation/ns:author" /></xsl:call-template>',
+								authorURL: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:authorinformation/ns:authorurl" /></xsl:call-template>'
 							},
 						</xsl:for-each>
 					];
@@ -435,5 +435,31 @@
 				</script>
 			</body>
 		</html>
+	</xsl:template>
+	
+	<xsl:template name="escapeQuotes">
+		<!-- http://mac-blog.org.ua/xslt-escape-single-quotes/ -->
+		
+		<xsl:param name="txt"/>
+		<xsl:variable name="backSlashQuote">&#92;&#39;</xsl:variable>
+		<xsl:variable name="singleQuote">&#39;</xsl:variable>
+		
+		<xsl:choose>
+			<xsl:when test="string-length($txt) = 0">
+				<!-- early return -->
+			</xsl:when>
+			
+			<xsl:when test="contains($txt, $singleQuote)">
+				<xsl:value-of disable-output-escaping="yes" select="concat(substring-before($txt, $singleQuote), $backSlashQuote)"/>
+				
+				<xsl:call-template name="escapeQuotes">
+					<xsl:with-param name="txt" select="substring-after($txt, $singleQuote)"/>
+				</xsl:call-template>
+			</xsl:when>
+			
+			<xsl:otherwise>
+				<xsl:value-of disable-output-escaping="yes" select="$txt"/>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 </xsl:stylesheet>
