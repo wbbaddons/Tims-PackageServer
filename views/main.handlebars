@@ -54,6 +54,10 @@
 						text-decoration: none;
 					}
 					
+					#noResults {
+						display: none;
+					}
+					
 					/* http://nicolasgallagher.com/jump-links-and-viewport-positioning/demo/#method-C */
 					.anchorFix {
 						padding-top: 60px;
@@ -82,8 +86,8 @@
 								<li><a href="https://github.com/wbbaddons/Tims-PackageServer">Tim’s PackageServer on GitHub</a></li>
 							</ul>
 							
-							<div class="navbar-form navbar-right">
-								<input id="search" type="text" class="form-control" placeholder="{{lang.search}}" />
+							<div class="navbar-form navbar-right jsOnly">
+								<input id="search" type="text" class="form-control" maxlength="32" placeholder="{{lang.search}}" />
 							</div>
 						</div>
 					</div>
@@ -97,7 +101,9 @@
 									<xsl:for-each select="ns:section/ns:package">
 										<xsl:sort select="ns:packageinformation/ns:packagename" />
 										
-										<li>
+										<li class="jsPackage">
+											<xsl:attribute name="id">nav-<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+											
 											<a>
 												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
 												
@@ -113,7 +119,7 @@
 							<xsl:for-each select="ns:section/ns:package">
 								<xsl:sort select="ns:packageinformation/ns:packagename" />
 								
-								<div class="anchorFix">
+								<div class="jsPackage anchorFix">
 									<xsl:attribute name="id"><xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
 									
 									<div class="panel panel-default packagePanel">
@@ -258,6 +264,13 @@
 								</div>
 							</xsl:for-each>
 							
+							<div id="noResults" class="panel panel-warning">
+								<div class="panel-heading">We’ve come up empty ;(</div>
+								<div class="panel-body">
+									No packages found that match your search.
+								</div>
+							</div>
+							
 							<div id="timsPackageServerLicenseInfo" class="anchorFix">
 								<div class="panel panel-default">
 									<div class="panel-body">
@@ -274,9 +287,123 @@
 				<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 				<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment-with-locales.min.js"></script>
 				<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/fuse.js/1.2.0/fuse.min.js"></script>
+				
+				<script>
+					window.packageSearch = [
+						<xsl:for-each select="ns:section/ns:package">
+							{
+								id: '<xsl:value-of select="@name" />',
+								name: '<xsl:value-of select="ns:packageinformation/ns:packagename" />',
+								description: '<xsl:value-of select="ns:packageinformation/ns:packagedescription" />',
+								author: '<xsl:value-of select="ns:authorinformation/ns:author" />',
+								authorURL: '<xsl:value-of select="ns:authorinformation/ns:authorurl" />'
+							},
+						</xsl:for-each>
+					];
+				</script>
 				
 				<script>
 					$(document).ready(function () {
+						var fuse = new Fuse(packageSearch, {
+							keys: ['name', 'description'],
+							includeScore: true,
+							threshold: 0.5,
+							distance: 100
+						});
+						
+						window.packageSearch = null; // Free some memory, hopefully
+						
+						requestAnimationFrame = (function() {
+							if ("requestAnimationFrame" in window) {
+								return window.requestAnimationFrame;
+							}
+							else {
+								return function(call) {
+									if (typeof call === 'function') {
+										call();
+									}
+								}
+							}
+						})();
+						
+						(function(window) {
+							var defaultOrder = (function() {
+								var list = [];
+								
+								$('#main .jsPackage').each(function() {
+									list.push($(this).attr('id'));
+								});
+								
+								return list;
+							})();
+							
+							var sortDOMElements = function(container, selector, order) {
+								order = order || defaultOrder;
+								
+								var elements = [];
+								
+								$.each(order, function(index, value) {
+									elements.push($(selector + value));
+								});
+								
+								container.prepend(elements);
+							};
+							
+							_doSearch = function(value) {
+								value = value.substr(0, 32);
+								
+								if (!value.length) {
+									sortDOMElements($('#main'), '#');
+									sortDOMElements($('#sidebarNav > ul'), '#nav-');
+									
+									$('.jsPackage').show();
+									$('#noResults').hide();
+									
+									$('body').scrollspy('refresh');
+									$('body').trigger('scroll');
+									
+									return;
+								}
+								
+								var results = fuse.search(value);
+								
+								results = results.map(function(v, k, a) {
+									return v.item.id.replace(/\./g, '-');
+								});
+								
+								if (results.length) {
+									$('.jsPackage').hide();
+									
+									sortDOMElements($('#main'), '#', results);
+									sortDOMElements($('#sidebarNav > ul'), '#nav-', results);
+									
+									$('#' + results.join(', #')).show();
+									$('#nav-' + results.join(', #nav-')).show();
+									
+									$('#noResults').hide();
+								}
+								else {
+									$('.jsPackage').hide();
+									$('#noResults').show();
+								}
+								
+								$('body').scrollspy('refresh');
+								$('body').trigger('scroll');
+							};
+							
+							window.doSearch = function(value) {
+								requestAnimationFrame(function() {
+									_doSearch(value, false);
+									$(window).scrollTop(0);
+								});
+							};
+						})(window);
+						
+						$('#search').on('input change', function() {
+							doSearch($(this).val());
+						});
+						
 						moment.locale(window.navigator.userLanguage || window.navigator.language);
 						
 						$('time').each(function(k, v) {
