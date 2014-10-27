@@ -554,7 +554,7 @@ app.all '/', (req, res) ->
 		writer.writeComment """
 			This list was presented by Tim’s PackageServer #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>
 			Tim’s PackageServer is licensed under the terms of the GNU Affero General Public License v3 <https://gnu.org/licenses/agpl-3.0.html>.
-			You can obtain a copy of the source code of this installation at #{host}/app.coffee.
+			You can obtain a copy of the source code of this installation at #{host}/source/.
 			"""
 		do writer.endElement
 		do writer.endDocument
@@ -606,15 +606,47 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 			
 		res.redirect 303, "#{host}/#{req.params[0]}/#{versionNumber.toLowerCase().replace /[ ]/g, '_'}"
 
-app.get '/app.coffee', (req, res) ->
-	res.type('txt').sendFile "#{__dirname}/app.coffee", (err) ->
-		if err
-			if err.code is 'ECONNABORT' and res.statusCode is 304
-				debug 'Request aborted, cached'
-			else
-				res.sendStatus 404 unless res.headersSent
-				
-			do res.end
+do ->
+	sourceFiles = [
+		'app.coffee'
+		'views/main.handlebars'
+	]
+	
+	app.get '/source', (req, res) ->
+		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+		res.format
+			'text/html': ->
+				res.type('html').send """
+					<!doctype html>
+					<html>
+						<head>
+							<title>#{config.pageTitle || 'Tim’s PackageServer'}</title>
+						</head>
+						<body>
+							<p>The following source files are available for download:</p>
+							<ul>
+							#{sourceFiles.map((item) -> "<li><a href=\"#{host}/source/#{item}\">#{item}</a></li>").join "\n"}
+							</ul>
+						</body>
+					</html>
+					"""
+			'text/plain': ->
+				res.type('txt').send """
+					The following source files are available for download:
+					
+					#{sourceFiles.map((item) -> "#{host}/source/#{item}").join "\n"}
+					"""
+			'default': -> res.sendStatus 406
+		
+	app.get new RegExp('/source/('+sourceFiles.join('|')+')'), (req, res) ->
+		res.type('txt').sendFile "#{__dirname}/#{req.params[0]}", (err) ->
+			if err
+				if err.code is 'ECONNABORT' and res.statusCode is 304
+					debug 'Request aborted, cached'
+				else
+					res.sendStatus 404 unless res.headersSent
+					
+				do res.end
 			
 app.get /\/style\/.*/, (req, res) ->
 	checkAuth req, res, (username) ->
