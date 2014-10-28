@@ -383,7 +383,6 @@ readPackages = (callback) ->
 												callback "Version missing in #{versionFile}"
 												return
 											if (packageData.version.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
-												debug "Boom"
 												callback "version number does not match filename in #{versionFile} (#{packageData.version} isnt #{path.basename versionFile, '.tar'})"
 												return
 													
