@@ -182,9 +182,17 @@ askForCredentials = (req, res) ->
 	res.status(401).send req.__ 'Please provide proper username and password to access this package'
 	
 app.all '/', (req, res) ->
+	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+	
+	if req.query?.doAuth?
+		checkAuth req, res, (username) ->
+			if username
+				res.redirect 303, host
+			else
+				askForCredentials req, res
+		return
+
 	callback = (username) ->
-		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
-		
 		# redirect when ?packageName=com.example.wcf.test[&packageVersion=1.0.0_Alpha_15] was requested
 		if req.query?.packageName?
 			if req.query.packageVersion?
