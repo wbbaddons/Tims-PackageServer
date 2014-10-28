@@ -41,8 +41,11 @@ module.exports = (filename, callback) ->
 		data = oboe stream
 		data.fail once (err) ->
 			callback "Error parsing auth.json: #{err.thrown}"
-		data.node 'packages.*', (item) ->
-			debug "Converting #{item} into comparator"
+		data.node 'packages.*', (item, path) ->
+			debug "Converting #{item}@#{path} into comparator"
+			createComparator item
+		data.node 'groups.*.*', (item, path) ->
+			debug "Converting #{item}@#{path} into comparator"
 			createComparator item
 		data.done (json) ->
 			debug "Finished parsing auth"
