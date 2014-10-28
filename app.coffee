@@ -376,6 +376,8 @@ do ->
 		'streamHasher.coffee'
 		'versionComparator.coffee'
 		'views/main.handlebars'
+		'views/source/html.handlebars'
+		'views/source/txt.handlebars'
 	]
 	
 	app.get '/source', (req, res) ->
