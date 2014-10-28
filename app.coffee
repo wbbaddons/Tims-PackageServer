@@ -24,16 +24,12 @@ serverVersion = (require './package.json').version
 async = require 'async'
 basicAuth = require 'basic-auth'
 bcrypt = require 'bcrypt'
-crypto = require 'crypto'
 escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 expresshb  = require 'express-handlebars'
 fs = require 'fs'
 i18n = require 'i18n'
-path = require 'path'
-tarstream = require 'tar-stream'
 watchr = require 'watchr'
-xmlstream = require 'xml-stream'
 xmlwriter = require 'xml-writer'
 
 debug = (require 'debug')('PackageServer:debug')
@@ -113,50 +109,6 @@ logDownload = (packageName, version) ->
 		
 	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version]
 
-createComparator = (comparison) ->
-	# simply return true if versions are *
-	(return -> true) if comparison is '*'
-	
-	# normalize comparison string
-	comparison = comparison.replace /([0-9]+\.[0-9]+\.[0-9]+(?:([ _])(?:a|alpha|b|beta|d|dev|rc|pl)([ _])[0-9]+)?)/ig, (version) ->
-		version = version.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
-		version[0] ?= 0
-		version[1] ?= 0
-		version[2] ?= 0
-		version[3] ?= 0
-		version[4] ?= 0
-		version = version.join '.'
-		
-	comparison = comparison.replace /[ ]/g, ''
-	
-	comparatorHelper = ($v, v2) ->
-		v2 = v2.split /\./
-		$v = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./)
-		$v[0] ?= 0
-		$v[1] ?= 0
-		$v[2] ?= 0
-		$v[3] ?= 0
-		$v[4] ?= 0
-		
-		result = 0
-		for i in [0...5]
-			continue if (parseInt $v[i]) is parseInt(v2[i])
-			if (parseInt $v[i]) < parseInt(v2[i])
-				result = -1
-				break
-			if (parseInt $v[i]) > parseInt(v2[i])
-				result = 1
-				break
-		result
-		
-	comparison = comparison.replace /\$v(==|<=|>=|<|>)([0-9]+\.[0-9]+\.[0-9]+.-?[0-9]+.[0-9]+)/g, (comparison, operator, v2) -> """(comparatorHelper($v, "#{v2}") #{operator} 0)"""
-	comparison = comparison.replace /\$v~(\/(?:[^/\\]|\\.)+\/i?)/g, (comparison, regex) -> """(#{regex}.test($v))"""
-	comparison = comparison.replace /\$v!~(\/(?:[^/\\]|\\.)+\/i?)/g, (comparison, regex) -> """(!#{regex}.test($v))"""
-	
-	comparator = new Function '$v', 'comparatorHelper', 'return ' + comparison
-	
-	($v) ->	comparator $v, comparatorHelper
-
 isAccessible = (username, testPackage, testVersion) ->
 	return true if auth is null
 	
@@ -202,242 +154,28 @@ checkAuth = (req, res, callback) ->
 	else
 		callback ''
 
-hashStream = (stream, callback) ->
-	hasher = new crypto.Hash 'sha256'
-	stream.pipe hasher
-	stream.on 'end', ->
-		hash = do hasher.read
-		debug "Hashed stream: #{hash.toString 'hex'}"
-		callback null, hash
-
 # Updates package list.
 readPackages = (callback) ->
 	updateStart = do process.hrtime
 	
-	fs.exists "#{config.packageFolder}auth.json", (authExists) ->
-		# no auth.json was found
-		unless authExists
-			warn "auth.json does not exist. Assuming all packages are free"
-			auth = null
-			return
-			
-		fs.readFile "#{config.packageFolder}auth.json", (err, contents) ->
-			if err?
-				error "error reading auth.json. Denying access to all packages: #{err}"
-				auth = { }
-				return
-			try
-				auth = JSON.parse contents
-				
-				# convert into functions
-				if auth.packages?
-					auth.packages[_package] = createComparator versions for _package, versions of auth.packages
-				if auth.groups?
-					(auth.groups[group][_package] = createComparator versions for _package, versions of packages) for group, packages of auth.groups
-				if auth.users?
-					(auth.users[username].packages[_package] = createComparator versions for _package, versions of userdata.packages) for username, userdata of auth.users when userdata.packages?
-				
-				debug "Updated auth"
-			catch err
-				error "error parsing auth.json. Denying access to all packages: #{err}"
-				auth = { }
+	debug "Starting update"
 	
-	fs.readdir config.packageFolder, (err, files) ->
-		debug "Starting update"
+	updateAuth = (callback) -> (require './authReader') "#{config.packageFolder}auth.json", callback
+	updatePackageList = (callback) -> (require './packageListReader') config.packageFolder, config.enableHash, callback
+	
+	async.parallel [ updateAuth, updatePackageList ], (err, results) ->
+		updateTime = process.hrtime updateStart
+		lastUpdate = new Date
+		
 		if err?
-			error err
-			return
-		
-		# ignore dotfiles, auth.json and invalid package identifiers
-		files = files.filter (file) ->
-			if file[0] is '.'
-				debug "Skipping dotfile #{config.packageFolder}#{file}"
-				false
-			else if file in [ 'auth.json', 'auth.json.example' ]
-				false
-			else unless /^([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)$/i.test file
-				debug "Skipping #{config.packageFolder}#{file}, as it does not match a valid package identifier"
-				false
-			else
-				true
-		
-		# loop over each file in the package folder
-		async.map files, (file, fileCallback) ->
-			packageFolder = config.packageFolder + file
-			debug "Parsing #{packageFolder}"
-			fs.stat packageFolder, (err, packageFolderStat) ->
-				if err?
-					fileCallback err
-					return
-					
-				unless do packageFolderStat.isDirectory
-					fileCallback "#{packageFolder} is not a folder"
-					return
-				
-				# read every file in the folder to find the available versions
-				fs.readdir packageFolder, (err, versions) ->
-					if err?
-						fileCallback err
-						return
-					
-					versions = versions.filter (versionFile) ->
-						if versionFile is 'latest'
-							warn "The latest symlink is obsolete now. The information are taken from the newest package automatically!"
-							false
-						else if (versionFile.substring 0, 1) is '.'
-							debug "Skipping dotfile #{packageFolder}/#{versionFile}"
-							false
-						else if /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.txt$/i.test versionFile
-							false
-						else unless /^([0-9]+\.[0-9]+\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?)\.tar$/i.test versionFile
-							debug "Skipping #{packageFolder}/#{versionFile}, as it does not match a valid version number"
-							false
-						else
-							true
-					
-					async.map versions, (versionFile, versionsCallback) ->
-						versionFile = packageFolder + '/' + versionFile
-						debug "Parsing #{versionFile}"
-						fs.stat versionFile, (err, versionFileStat) ->
-							debug "Got #{versionFile} stat"
-							if err?
-								versionsCallback err
-								return
-							
-							unless do versionFileStat.isFile
-								versionsCallback "#{versionFile} is not a file"
-								return
-							
-							archiveStream = fs.createReadStream versionFile
-							tasks = [ ]
-							
-							if config.enableHash
-								tasks.push (callback) -> hashStream archiveStream, callback
-							
-							tasks.unshift (callback) ->
-								extract = tarstream.extract()
-								
-								packageXmlFound = no
-								
-								# no more data, but no package.xml was found
-								extract.on 'finish', -> callback "package.xml is missing in #{versionFile}" unless packageXmlFound
-								
-								extract.on 'entry', (entryHeader, entryStream, entryCallback) ->
-									debug "Found #{entryHeader.name} in #{versionFile}"
-									if entryHeader.name isnt 'package.xml' or entryHeader.type isnt 'file'
-										entryStream.on 'end', -> do entryCallback
-										# we have to consume the entire stream, before parsing continues
-										do entryStream.resume
-										return
-									packageXmlFound = yes
-									
-									# set up xml parser
-									packageXmlXmlStream = new xmlstream entryStream
-									
-									packageData = 
-										time: versionFileStat.mtime
-									
-									listeners = 
-										'startElement: package': (data) -> packageData.package = data.$.name
-										'text: package > packageinformation > version':  (data) -> packageData.version = data.$text
-										'text: package > packageinformation > license': (data) -> packageData.license = data.$text
-										'text: package > packageinformation > isapplication': (data) -> packageData.isapplication = data.$text
-										'text: package > packageinformation > packagename': (data) ->
-											if not packageData.packagename? or not data.$?.language?
-												packageData.packagename = data.$text
-										'text: package > packageinformation > packagedescription': (data) ->
-											if not packageData.packagedescription? or not data.$?.language?
-												packageData.packagedescription = data.$text
-										'text: package > authorinformation > author': (data) -> packageData.author = data.$text
-										'text: package > authorinformation > authorurl': (data) -> packageData.authorurl = data.$text
-										'text: package > requiredpackages > requiredpackage': (data) ->
-											packageData.requiredpackages ?= []
-											packageData.requiredpackages.push
-												package: data.$text
-												minversion: data.$?.minversion
-										'text: package > excludedpackages > excludedpackage': (data) ->
-											packageData.excludedpackages ?= []
-											packageData.excludedpackages.push
-												package: data.$text
-												version: data.$?.version
-										'text: package > optionalpackages > optionalpackage': (data) ->
-											packageData.optionalpackages ?= []
-											packageData.optionalpackages.push data.$text
-										'startElement: package > instructions': (data) ->
-											return if data.$?.type isnt 'update'
-											return unless data.$?.fromversion?
-											
-											packageData.fromversions ?= []
-											packageData.fromversions.push data.$.fromversion
-										'end': ->
-											debug "Finished parsing package.xml in #{versionFile}"
-											
-											do entryCallback
-											unless packageData.package?
-												callback "Package name missing in #{versionFile}"
-												return
-											if packageData.package isnt path.basename packageFolder
-												callback "package name does not match folder in #{versionFile} (#{packageData.package} isnt #{path.basename packageFolder})"
-												return
-											unless packageData.version?
-												callback "Version missing in #{versionFile}"
-												return
-											if (packageData.version.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
-												callback "version number does not match filename in #{versionFile} (#{packageData.version} isnt #{path.basename versionFile, '.tar'})"
-												return
-													
-											callback null, packageData
-									
-									for event, listener of listeners
-										packageXmlXmlStream.on event, listener
-										
-								archiveStream.pipe extract
-									
-							async.parallel tasks, (err, data) ->
-								versionsCallback err, data
-					, (err, data) ->
-						# data = [ [ packageData, hash? ], … ]
-						if err?
-							fileCallback err
-						else
-							data = data.filter (item) -> item?
-							data.sort (a, b) ->
-								a = a[0].version
-								b = b[0].version
-								
-								if a is b
-									0
-								else if (createComparator "$v > #{b}")(a)
-									1
-								else
-									-1
-							
-							if data.length is 0
-								warn "Could not find valid versions for #{packageFolder}"
-								# this will be filtered out afterwards
-								fileCallback null, undefined
-							else
-								fileCallback err, data
-		, (err, data) ->
-			# update scan time and statistics
-			lastUpdate = new Date
-			updateTime = process.hrtime updateStart
-			
-			if err?
-				error "Error reading package list: #{err}"
-				packageList = null
-				callback? false
-				return
-			
-			data = data.filter (item) -> item?
-			
-			# overwrite packageList once everything succeeded
-			packageList = data
+			debug "Update failed:", err
+			auth = packageList = undefined
+			callback err
+		else
 			debug "Finished update"
-			
-			# and finally call the callback
-			callback? true
-			
+			[ auth, packageList ] = results
+			callback null
+		
 askForCredentials = (req, res) ->
 	res.type 'txt'
 	res.setHeader 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
@@ -625,6 +363,10 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/?(?:\?.*)?$/i, (req, r
 do ->
 	sourceFiles = [
 		'app.coffee'
+		'authReader.coffee'
+		'packageListReader.coffee'
+		'streamHasher.coffee'
+		'versionComparator.coffee'
 		'views/main.handlebars'
 	]
 	
