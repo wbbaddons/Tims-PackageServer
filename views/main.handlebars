@@ -83,11 +83,11 @@
 						</div>
 						<div class="navbar-collapse collapse">
 							<ul class="nav navbar-nav navbar-right">
-								<li><a href="https://github.com/wbbaddons/Tims-PackageServer">Tim’s PackageServer on GitHub</a></li>
+								<li><a href="https://github.com/wbbaddons/Tims-PackageServer">{{__ "Tim’s PackageServer on GitHub"}}</a></li>
 							</ul>
 							
 							<div class="navbar-form navbar-right jsOnly">
-								<input id="search" type="text" class="form-control" maxlength="32" placeholder="{{lang.search}}" />
+								<input id="search" type="text" class="form-control" maxlength="32" placeholder="{{__ "Search…"}}" />
 							</div>
 						</div>
 					</div>
@@ -134,7 +134,7 @@
 												<xsl:if test="ns:authorinformation">
 													<xsl:choose>
 														<xsl:when test="ns:authorinformation/ns:authorurl">
-															{{lang.by}}
+															{{__ "by"}}
 															<a class="authorURL">
 																<xsl:attribute name="href"><xsl:value-of select="ns:authorinformation/ns:authorurl" /></xsl:attribute>
 																
@@ -150,7 +150,7 @@
 														</xsl:when>
 														<xsl:otherwise>
 															<xsl:if test="ns:authorinformation/ns:author">
-																{{lang.by}} <xsl:value-of select="ns:authorinformation/ns:author" />
+																{{__ "by"}} <xsl:value-of select="ns:authorinformation/ns:author" />
 															</xsl:if>
 														</xsl:otherwise>
 													</xsl:choose>
@@ -166,10 +166,10 @@
 											<table class="table table-striped">
 												<thead>
 													<tr>
-														<th class="col-md-2">{{lang.version}}</th>
-														<th class="col-md-4">{{lang.license}}</th>
-														<th class="col-md-4">{{lang.requirements}}</th>
-														<th class="col-md-2 jsOnly">{{lang.date}}</th>
+														<th class="col-md-2">{{__ "Version"}}</th>
+														<th class="col-md-4">{{__ "License"}}</th>
+														<th class="col-md-4">{{__ "Required Packages"}}</th>
+														<th class="col-md-2 jsOnly">{{__ "Last Modified"}}</th>
 													</tr>
 												</thead>
 												<tbody>
@@ -218,7 +218,7 @@
 																			</xsl:otherwise>
 																		</xsl:choose>
 																	</xsl:when>
-																	<xsl:otherwise>{{lang.missingLicenseInformation}}</xsl:otherwise>
+																	<xsl:otherwise>{{__ "This package does not contain licensing information."}}</xsl:otherwise>
 																</xsl:choose>
 															</td>
 															<td>
@@ -247,7 +247,7 @@
 																			</xsl:for-each>
 																		</ul>
 																	</xsl:when>
-																	<xsl:otherwise>{{lang.noRequirements}}</xsl:otherwise>
+																	<xsl:otherwise>{{__ "This package does not have any requirements."}}</xsl:otherwise>
 																</xsl:choose>
 															</td>
 															<td class="jsOnly">
@@ -265,18 +265,18 @@
 							</xsl:for-each>
 							
 							<div id="noResults" class="panel panel-warning">
-								<div class="panel-heading">We’ve come up empty ;(</div>
+								<div class="panel-heading">{{__ 'No results found :-('}}</div>
 								<div class="panel-body">
-									No packages found that match your search.
+									{{__ "No packages found that match your search."}}
 								</div>
 							</div>
 							
 							<div id="timsPackageServerLicenseInfo" class="anchorFix">
 								<div class="panel panel-default">
 									<div class="panel-body">
-										<p>This list was presented by <a href="https://github.com/wbbaddons/Tims-PackageServer">Tim’s PackageServer</a> in version {{serverVersion}}.</p>
-										<p>Tim’s PackageServer is licensed under the terms of the <a href="https://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License v3</a>.</p>
-										<p>Click <a href="{{host}}/source/">here</a> to obtain a copy of the source code of this installation.</p>
+										<p>{{{__ 'This list was presented by <a href="%2$s">%1$s</a> in version %3$s' 'Tim’s PackageServer' 'https://github.com/wbbaddons/Tims-PackageServer' serverVersion}}}.</p>
+										<p>{{{__ '%1$s is licensed under the terms of the <a href="%3$s">%2$s</a>.' 'Tim’s PackageServer' 'GNU Affero General Public License v3' 'https://www.gnu.org/licenses/agpl-3.0.html'}}}</p>
+										<p>{{{__ 'Click <a href="%s/source/">here</a> to obtain a copy of the source code of this installation.' host}}}</p>
 									</div>
 								</div>
 							</div>

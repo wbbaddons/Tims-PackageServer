@@ -1,0 +1,17 @@
+{
+	"Tim’s PackageServer on GitHub": "Tim’s PackageServer on GitHub",
+	"Search…": "Suchen…",
+	"Version": "Version",
+	"License": "Lizenz",
+	"Required Packages": "Benötigte Pakete",
+	"Last Modified": "Zuletzt geändert",
+	"This package does not contain licensing information.": "Dieses Paket enthält keine Lizenz-Informationen.",
+	"This package does not have any requirements.": "Dieses Paket besitzt keine Abhängigkeiten.",
+	"No packages found that match your search.": "Es wurden keine, Ihrer Suche entsprechenden, Pakete gefunden.",
+	"Click <a href=\"%s/source/\">here</a> to obtain a copy of the source code of this installation.": "Sie können eine Kopie des Quellcodes <a href=\"%s/source/\">hier</a> abrufen.",
+	"by": "von",
+	"No results found :-(": "Nichts gefunden :-(",
+	"The following source files are available for download:": "Die folgenden Quelldateien stehen zur Verfügung:",
+	"This list was presented by <a href=\"%2$s\">%1$s</a> in version %3$s": "Diese Liste wurde Ihnen von <a href=\"%2$s\">%1$s</a> %3$s präsentiert.",
+	"%1$s is licensed under the terms of the <a href=\"%3$s\">%2$s</a>.": "%1$s ist unter den Bedingungen der <a href=\"%3$s\">%2$s</a> lizensiert."
+}

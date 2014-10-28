@@ -28,8 +28,8 @@ crypto = require 'crypto'
 escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 expresshb  = require 'express-handlebars'
-
 fs = require 'fs'
+i18n = require 'i18n'
 path = require 'path'
 tarstream = require 'tar-stream'
 watchr = require 'watchr'
@@ -65,7 +65,12 @@ config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableStatistics ?= on
 config.enableHash ?= on
 config.deterministic ?= off
-config.lang ?= {}
+config.i18n ?=
+	locales: [ 'en', 'de' ]
+	directory: "#{__dirname}/locales"
+	defaultLocale: 'en'
+	
+i18n.configure config.i18n
 
 if config.enableManualUpdate?
 	warn 'config.enableManualUpdate is obsolete and ignored in this version'
@@ -73,7 +78,8 @@ if config.enableManualUpdate?
 # initialize express
 app = do express
 
-app.engine 'handlebars', expresshb()
+app.use i18n.init
+app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
 # app.enable 'view cache'
 
@@ -428,8 +434,8 @@ readPackages = (callback) ->
 			
 askForCredentials = (req, res) ->
 	res.type 'txt'
-	res.setHeader 'WWW-Authenticate', 'Basic realm="Please provide proper username and password to access this package"'
-	res.status(401).send 'Please provide proper username and password to access this package'
+	res.setHeader 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
+	res.status(401).send req.__ 'Please provide proper username and password to access this package'
 	
 app.all '/', (req, res) ->
 	callback = (username) ->
@@ -554,7 +560,7 @@ app.all '/', (req, res) ->
 		writer.writeComment """
 			This list was presented by Tim’s PackageServer #{serverVersion} <https://github.com/wbbaddons/Tims-PackageServer>
 			Tim’s PackageServer is licensed under the terms of the GNU Affero General Public License v3 <https://gnu.org/licenses/agpl-3.0.html>.
-			You can obtain a copy of the source code of this installation at #{host}/source/.
+			You can obtain a copy of the source code of this installation at <#{host}/source/>.
 			"""
 		do writer.endElement
 		do writer.endDocument
@@ -615,28 +621,17 @@ do ->
 	app.get '/source', (req, res) ->
 		host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 		res.format
-			'text/html': ->
-				res.type('html').send """
-					<!doctype html>
-					<html>
-						<head>
-							<title>#{config.pageTitle || 'Tim’s PackageServer'}</title>
-						</head>
-						<body>
-							<p>The following source files are available for download:</p>
-							<ul>
-							#{sourceFiles.map((item) -> "<li><a href=\"#{host}/source/#{item}\">#{item}</a></li>").join "\n"}
-							</ul>
-						</body>
-					</html>
-					"""
-			'text/plain': ->
-				res.type('txt').send """
-					The following source files are available for download:
-					
-					#{sourceFiles.map((item) -> "#{host}/source/#{item}").join "\n"}
-					"""
-			'default': -> res.sendStatus 406
+			html: ->
+				res.type('html').render 'source/html',
+					title: config.pageTitle || 'Tim’s PackageServer'
+					host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+					files: sourceFiles
+			txt: ->
+				res.type('txt').render 'source/txt',
+					title: config.pageTitle || 'Tim’s PackageServer'
+					host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
+					files: sourceFiles
+			default: -> res.sendStatus 406
 		
 	app.get new RegExp('/source/('+sourceFiles.join('|')+')'), (req, res) ->
 		res.type('txt').sendFile "#{__dirname}/#{req.params[0]}", (err) ->
@@ -655,15 +650,6 @@ app.get /\/style\/.*/, (req, res) ->
 			serverVersion: serverVersion
 			host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 			username: username
-			lang:
-				version: config.lang.version || 'Version'
-				license: config.lang.license || 'License'
-				requirements: config.lang.noRequirements || 'Requirements'
-				date: config.lang.date || 'Date'
-				by: config.lang.by || 'by'
-				noRequirements: config.lang.noRequirements || 'No requirements found'
-				missingLicenseInformation: config.lang.missingLicenseInformation || 'No license information'
-				search: config.lang.search || 'Search…'
 				
 			
 # throw 404 on any unknown route
