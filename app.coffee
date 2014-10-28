@@ -397,23 +397,28 @@ readPackages = (callback) ->
 							async.parallel tasks, (err, data) ->
 								versionsCallback err, data
 					, (err, data) ->
-						# data = [ packageData, hash? ]
-						
-						data = data.filter (item) -> item?
-						data.sort (a, b) ->
-							a = a[0].version
-							b = b[0].version
-							
-							if a is b
-								0
-							else if (createComparator "$v > #{b}")(a)
-								1
-							else
-								-1
-						if data.length is 0
-							fileCallback "Could not find valid versions for #{packageFolder}"
+						# data = [ [ packageData, hash? ], … ]
+						if err?
+							fileCallback err
 						else
-							fileCallback err, data
+							data = data.filter (item) -> item?
+							data.sort (a, b) ->
+								a = a[0].version
+								b = b[0].version
+								
+								if a is b
+									0
+								else if (createComparator "$v > #{b}")(a)
+									1
+								else
+									-1
+							
+							if data.length is 0
+								warn "Could not find valid versions for #{packageFolder}"
+								# this will be filtered out afterwards
+								fileCallback null, undefined
+							else
+								fileCallback err, data
 		, (err, data) ->
 			if err?
 				error "Error reading package list: #{err}"
