@@ -82,6 +82,14 @@
 							<a class="navbar-brand" href="#">{{title}}</a>
 						</div>
 						<div class="navbar-collapse collapse">
+							{{#if username}}
+								<p class="navbar-text">
+									{{__ "Signed in as %s" username}}
+								</p>
+							{{else}}
+								<a href="{{host}}?doAuth"><button type="button" class="btn btn-default navbar-btn">Sign in</button></a>
+							{{/if}}
+							
 							<ul class="nav navbar-nav navbar-right">
 								<li><a href="https://github.com/wbbaddons/Tims-PackageServer">{{__ "Tim’s PackageServer on GitHub"}}</a></li>
 							</ul>
