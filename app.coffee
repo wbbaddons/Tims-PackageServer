@@ -83,7 +83,7 @@ app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
 # app.enable 'view cache'
 
-packageList = { }
+packageList = null
 updating = no
 updateTimeout = null
 lastUpdate = new Date
@@ -419,8 +419,13 @@ readPackages = (callback) ->
 							else
 								fileCallback err, data
 		, (err, data) ->
+			# update scan time and statistics
+			lastUpdate = new Date
+			updateTime = process.hrtime updateStart
+			
 			if err?
 				error "Error reading package list: #{err}"
+				packageList = null
 				callback? false
 				return
 			
@@ -428,9 +433,6 @@ readPackages = (callback) ->
 			
 			# overwrite packageList once everything succeeded
 			packageList = data
-			# update scan time and statistics
-			lastUpdate = new Date
-			updateTime = process.hrtime updateStart
 			debug "Finished update"
 			
 			# and finally call the callback
@@ -451,6 +453,10 @@ app.all '/', (req, res) ->
 				res.redirect 301, "#{host}/#{req.query.packageName}/#{req.query.packageVersion.replace /[ ]/g, '_'}"
 			else
 				res.redirect 301, "#{host}/#{req.query.packageName}"
+			return
+		
+		unless packageList?
+			res.sendStatus 503
 			return
 		
 		unless req.accepts 'xml'
