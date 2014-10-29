@@ -32,6 +32,11 @@ How to use?
 
 5. Open the package server in the browser, your package should appear.
 
+auth.json
+---------
+
+The grammar for valid version checks can be found in versionComparator.jison.
+
 config.js
 ---------
 

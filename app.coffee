@@ -21,6 +21,9 @@ panic() if process.getuid?() is 0 or process.getgid?() is 0
 serverVersion = (require './package.json').version
 (require 'child_process').exec 'git describe --always', (err, stdout, stderr) -> serverVersion = stdout.trim() unless err?
 
+authReader = require './authReader'
+packageListReader = require './packageListReader'
+
 async = require 'async'
 basicAuth = require 'basic-auth'
 bcrypt = require 'bcrypt'
@@ -160,8 +163,8 @@ readPackages = (callback) ->
 	
 	debug "Starting update"
 	
-	updateAuth = (callback) -> (require './authReader') "#{config.packageFolder}auth.json", callback
-	updatePackageList = (callback) -> (require './packageListReader') config.packageFolder, config.enableHash, callback
+	updateAuth = (callback) -> authReader "#{config.packageFolder}auth.json", callback
+	updatePackageList = (callback) -> packageListReader config.packageFolder, config.enableHash, callback
 	
 	async.parallel [ updateAuth, updatePackageList ], (err, results) ->
 		updateTime = process.hrtime updateStart
