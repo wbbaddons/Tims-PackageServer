@@ -36,7 +36,8 @@
 expressions :
 	  '*' EOF { return "return true;" }
 	| e EOF {
-		return "$vv = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./).map(function (item) { \
+		return "$v = $v || \"\"; \
+			$vv = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./).map(function (item) { \
 				return parseInt(item, 10); \
 			}); \
 			for (var i = 0; i < 5; i++) if ($vv[i] == null) $vv[i] = 0; \

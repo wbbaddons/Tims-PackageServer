@@ -196,7 +196,7 @@ module.exports = (folder, enableHash, callback) ->
 								
 								if a is b
 									0
-								else if (createComparator "$v > #{b}")(a)
+								else if (createComparator "#{a} > #{b}")()
 									1
 								else
 									-1
