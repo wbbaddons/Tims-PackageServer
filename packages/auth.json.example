@@ -10,7 +10,7 @@
 			"passwd": "$2a$10$SQrTPilHDjsIgfuWf19BseC.vxRf.D3sNeSn5ZESbHdon26yLmXYW",
 			"groups": [ ],
 			"packages": {
-				"be.bastelstu.wcf.commercial": "$v >= 1.0.0 && $v < 1.1.0"
+				"be.bastelstu.wcf.commercial": "(1.0.0 <= $v < 1.1.0) || $v > 2.0.0"
 			}
 		},
 		"Customer2": {
@@ -28,7 +28,7 @@
 	},
 	"packages": {
 		"be.bastelstu.wcf.freePackage": "*",
-		"be.bastelstu.wcf.openBeta": "$v >= 1.0.0 Beta 1 && $v < 1.0.0 RC 1",
-		"*": "$v ~ /alpha/i"
+		"be.bastelstu.wcf.openBeta": "1.0.0 Beta 1 <= $v < 1.0.0 RC 1",
+		"*": "$v ~ alpha"
 	}
 }
