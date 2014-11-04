@@ -399,7 +399,7 @@ do ->
 					files: sourceFiles
 			default: -> res.sendStatus 406
 		
-	app.get new RegExp('/source/('+sourceFiles.join('|')+')'), (req, res) ->
+	app.get new RegExp('/source/('+sourceFiles.map(escapeRegExp).join('|')+')'), (req, res) ->
 		res.type('txt').sendFile "#{__dirname}/#{req.params[0]}", (err) ->
 			if err
 				if err.code is 'ECONNABORT' and res.statusCode is 304
