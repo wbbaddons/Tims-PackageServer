@@ -25,17 +25,18 @@
 
 /lex
 
-%nonassoc '&&' '||'
+%left '&&' '||'
 %left '='
 %left '<=' '>=' '=' '<' '>' '!=' '!~' '~'
 
-%start expressions
+%start ruleset
 
 %%
 
-expressions :
-	  '*' EOF { return "return true;" }
-	| e EOF {
+// A valid ruleset is either an asterisk or an expression
+ruleset :
+	'*' EOF { return "return true;" }
+|	E EOF {
 		return "$v = $v || \"\"; \
 			$vv = $v.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\\./).map(function (item) { \
 				return parseInt(item, 10); \
@@ -53,9 +54,10 @@ expressions :
 	}
 ;
 
+// A valid version is either $v or a valid version number
 V : 
-	  '$v' { $$ = '$vv' }
-	| VERSION { 
+	'$v' { $$ = '$vv' }
+|	VERSION {
 		var version = $1.replace(/[ _]/g, '.').replace(/a(?:lpha)/i, -3).replace(/b(?:eta)?/i, -2).replace(/d(?:ev)?/i, -4).replace(/rc/i, -1).replace(/pl/i, 1).split(/\./).map(function (item) { 
 			return parseInt(item, 10); 
 		});
@@ -65,16 +67,30 @@ V :
 	}
 ;
 
-RELATION : '<' | '>' | '<=' | '>=' ;
+// A valid expression is either a chain of ANDs, a chain of ORs or a valid subexpression
+E : AND | OR | e ;
 
-e : 
-	  '(' e ')' { $$ = $1 + $2 + $3 }
-	| e '&&' e { $$ = '(' + $1 + $2 + $3 + ')' }
-	| e '||' e { $$ = '(' + $1 + $2 + $3 + ')' }
-	| '$v' '!~' WORD { $$ = '(!/' + $3 + '/i.test(' + $1 + '))' }
-	| '$v' '~' WORD { $$ = '(/' + $3 + '/i.test(' + $1 + '))' }
-	| V '!=' V  { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)' }
-	| V RELATION V RELATION V { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)&&(helper(' + $3 + ',' + $5 + ')' + $4 + '0)' }
-	| V RELATION V { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)' }
-	| V '=' V  { $$ = '(helper(' + $1 + ',' + $3 + ')==0)' }
+// A valid chain of ANDs is a subexpression followed by &&, followed by either a chain of ANDs or a subexpression
+AND :
+	e '&&' e { $$ = '(' + $1 + $2 + $3 + ')' }
+|	e '&&' AND { $$ = '(' + $1 + $2 + $3 + ')' }
 ;
+
+// A valid chain of ORs is a subexpression followed by ||, followed by either a chain of ORs or a subexpression
+OR :
+	e '||' e { $$ = '(' + $1 + $2 + $3 + ')' }
+|	e '||' OR { $$ = '(' + $1 + $2 + $3 + ')' }
+;
+
+// A valid subexpression is either an expression in parentheses or a comparison
+e : 
+	'(' E ')' { $$ = $1 + $2 + $3 }
+|	'$v' '!~' WORD { $$ = '(!/' + $3 + '/i.test(' + $1 + '))' }
+|	'$v' '~' WORD { $$ = '(/' + $3 + '/i.test(' + $1 + '))' }
+|	V '!=' V  { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)' }
+|	V RELATION V RELATION V { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)&&(helper(' + $3 + ',' + $5 + ')' + $4 + '0)' }
+|	V RELATION V { $$ = '(helper(' + $1 + ',' + $3 + ')' + $2 + '0)' }
+|	V '=' V  { $$ = '(helper(' + $1 + ',' + $3 + ')==0)' }
+;
+
+RELATION : '<' | '>' | '<=' | '>=' ;

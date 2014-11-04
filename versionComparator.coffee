@@ -26,5 +26,5 @@ module.exports = (comparison) ->
 	# normalize comparison string
 	comparison = parser.parse comparison
 	
-	debug "Result: #{comparison.replace /\s+/g, ' '}"
+	debug "Result: #{comparison}"
 	new Function '$v', comparison
