@@ -378,6 +378,7 @@ do ->
 		'packageListReader.coffee'
 		'streamHasher.coffee'
 		'versionComparator.coffee'
+		'versionComparator.jison'
 		'views/main.handlebars'
 		'views/source/html.handlebars'
 		'views/source/txt.handlebars'
