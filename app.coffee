@@ -80,6 +80,7 @@ app = do express
 app.use i18n.init
 app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
+app.set 'views', "#{__dirname}/views"
 # app.enable 'view cache'
 
 packageList = null
