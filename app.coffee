@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
 panic() if process.getuid?() is 0 or process.getgid?() is 0
 	
+process.chdir __dirname
 serverVersion = (require './package.json').version
 (require 'child_process').exec 'git describe --always', (err, stdout, stderr) -> serverVersion = stdout.trim() unless err?
 
