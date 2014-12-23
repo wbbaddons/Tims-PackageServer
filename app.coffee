@@ -325,7 +325,7 @@ app.all '/', (req, res) ->
 			"""
 		do writer.endElement
 		do writer.endDocument
-		res.setHeader 'ETag', "\"#{if config.deterministic then '' else 'W/'}#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
+		res.setHeader 'ETag', "#{if config.deterministic then '' else 'W/'}\"#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
 		res.status(200).send writer.toString()
 	
 	checkAuth req, res, callback
