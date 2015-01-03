@@ -13,5 +13,7 @@
 	"No results found :-(": "Nichts gefunden :-(",
 	"The following source files are available for download:": "Die folgenden Quelldateien stehen zur Verfügung:",
 	"This list was presented by <a href=\"%2$s\">%1$s</a> in version %3$s!": "Diese Liste wurde Ihnen von <a href=\"%2$s\">%1$s</a> %3$s präsentiert!",
-	"%1$s is licensed under the terms of the <a href=\"%3$s\">%2$s</a>.": "%1$s ist unter den Bedingungen der <a href=\"%3$s\">%2$s</a> lizensiert."
+	"%1$s is licensed under the terms of the <a href=\"%3$s\">%2$s</a>.": "%1$s ist unter den Bedingungen der <a href=\"%3$s\">%2$s</a> lizensiert.",
+	"Please provide proper username and password to access this package": "Bitte geben Sie gültige Zugangsdaten an, um auf dieses Paket zugreifen zu dürfen",
+	"You may not access this package": "Sie haben keinen Zugriff auf dieses Paket"
 }

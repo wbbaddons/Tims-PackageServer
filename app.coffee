@@ -28,6 +28,7 @@ packageListReader = require './packageListReader'
 async = require 'async'
 basicAuth = require 'basic-auth'
 bcrypt = require 'bcrypt'
+bodyParser = require 'body-parser'
 escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 expresshb  = require 'express-handlebars'
@@ -79,6 +80,7 @@ if config.enableManualUpdate?
 app = do express
 
 app.use i18n.init
+app.use bodyParser.urlencoded extended: yes
 app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
 app.set 'views', "#{__dirname}/views"
@@ -138,7 +140,6 @@ isAccessible = (username, testPackage, testVersion) ->
 
 checkAuth = (req, res, callback) ->
 	reqAuth = basicAuth req
-	
 	if reqAuth?
 		if auth?.users?[reqAuth.name]?
 			# hash first because Woltlab Community Framework uses double salted hashes
@@ -350,7 +351,11 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 							do res.end
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
-					askForCredentials req, res
+					
+					if req.param('apiVersion') in [ '2.1' ]
+						res.status(402).send req.__ "You may not access this package"
+					else
+						askForCredentials req, res
 			else
 				res.sendStatus 404
 				
