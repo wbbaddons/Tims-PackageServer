@@ -185,7 +185,12 @@ askForCredentials = (req, res) ->
 	res.type 'txt'
 	res.setHeader 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
 	res.status(401).send req.__ 'Please provide proper username and password to access this package'
-	
+
+app.use (req, res, next) ->
+	res.set 'wcf-update-server-api', '2.0 2.1'
+	res.set 'wcf-update-server-ssl', 'false'
+	do next
+
 app.all '/', (req, res) ->
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	
