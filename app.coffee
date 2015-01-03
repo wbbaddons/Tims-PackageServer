@@ -191,7 +191,7 @@ app.use (req, res, next) ->
 	res.set 'wcf-update-server-ssl', 'false'
 	do next
 
-app.all '/', (req, res) ->
+app.all /^\/(list\/[a-z-]{2,}\.xml)?$/, (req, res) ->
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	
 	if req.query?.doAuth?
