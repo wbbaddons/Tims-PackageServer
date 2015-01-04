@@ -175,11 +175,11 @@ readPackages = (callback) ->
 		if err?
 			debug "Update failed:", err
 			auth = packageList = undefined
-			callback err
+			callback? err
 		else
 			debug "Finished update"
 			[ auth, packageList ] = results
-			callback null
+			callback? null
 		
 askForCredentials = (req, res) ->
 	res.type 'txt'
