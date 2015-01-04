@@ -66,6 +66,7 @@ config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableStatistics ?= on
 config.enableHash ?= on
 config.deterministic ?= off
+config.ssl ?= off
 config.i18n ?=
 	locales: [ 'en', 'de' ]
 	directory: "#{__dirname}/locales"
@@ -189,7 +190,7 @@ askForCredentials = (req, res) ->
 
 app.use (req, res, next) ->
 	res.set 'wcf-update-server-api', '2.0 2.1'
-	res.set 'wcf-update-server-ssl', 'false'
+	res.set 'wcf-update-server-ssl', if config.ssl then "true" else "false"
 	do next
 
 app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
