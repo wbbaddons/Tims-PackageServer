@@ -192,7 +192,7 @@ app.use (req, res, next) ->
 	res.set 'wcf-update-server-ssl', 'false'
 	do next
 
-app.all /^\/(list\/[a-z-]{2,}\.xml)?$/, (req, res) ->
+app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	
 	if req.query?.doAuth?
@@ -242,9 +242,8 @@ app.all /^\/(list\/[a-z-]{2,}\.xml)?$/, (req, res) ->
 			writer.startElement 'package'
 			writer.writeAttribute 'name', newestVersion[0].package
 			writer.startElement 'packageinformation'
-			
-			writer.writeElement 'packagename', newestVersion[0].packagename ? ''
-			writer.writeElement 'packagedescription', newestVersion[0].packagedescription ? ''
+			writer.writeElement 'packagename', newestVersion[0].packagename?[req.params[0] ? req.getLocale() ? '_'] ? newestVersion[0].packagename?['_'] ? ''
+			writer.writeElement 'packagedescription', newestVersion[0].packagedescription?[req.params[0] ? req.getLocale() ? '_'] ? newestVersion[0].packagedescription?['_'] ? ''
 			writer.writeElement 'isapplication', String(newestVersion[0].isapplication ? 0)
 			do writer.endElement
 			

@@ -132,11 +132,11 @@ module.exports = (folder, enableHash, callback) ->
 										'text: package > packageinformation > license': (data) -> packageData.license = data.$text
 										'text: package > packageinformation > isapplication': (data) -> packageData.isapplication = data.$text
 										'text: package > packageinformation > packagename': (data) ->
-											if not packageData.packagename? or not data.$?.language?
-												packageData.packagename = data.$text
+											packageData.packagename ?= { }
+											packageData.packagename[data.$?.language ? '_'] = data.$text
 										'text: package > packageinformation > packagedescription': (data) ->
-											if not packageData.packagedescription? or not data.$?.language?
-												packageData.packagedescription = data.$text
+											packageData.packagedescription ?= { }
+											packageData.packagedescription[data.$?.language ? '_'] = data.$text
 										'text: package > authorinformation > author': (data) -> packageData.author = data.$text
 										'text: package > authorinformation > authorurl': (data) -> packageData.authorurl = data.$text
 										'text: package > requiredpackages > requiredpackage': (data) ->
@@ -174,7 +174,7 @@ module.exports = (folder, enableHash, callback) ->
 											if (packageData.version.toLowerCase().replace /[ ]/g, '_') isnt path.basename versionFile, '.tar'
 												callback "version number does not match filename in #{versionFile} (#{packageData.version} isnt #{path.basename versionFile, '.tar'})"
 												return
-													
+											
 											callback null, packageData
 									
 									for event, listener of listeners
