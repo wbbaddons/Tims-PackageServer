@@ -28,6 +28,7 @@ packageListReader = require './packageListReader'
 async = require 'async'
 basicAuth = require 'basic-auth'
 bcrypt = require 'bcrypt'
+bodyParser = require 'body-parser'
 escapeRegExp = require 'escape-string-regexp'
 express = require 'express'
 expresshb  = require 'express-handlebars'
@@ -65,6 +66,7 @@ config.packageFolder += '/' unless /\/$/.test config.packageFolder
 config.enableStatistics ?= on
 config.enableHash ?= on
 config.deterministic ?= off
+config.ssl ?= off
 config.i18n ?=
 	locales: [ 'en', 'de' ]
 	directory: "#{__dirname}/locales"
@@ -79,6 +81,7 @@ if config.enableManualUpdate?
 app = do express
 
 app.use i18n.init
+app.use bodyParser.urlencoded extended: yes
 app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
 app.set 'views', "#{__dirname}/views"
@@ -138,7 +141,6 @@ isAccessible = (username, testPackage, testVersion) ->
 
 checkAuth = (req, res, callback) ->
 	reqAuth = basicAuth req
-	
 	if reqAuth?
 		if auth?.users?[reqAuth.name]?
 			# hash first because Woltlab Community Framework uses double salted hashes
@@ -185,8 +187,13 @@ askForCredentials = (req, res) ->
 	res.type 'txt'
 	res.setHeader 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
 	res.status(401).send req.__ 'Please provide proper username and password to access this package'
-	
-app.all '/', (req, res) ->
+
+app.use (req, res, next) ->
+	res.set 'wcf-update-server-api', '2.0 2.1'
+	res.set 'wcf-update-server-ssl', if config.ssl then "true" else "false"
+	do next
+
+app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 	host = config.basePath ? "#{req.protocol}://#{req.header 'host'}"
 	
 	if req.query?.doAuth?
@@ -236,9 +243,8 @@ app.all '/', (req, res) ->
 			writer.startElement 'package'
 			writer.writeAttribute 'name', newestVersion[0].package
 			writer.startElement 'packageinformation'
-			
-			writer.writeElement 'packagename', newestVersion[0].packagename ? ''
-			writer.writeElement 'packagedescription', newestVersion[0].packagedescription ? ''
+			writer.writeElement 'packagename', newestVersion[0].packagename?[req.params[0] ? req.getLocale() ? '_'] ? newestVersion[0].packagename?['_'] ? ''
+			writer.writeElement 'packagedescription', newestVersion[0].packagedescription?[req.params[0] ? req.getLocale() ? '_'] ? newestVersion[0].packagedescription?['_'] ? ''
 			writer.writeElement 'isapplication', String(newestVersion[0].isapplication ? 0)
 			do writer.endElement
 			
@@ -345,7 +351,11 @@ app.all /^\/([a-z0-9_-]+\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)+)\/([0-9]+\.[0-9]+\.[0-9]
 							do res.end
 				else
 					debug "#{username} tried to download #{req.params[0]}/#{req.params[1].toLowerCase()}"
-					askForCredentials req, res
+					
+					if req.param('apiVersion') in [ '2.1' ]
+						res.status(402).send req.__ "You may not access this package"
+					else
+						askForCredentials req, res
 			else
 				res.sendStatus 404
 				
