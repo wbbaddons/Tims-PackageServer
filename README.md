@@ -43,7 +43,7 @@ config.js
 ```js
 module.exports = {
     port: 9001, // the port the package server binds to
-    ip: '0.0.0.0' // the ip the package server binds to
+    ip: '0.0.0.0', // the ip the package server binds to
     packageFolder: __dirname + "/packages/", // the folder the packages are searched in
     enableStatistics: true, // Whether to enable download counters
     enableHash: true, // Whether to provide a SHA-256 hash of every version
