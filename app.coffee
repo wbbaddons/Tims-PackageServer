@@ -123,20 +123,17 @@ isAccessible = (username, testPackage, testVersion) ->
 	# check general packages
 	if auth.packages?
 		for _package, version of auth.packages
-			_package = escapeRegExp(_package).replace /\\\*/, '.*'
-			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
+			return true if (version[0].test testPackage) and version[1] testVersion
 	
 	# check user
 	if auth.users?[username]?.packages?
 		for _package, version of auth.users[username].packages
-			_package = escapeRegExp(_package).replace /\\\*/, '.*'
-			return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
+			return true if (_package.test testPackage) and version testVersion
 		# check user groups
 		for group in auth.users[username].groups
 			if auth.groups?[group]?
 				for _package, version of auth.groups[group]
-					_package = escapeRegExp(_package).replace /\\\*/, '.*'
-					return true if (RegExp("^#{_package}$", 'i').test testPackage) and version testVersion
+					return true if (version[0].test testPackage) and version[1] testVersion
 	false
 
 checkAuth = (req, res, callback) ->

@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 createComparator = require './versionComparator'
 
+escapeRegExp = require 'escape-string-regexp'
 fs = require 'fs'
 oboe = require 'oboe'
 once = require 'once'
@@ -43,10 +44,15 @@ module.exports = (filename, callback) ->
 			callback "Error parsing auth.json: #{err.thrown}"
 		data.node 'packages.*', (item, path) ->
 			debug "Converting #{item}@#{path} into comparator"
-			createComparator item
+		
+			_package = escapeRegExp(path[path.length - 1]).replace /\\\*/, '.*'
+			[ RegExp("^#{_package}$", 'i'), createComparator item ]
 		data.node 'groups.*.*', (item, path) ->
 			debug "Converting #{item}@#{path} into comparator"
-			createComparator item
+			
+			_package = escapeRegExp(path[path.length - 1]).replace /\\\*/, '.*'
+			[ RegExp("^#{_package}$", 'i'), createComparator item ]
 		data.done (json) ->
 			debug "Finished parsing auth"
+			
 			callback null, json
