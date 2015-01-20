@@ -48,7 +48,8 @@ module.exports = {
     enableStatistics: true, // Whether to enable download counters
     enableHash: true, // Whether to provide a SHA-256 hash of every version
     deterministic: false, // Whether to generate deterministic XML output
-    basePath: null // The base path of the package server. By default it takes the host supplied within the request. Change if you are using a reverse proxy
+    basePath: null, // The base path of the package server. By default it takes the host supplied within the request. Change if you are using a reverse proxy
+    ssl: false // Whether the package server should advertise SSL support
 };
 ```
 Debugging
