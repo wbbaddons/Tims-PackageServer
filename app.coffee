@@ -1,5 +1,5 @@
 ###
-Copyright (C) 2013 - 2014 Tim Düsterhus
+Copyright (C) 2013 - 2015 Tim Düsterhus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -379,6 +379,8 @@ do ->
 		'views/main.handlebars'
 		'views/source/html.handlebars'
 		'views/source/txt.handlebars'
+		'Dockerfile'
+		'LICENSE'
 	]
 	
 	app.get '/source', (req, res) ->
