@@ -43,39 +43,27 @@ warn.log = console.warn.bind console
 error = (require 'debug')('PackageServer:error')
 error.log = console.error.bind console
 
-# Try to load config
-try
-	filename = "#{__dirname}/config.js"
-
-	# configuration file was passed via `process.argv`
-	filename = (require 'path').resolve process.argv[2] if process.argv[2]?
+config = require('rc') 'PackageServer',
+	port: 9001
+	ip: '0.0.0.0'
+	packageFolder: "#{__dirname}/packages/"
+	enableStatistics: yes
+	enableHash: yes
+	deterministic: no
+	ssl: no
+	i18n:
+		locales: [ 'en', 'de' ]
+		directory: "#{__dirname}/locales"
+		defaultLocale: 'en'
 	
-	filename = fs.realpathSync filename
-	
-	debug "Using config '#{filename}'"
-	config = require filename
-catch e
-	warn e.message
-	config = { }
-
-# default values for configuration
-config.port ?= 9001
-config.ip ?= '0.0.0.0'
-config.packageFolder ?= "#{__dirname}/packages/"
 config.packageFolder += '/' unless /\/$/.test config.packageFolder
-config.enableStatistics ?= on
-config.enableHash ?= on
-config.deterministic ?= off
-config.ssl ?= off
-config.i18n ?=
-	locales: [ 'en', 'de' ]
-	directory: "#{__dirname}/locales"
-	defaultLocale: 'en'
-	
+
 i18n.configure config.i18n
 
 if config.enableManualUpdate?
 	warn 'config.enableManualUpdate is obsolete and ignored in this version'
+if config.basePath?
+	warn "config.basePath is deprecated. Advice the reverse proxy to pass a proper 'Host' header"
 
 # initialize express
 app = do express

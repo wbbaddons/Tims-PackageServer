@@ -37,21 +37,22 @@ auth.json
 
 The grammar for valid version checks can be found in versionComparator.jison.
 
-config.js
----------
+Configuration
+-------------
 
-```js
-module.exports = {
-    port: 9001, // the port the package server binds to
-    ip: '0.0.0.0', // the ip the package server binds to
-    packageFolder: __dirname + "/packages/", // the folder the packages are searched in
-    enableStatistics: true, // Whether to enable download counters
-    enableHash: true, // Whether to provide a SHA-256 hash of every version
-    deterministic: false, // Whether to generate deterministic XML output
-    basePath: null, // The base path of the package server. By default it takes the host supplied within the request. Change if you are using a reverse proxy
-    ssl: false // Whether the package server should advertise SSL support
-};
-```
+Tim’s PackageServer is configured using [rc](https://www.npmjs.com/package/rc). The
+following configuration options are available:
+
+| Name             | Default Value            | Explanation                                        |
+|------------------|--------------------------|----------------------------------------------------|
+| port             | 9001                     | The port to bind to                                |
+| ip               | '0.0.0.0'                | The ip to bind to                                  |
+| packageFolder    | __dirname + "/packages/" | The folder the packages are searched in            |
+| enableStatistics | true                     | Whether to enable download counters                |
+| enableHash       | true                     | Whether to provide a SHA-256 hash of every version |
+| deterministic    | false                    | Hides per request statistics                       |
+| ssl              | false                    | Whether to advertise SSL support                   |
+
 Debugging
 ---------
 
