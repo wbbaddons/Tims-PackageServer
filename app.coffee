@@ -65,6 +65,8 @@ if config.enableManualUpdate?
 if config.basePath?
 	warn "config.basePath is deprecated. Advice the reverse proxy to pass a proper 'Host' header"
 
+process.title = "PackageServer #{config.packageFolder}"
+
 # initialize express
 app = do express
 
