@@ -6,7 +6,7 @@
 		"woltlab community framework"
 	],
 	"author": "Tim Düsterhus <tim@bastelstu.be>",
-	"license": "AGPLv3",
+	"license": "AGPL-3.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/wbbaddons/Tims-PackageServer.git"
