@@ -51,6 +51,7 @@ config = require('rc') 'PackageServer',
 	enableHash: yes
 	deterministic: no
 	ssl: no
+	trustProxy: no
 	i18n:
 		locales: [ 'en', 'de' ]
 		directory: "#{__dirname}/locales"
@@ -75,6 +76,7 @@ app.use bodyParser.urlencoded extended: yes
 app.engine 'handlebars', do expresshb
 app.set 'view engine', 'handlebars'
 app.set 'views', "#{__dirname}/views"
+app.enable 'trust proxy' if config.trustProxy
 # app.enable 'view cache'
 
 packageList = null
