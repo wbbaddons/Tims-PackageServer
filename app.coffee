@@ -376,6 +376,7 @@ do ->
 	sourceFiles = [
 		'app.coffee'
 		'authReader.coffee'
+		'package.json'
 		'packageListReader.coffee'
 		'streamHasher.coffee'
 		'versionComparator.coffee'
@@ -385,6 +386,7 @@ do ->
 		'views/source/txt.handlebars'
 		'Dockerfile'
 		'LICENSE'
+		'README.md'
 	]
 	
 	app.get '/source', (req, res) ->
