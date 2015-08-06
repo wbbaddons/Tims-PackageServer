@@ -174,7 +174,7 @@ readPackages = (callback) ->
 		
 askForCredentials = (req, res) ->
 	res.type 'txt'
-	res.setHeader 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
+	res.set 'WWW-Authenticate', 'Basic realm="' + (req.__ 'Please provide proper username and password to access this package') + '"'
 	res.status(401).send req.__ 'Please provide proper username and password to access this package'
 
 app.use (req, res, next) ->
@@ -320,7 +320,7 @@ app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 			"""
 		do writer.endElement
 		do writer.endDocument
-		res.setHeader 'ETag', "#{if config.deterministic then '' else 'W/'}\"#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
+		res.set 'ETag', "#{if config.deterministic then '' else 'W/'}\"#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
 		res.status(200).send writer.toString()
 	
 	checkAuth req, res, callback
