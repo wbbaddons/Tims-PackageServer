@@ -210,6 +210,11 @@ app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 			res.sendStatus 406
 			return
 			
+		res.set 'ETag', "#{if config.deterministic then '' else 'W/'}\"#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
+		if req.fresh
+			res.sendStatus 304
+			return
+
 		res.type 'xml'
 		
 		# build the xml structure of the package list
@@ -320,7 +325,6 @@ app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 			"""
 		do writer.endElement
 		do writer.endDocument
-		res.set 'ETag', "#{if config.deterministic then '' else 'W/'}\"#{if username isnt '' then username + '-' else ''}#{lastUpdate.getTime()}\""
 		res.status(200).send writer.toString()
 	
 	checkAuth req, res, callback
