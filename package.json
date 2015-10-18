@@ -25,7 +25,7 @@
 		"debounce": "*",
 		"escape-string-regexp": "*",
 		"xml-stream": "*",
-		"express-handlebars": "~1.1.0",
+		"express-handlebars": "~2",
 		"i18n": ">=0.5.0",
 		"oboe": "~2",
 		"once": ">=1.3",
