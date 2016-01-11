@@ -120,7 +120,7 @@ isAccessible = (username, testPackage, testVersion) ->
 	# check user
 	if auth.users?[username]?.packages?
 		for _package, version of auth.users[username].packages
-			return true if (_package.test testPackage) and version testVersion
+			return true if (version[0].test testPackage) and version[1] testVersion
 		# check user groups
 		for group in auth.users[username].groups
 			if auth.groups?[group]?
@@ -135,10 +135,12 @@ checkAuth = (req, res, callback) ->
 			# hash first because Woltlab Community Framework uses double salted hashes
 			bcrypt.hash reqAuth.pass, auth.users[reqAuth.name].passwd, (err, hash) ->
 				if err?
+					error err
 					res.sendStatus 500
 					return
 				bcrypt.compare hash, auth.users[reqAuth.name].passwd, (err, result) ->
 					if err?
+						error err
 						res.sendStatus 500
 						return
 					if result
