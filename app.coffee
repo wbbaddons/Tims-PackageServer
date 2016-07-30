@@ -257,7 +257,6 @@ app.all /^\/(?:list\/([a-z-]{2,})\.xml)?$/, (req, res) ->
 				writer.writeAttribute 'name', version[0].version
 				
 				writer.writeAttribute 'accessible', if (isAccessible username, version[0].package, version[0].version) then "true" else "false"
-				writer.writeAttribute 'critical', if (/pl/i.test version[0].version) then "true" else "false"
 				writer.writeComment "sha256:#{version[1].toString 'hex'}" if version[1]?
 				
 				# write <fromversions>
