@@ -434,18 +434,17 @@ app.all '*', (req, res) -> res.sendStatus 404
 # Creates watchers for every relevant file in the package folder
 do ->
 	_readPackages = (require 'debounce') readPackages, 3e3
-	watchr.watch
-		path: config.packageFolder
+	stalker = watchr.create config.packageFolder
+	stalker.on 'change', (changeType, fullPath, currentStat, previousStat) ->
+		debug "The package folder was changed (#{fullPath}: #{changeType})"
+		do _readPackages
+	stalker.on 'log', debug
+	stalker.setConfig
 		ignoreCustomPatterns: /\.txt$/
-		listeners:
-			watching: (err, watcherInstance, isWatching) ->
-				if err
-					error "watching the path #{watcherInstance.path} failed with error:", err
-				else
-					debug "watching the path #{watcherInstance.path} completed"
-			change: (changeType, filePath, fileCurrentStat, filePreviousStat) ->
-				debug "The package folder was changed (#{filePath}: #{changeType})"
-				do _readPackages
+		ignoreHiddenFiles: yes
+		ignoreCommonPatterns: yes
+		persistent: no
+	stalker.watch ->
 
 # Once the package list was successfully scanned once bind to the port
 readPackages -> app.listen config.port, config.ip
