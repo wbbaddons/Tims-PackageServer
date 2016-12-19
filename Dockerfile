@@ -16,10 +16,6 @@
 FROM node:onbuild
 MAINTAINER Tim Düsterhus
 
-RUN	groupadd -r node \
-	&& useradd -r -g node node \
-	&& chown -R node:node /usr/src/app
-
 USER node
 
 EXPOSE 9001
