@@ -13,10 +13,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-FROM node:onbuild
-MAINTAINER Tim Düsterhus
+FROM	node
 
-USER node
+RUN	mkdir -p /usr/src/app/
 
-EXPOSE 9001
-VOLUME [ "/usr/src/app/packages" ]
+WORKDIR	/usr/src/app
+
+COPY	package.json /usr/src/app/
+RUN	yarn install
+COPY	. /usr/src/app/
+
+USER	node
+
+VOLUME	[ "/usr/src/app/packages" ]
+EXPOSE	9001
+
+CMD	[ "yarn", "run", "coffee", "app.coffee" ]
