@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###
 
 panic = -> throw new Error "Cowardly refusing to keep the process alive as root"
-panic() if process.getuid?() is 0 or process.getgid?() is 0
+#panic() if process.getuid?() is 0 or process.getgid?() is 0
 	
 process.chdir __dirname
 serverVersion = (require './package.json').version
@@ -107,7 +107,8 @@ logDownload = (packageName, version) ->
 				logDownload packageName, version
 		return
 		
-	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version]
+	fs.writeFile "#{config.packageFolder}#{packageName}/#{version}.txt", ++downloadCounterFiles[packageName][version], (err) ->
+		warn "Failed to write to #{config.packageFolder}#{packageName}/#{version}.txt: #{err}"
 
 isAccessible = (username, testPackage, testVersion) ->
 	return true if auth is null
