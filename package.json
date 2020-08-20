@@ -14,7 +14,7 @@
 	"dependencies": {
 		"async": "^2.6.0",
 		"basic-auth": "^2.0.0",
-		"bcrypt": "^2.0.0",
+		"bcrypt": "^5.0.0",
 		"body-parser": "^1.18.2",
 		"coffeescript": "^1.11.1",
 		"debounce": "^1.0.0",
