@@ -22,7 +22,7 @@
 		"escape-string-regexp": "^1.0.5",
 		"express": "^4.14.0",
 		"express-handlebars": "~2",
-		"i18n": "^0.8.3",
+		"i18n": "^0.13.0",
 		"jison": "^0.4.18",
 		"oboe": "^2.1.2",
 		"once": "^1.4.0",
