@@ -18,7 +18,7 @@
 		"body-parser": "^1.18.2",
 		"coffeescript": "^1.11.1",
 		"debounce": "^1.0.0",
-		"debug": "^2.2.0",
+		"debug": "^4.1.1",
 		"escape-string-regexp": "^1.0.5",
 		"express": "^4.14.0",
 		"express-handlebars": "~2",
