@@ -423,6 +423,7 @@ do ->
 app.get /\/style\/.*/, (req, res) ->
 	checkAuth req, res, (username) ->
 		res.type('text/xsl').render 'main',
+			layout: false
 			title: config.pageTitle || 'Tim’s PackageServer'
 			serverVersion: serverVersion
 			host: config.basePath ? "#{req.protocol}://#{req.header 'host'}"
