@@ -19,7 +19,7 @@
 		"coffeescript": "^1.11.1",
 		"debounce": "^1.0.0",
 		"debug": "^4.1.1",
-		"escape-string-regexp": "^1.0.5",
+		"escape-string-regexp": "^4.0.0",
 		"express": "^4.14.0",
 		"express-handlebars": "~5",
 		"i18n": "^0.13.2",
