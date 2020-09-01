@@ -27,7 +27,7 @@
 		"oboe": "^2.1.2",
 		"once": "^1.4.0",
 		"rc": "^1.1.6",
-		"tar-stream": "<2.1.0",
+		"tar-stream": "<2.2.0",
 		"watchr": "^6.7.0",
 		"xml-stream": "^0.4.5",
 		"xml-writer": "^1.6.0"
