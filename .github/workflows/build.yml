@@ -16,29 +16,33 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-FROM	rust:1 AS builder
+name: Build
 
-COPY	. /usr/src/PackageServer/
+on:
+  push:
+    branches:
+    - wip
+  pull_request:
 
-RUN	cd /usr/src/PackageServer/ \
-&&	cargo build --release
+env:
+  CARGO_TERM_COLOR: always
 
-FROM	debian:buster
-
-RUN	set -ex \
-&&	groupadd -r packageserver \
-&&	useradd -r -g packageserver packageserver \
-&&	mkdir /var/lib/PackageServer/ \
-&&	mkdir /var/lib/PackageServer/packages/ \
-&&	chown packageserver:packageserver /var/lib/PackageServer/ /var/lib/PackageServer/packages/
-
-VOLUME	[ "/var/lib/PackageServer/packages" ]
-
-COPY	--from=builder /usr/src/PackageServer/target/release/tims-package-server /usr/local/bin/tims-package-server
-
-WORKDIR	/var/lib/PackageServer/
-
-USER	packageserver
-EXPOSE	9001
-
-CMD	[ "tims-package-server" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+    - uses: Swatinem/rust-cache@v1
+      with:
+        sharedKey: ci
+    - run: cargo build --verbose
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Compiled
+        path: target/*/tims-package-server
+        if-no-files-found: error
+        retention-days: 2
