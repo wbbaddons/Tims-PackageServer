@@ -67,7 +67,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract version from tag
+        id: extract_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\/v/}
       - uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/wbbaddons/tims-package-server:latest,ghcr.io/wbbaddons/tims-package-server:${{ github.ref }}
+          tags: ghcr.io/wbbaddons/tims-package-server:latest,ghcr.io/wbbaddons/tims-package-server:${{ steps.extract_version.outputs.version }}
