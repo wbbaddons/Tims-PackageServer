@@ -21,7 +21,7 @@ name: Build
 on:
   push:
     branches:
-    - wip
+    - master
   pull_request:
 
 env:
