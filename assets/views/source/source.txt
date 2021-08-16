@@ -1,0 +1,12 @@
+# {% if title.is_some() -%}
+	{{- title.as_ref().unwrap() -}}
+{%- else -%}
+	{{- fluent!(self.lang, "product-name") -}}
+{%- endif %}
+## {{ fluent!(self.lang, "version") }}: {{ self.server_version }}
+
+{{ fluent!(self.lang, "available-files") }}
+
+{% for (file, _) in crate::SOURCE_FILES -%}
+* {{ host }}/source/{{ file }}
+{% endfor -%}

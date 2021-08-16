@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>
+			{%- if title.is_some() -%}
+				{{- title.as_ref().unwrap() -}}
+			{%- else -%}
+				{{- fluent!(self.lang, "product-name") -}}
+			{%- endif -%}
+		</title>
+	</head>
+	<body>
+		<h1>
+			{%- if title.is_some() -%}
+				{{- title.as_ref().unwrap() -}}
+			{%- else -%}
+				{{- fluent!(self.lang, "product-name") -}}
+			{%- endif -%}
+		</h1>
+		<h2>{{ fluent!(self.lang, "version") }}: {{ self.server_version }}</h2>
+
+		<p>{{ fluent!(self.lang, "available-files") }}</p>
+		<ul>
+			{% for (file, _) in crate::SOURCE_FILES -%}
+			<li><a href="{{ host }}/source/{{ file }}">{{ file }}</a></li>
+			{% endfor %}
+		</ul>
+	</body>
+</html>

@@ -1,0 +1,110 @@
+{%- macro opt_attribute(attr, opt) -%}
+   {%- match opt -%}
+      {%- when Some with (val) %} {{ attr }}="{{ val|safe }}"
+      {%- else -%}
+   {%- endmatch -%}
+{%- endmacro -%}
+
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="{{ host }}/style/main.xslt"?>
+<section name="packages" xmlns="http://www.woltlab.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.woltlab.com https://www.woltlab.com/XSD/packageUpdateServer.xsd">
+{%- for package in package_list.packages -%}
+   {%- let newest = package.first().unwrap() %}
+   <package name="{{ newest.data.name }}">
+      <packageinformation>
+         <packagename>{{ newest.data.package_information.name|package_name(xml_lang) }}</packagename>
+         <packagedescription>{{ newest.data.package_information.description|package_description(xml_lang) }}</packagedescription>
+         <isapplication>
+            {%- if newest.data.package_information.is_application -%}
+            1
+            {%- else -%}
+            0
+            {%- endif -%}
+         </isapplication>
+      </packageinformation>
+
+      <authorinformation>
+         <author>{{ newest.data.author_information.author }}</author>
+         {% if newest.data.author_information.author_url.is_some() -%}
+            <authorurl>{{ newest.data.author_information.author_url.as_ref().unwrap()|safe }}</authorurl>
+         {%- endif %}
+      </authorinformation>
+
+      <versions>
+      {%- for version in package %}
+         <version name="{{ version.data.package_information.version }}" accessible="{{ version|is_accessible(auth_info, auth_data) }}">
+            <!-- sha256:{{ version.hash }} -->
+            {%- if !version.data.instructions.is_empty() %}
+            <fromversions>
+               {% for instruction in version.data.instructions -%}
+               <fromversion>
+                  {{- instruction.from_version -}}
+               </fromversion>
+               {% endfor %}
+            </fromversions>
+            {% endif -%}
+            {%- if !version.data.required_packages.is_empty() %}
+            <requiredpackages>
+               {% for package in version.data.required_packages -%}
+               <requiredpackage minversion="{{ package.min_version }}">
+                  {{- package.identifier -}}
+               </requiredpackage>
+               {% endfor %}
+            </requiredpackages>
+            {% endif -%}
+            {%- if !version.data.optional_packages.is_empty() %}
+            <optionalpackages>
+               {% for package in version.data.optional_packages -%}
+               <optionalpackage>
+                  {{- package.identifier -}}
+               </optionalpackage>
+               {% endfor %}
+            </optionalpackages>
+            {% endif -%}
+            {%- if !version.data.excluded_packages.is_empty() %}
+            <excludedpackages>
+               {% for package in version.data.excluded_packages -%}
+               <excludedpackage {%- call opt_attribute("version", package.version) -%}>
+                  {{- package.identifier -}}
+               </excludedpackage>
+               {% endfor %}
+            </excludedpackages>
+            {% endif -%}
+            {%- if version.mtime.is_some() -%}
+               <timestamp>{{ version.mtime.unwrap()|timestamp }}</timestamp>
+            {%- endif %}
+            <file>{{ host|safe }}/{{ version.data.name|safe }}/{{ version.data.package_information.version.format_url() }}</file>
+            {% if version.data.package_information.license.is_some() -%}
+               {%- let license = version.data.package_information.license.as_ref().unwrap() -%}
+               <license {%- call opt_attribute("url", license.url) -%}>{{ license.value }}</license>
+            {%- endif %}
+            {% if !version.data.compatibility.is_empty() -%}
+            <compatibility>
+               {% for version in version.data.compatibility -%}
+               <api version="{{ version }}" />
+               {% endfor %}
+            </compatibility>
+            {% endif %}
+         </version>
+      {% endfor %}
+      </versions>
+   </package>
+{% endfor %}
+   <!--
+   {{ fluent!(self.user_lang, "last-update") }} {{ package_list.updated_at|rfc3339 }}
+   {% if auth_info.username.is_some() %}{{ fluent!(self.user_lang, "signed-in-as", { self.auth_info.username }) }}{% endif %}
+   {{ fluent!(self.user_lang, "presented-by-xml", { self.server_version })|safe }}
+   {{ fluent!(self.user_lang, "license-terms-xml")|safe }}
+   {{ fluent!(self.user_lang, "source-code-url-xml", { self.host })|safe }}
+   {%- if !deterministic %}
+
+   {{ fluent!(self.user_lang, "up-since", { "duration": humantime::format_duration(self.uptime).to_string() }) }}
+   {{ fluent!(self.user_lang, "scan-duration", {
+      "duration": self.package_list.updated_in.as_secs_f32(),
+      "valid": self.package_list.packages.iter().fold(0, |acc, x| acc + x.len()),
+      "total": self.package_list.scanned_version_count
+   })|safe }}
+   {{ fluent!(self.user_lang, "generated-in", { "duration": self.start_time.elapsed().as_secs_f32() * 1000.0 }) }}
+   {%- endif %}
+   -->
+</section>
