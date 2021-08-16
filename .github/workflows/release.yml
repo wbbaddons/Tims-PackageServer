@@ -55,7 +55,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: target/release/tims-package-server
-          asset_name: PackageServer
+          asset_name: tims-package-server_linux_amd64
           asset_content_type: application/x-pie-executable
   docker_image:
     name: Push Docker image to ghcr.io
