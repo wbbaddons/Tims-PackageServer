@@ -34,8 +34,6 @@ jobs:
           profile: minimal
           toolchain: stable
       - uses: Swatinem/rust-cache@v1
-        with:
-          sharedKey: ci
       - run: cargo build --release --verbose
       - name: Create Release
         id: create_release
