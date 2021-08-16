@@ -79,11 +79,14 @@ fn bundle_source_code() -> crate::Result<()> {
     let overrides = OverrideBuilder::new("./")
         .add("!/.git/")
         .unwrap()
+        .add("!/target/")
+        .unwrap()
         .build()
         .unwrap();
 
     let walker = WalkBuilder::new("./")
         .hidden(false)
+        .require_git(false)
         .overrides(overrides)
         .sort_by_file_name(|a, b| a.cmp(b))
         .build();
