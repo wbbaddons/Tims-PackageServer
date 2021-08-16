@@ -21,6 +21,7 @@ FROM	rust:1 AS builder
 COPY	. /usr/src/PackageServer/
 
 RUN	cd /usr/src/PackageServer/ \
+&&	find . -not -path './.git/*' \
 &&	cargo build --release
 
 FROM	debian:buster
