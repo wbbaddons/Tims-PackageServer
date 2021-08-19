@@ -24,11 +24,11 @@
 	futures-util = { version = "0.3.16", default-features = false }
 	humantime = "2.1.0"
 	language-tags = "0.3.2"
-	libc = "0.2.98"
+	libc = "0.2.99"
 	log = "0.4.14"
 	mime = "0.3.16"
 	mime_guess = { version = "2.0.3", default-features = false }
-	nom = { version = "7.0.0-alpha2", default-features = false, features = [ "alloc" ] } # Like nom 6.0 but with updated dependencies
+	nom = { version = "7.0.0-alpha3", default-features = false, features = [ "alloc" ] } # Like nom 6.0 but with updated dependencies
 	notify = "4.0.17"
 	once_cell = { version = "1.8.0", default-features = false }
 	phf = "0.10.0"
@@ -37,7 +37,7 @@
 	serde = { version = "1.0.127", features = [ "derive" ] }
 	serde_json = { version = "1.0.66", default-features = false }
 	sha2 = "0.9.5"
-	tar = { version = "0.4.35", default-features = false }
+	tar = { version = "0.4.37", default-features = false }
 	unic-langid = "0.9.0"
 	url = { version = "2.2.2", features = ["serde"] }
 
@@ -45,7 +45,7 @@
 	base64 = "0.13.0"
 	built = { version = "0.5.1", features = [ "git2" ] }
 	cargo-license = "0.4.1"
-	cargo_metadata = { version = "0.9.1", default-features = false }
+	cargo_metadata = { version = "0.14.0", default-features = false }
 	ignore = "0.4.18"
 	phf_codegen = "0.10.0"
 	sha2 = "0.9.5"
