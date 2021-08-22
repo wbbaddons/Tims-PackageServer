@@ -406,6 +406,8 @@
 	</xsl:template>
 
 	<xsl:template name="dateTime">
+		<!-- https://stackoverflow.com/a/58145572 -->
+
 		<xsl:param name="unixTime" />
 
 		<xsl:variable name="JDN" select="floor($unixTime div 86400) + 2440588" />
