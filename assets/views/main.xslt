@@ -104,7 +104,7 @@
 							</div>
 						</nav>
 
-						<div id="main-content" class="container-fluid p-3 overflow-auto" data-bs-spy="scroll" data-bs-target="#sidebar" data-bs-offset="160">
+						<div id="main-content" class="container-fluid p-3 overflow-auto" data-bs-target="#sidebar" data-bs-offset="20">
 							<div id="no-results" class="card border-warning mb-3 d-none">
 								<div class="card-header bg-warning text-dark">{{ fluent!(self.lang, "no-results-heading") }}</div>
 								<div class="card-body">
