@@ -21,9 +21,10 @@ use once_cell::sync::Lazy;
 use regex::{Regex, RegexBuilder};
 use std::{convert::TryFrom, fmt::Display};
 use unic_langid::LanguageIdentifier;
+use url::Url;
 
 static LICENSE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    RegexBuilder::new(r#"^(.*?)(?:\s<(https?://.*)>)?$"#)
+    RegexBuilder::new(r#"^(.*?)(?:\s*(?:<(https?://.*)>)|(https?://.*))?$"#)
         .case_insensitive(true)
         .build()
         .unwrap()
@@ -69,13 +70,16 @@ impl TryFrom<&str> for License {
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let caps = LICENSE_REGEX.captures(s).ok_or("Failed to match license")?;
 
+        let url = caps
+            .get(2)
+            .or_else(|| caps.get(3))
+            .and_then(|url| url.as_str().parse::<Url>().ok());
+
         let mut value = caps
             .get(1)
-            .ok_or("No license text found")?
-            .as_str()
-            .to_owned();
-
-        let url = caps.get(2).and_then(|url| url.as_str().parse().ok());
+            .map(|m| m.as_str().to_owned())
+            .or_else(|| url.as_ref().map(|url| url.to_string()))
+            .ok_or("No license text found")?;
 
         if value.is_empty() && url.is_none() {
             return Err("No license information found".into());
