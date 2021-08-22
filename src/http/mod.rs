@@ -25,7 +25,7 @@ use crate::SETTINGS;
 use actix_web::{middleware, App, HttpServer};
 use helpers::{get_auth_info, is_accessible, redirect, RedirectType};
 use routes::{
-    assets, download, favicon, health, login, main_xslt, package_update_xml, source_code,
+    about, assets, download, favicon, health, login, main_xslt, package_update_xml, source_code,
 };
 
 pub async fn run() -> crate::Result<()> {
@@ -49,6 +49,7 @@ pub async fn run() -> crate::Result<()> {
             .service(assets)
             .service(source_code())
             .service(favicon)
+            .service(about)
             .service(login())
             .service(package_update_xml())
     })

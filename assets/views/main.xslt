@@ -1,71 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:ns="http://www.woltlab.com" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-	<xsl:output method="html" encoding="UTF-8" doctype-system="about:legacy-compat"/>
+<xsl:stylesheet xmlns:ns="http://www.woltlab.com" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:svg="http://www.w3.org/2000/svg" version="1.0">
+	<xsl:output method="html" encoding="UTF-8" doctype-system="about:legacy-compat" />
 
 	<xsl:template match="/">
 		<html>
 			<head>
 				<meta charset="utf-8" />
-				<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-				<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' integrity='{{ self.sri("static/favicon.ico")|safe }}' />
 				<link rel="stylesheet" href='{{ self.asset("static/bootstrap.min.css")|safe }}' integrity='{{ self.sri("static/bootstrap.min.css")|safe }}' />
-
-				<style>
-					body {
-						position: relative;
-					}
-
-					#main, .sidebar {
-						margin-top: 50px;
-					}
-
-					#main {
-						padding: 40px 15px;
-					}
-
-					.main > .row {
-						poisition: relative;
-					}
-
-					#sidebarNav {
-						padding-top: 40px;
-						padding-bottom: 40px;
-					}
-
-					.sidebar {
-						overflow-y: auto;
-						position: fixed;
-						top: 0;
-						left: 0;
-						bottom: 0;
-					}
-
-					.jsOnly {
-						display: none;
-					}
-
-					a.authorURL {
-						text-decoration: underline;
-					}
-
-					a.authorURL:hover {
-						text-decoration: none;
-					}
-
-					#noResults {
-						display: none;
-					}
-
-					/* http://nicolasgallagher.com/jump-links-and-viewport-positioning/demo/#method-C */
-					.anchorFix {
-						padding-top: 60px;
-						margin-top: -60px;
-						-webkit-background-clip: content-box;
-						background-clip: content-box;
-					}
-				</style>
+				<link rel="stylesheet" href='{{ self.asset("static/main.css")|safe }}' integrity='{{ self.sri("static/main.css")|safe }}' />
+				<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' integrity='{{ self.sri("static/favicon.ico")|safe }}' />
 
 				<title>
 					{%- if title.is_some() -%}
@@ -76,414 +21,360 @@
 				</title>
 			</head>
 			<body>
-				<div class="navbar navbar-inverse navbar-fixed-top hidden-print" role="navigation">
-					<div class="container-fluid">
-						<div class="navbar-header">
-							<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
-								<span class="sr-only">Toggle navigation</span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-							</button>
-							<a class="navbar-brand" href="#">
-								{%- if title.is_some() -%}
-									{{- title.as_ref().unwrap() -}}
-								{%- else -%}
-									{{- fluent!(self.lang, "product-name") -}}
-								{%- endif -%}
-							</a>
-						</div>
-						<div class="navbar-collapse collapse">
-							{%- if auth_info.username.is_some() -%}
-								<p class="navbar-text">
-									{{ fluent!(self.lang, "signed-in-as", { self.auth_info.username }) }}
-								</p>
-							{%- else -%}
-								<a href="{{ host|safe }}/login"><button type="button" class="btn btn-default navbar-btn">{{ fluent!(self.lang, "sign-in") }}</button></a>
-							{%- endif -%}
-
-							<ul class="nav navbar-nav navbar-right">
-								<li><a href="{{ fluent!(self.lang, "github-url") }}">
-									{{- fluent!(self.lang, "code-on-github") -}}
-								</a></li>
-							</ul>
-
-							<div class="navbar-form navbar-right jsOnly">
-								<input id="search" type="text" class="form-control" maxlength="32" placeholder="{{ fluent!(self.lang, "search-placeholder") }}" />
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="main container-fluid">
-					<div class="row">
-						<div class="col-md-2 sidebar hidden-xs hidden-sm hidden-print">
-							<div id="sidebarNav">
-								<ul class="nav nav-pills nav-stacked">
-									<xsl:for-each select="ns:section/ns:package">
-										<xsl:sort select="ns:packageinformation/ns:packagename" />
-
-										<li class="jsPackage">
-											<xsl:attribute name="id">nav-<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
-
-											<a>
-												<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
-
-												<xsl:value-of select="./ns:packageinformation/ns:packagename" />
-											</a>
-										</li>
-									</xsl:for-each>
-								</ul>
-							</div>
+				<div id="main-grid">
+					<aside id="sidebar" class="text-white bg-dark p-3 d-none d-md-grid">
+						<div>
+							<span class="d-flex flex-column align-items-center mb-3 mb-md-0 me-md-auto fs-4">
+								<a class="link-light text-decoration-none" href="{{ host|safe }}">
+									<span class="d-flex align-items-center">
+										<img src='{{ self.asset("favicon.ico")|safe }}' alt="" width="32" height="32" class="me-2" />
+										{%- if title.is_some() -%}
+											{{- title.as_ref().unwrap() -}}
+										{%- else -%}
+											{{- fluent!(self.lang, "product-name") -}}
+										{%- endif -%}
+									</span>
+								</a>
+							</span>
+							<hr />
 						</div>
 
-						<div id="main" class="col-md-10 col-md-offset-2" role="main">
+						<ul id="sidebar-nav" class="nav nav-pills flex-column flex-nowrap overflow-auto">
 							<xsl:for-each select="ns:section/ns:package">
 								<xsl:sort select="ns:packageinformation/ns:packagename" />
 
-								<div class="jsPackage anchorFix">
+								<li class="package">
+									<xsl:attribute name="id">nav-<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+
+									<a class="nav-link link-light">
+										<xsl:attribute name="href">#<xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
+
+										<xsl:value-of select="./ns:packageinformation/ns:packagename" />
+									</a>
+								</li>
+							</xsl:for-each>
+						</ul>
+					</aside>
+
+					<main id="main">
+						<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+							<div class="container-fluid">
+								<a class="navbar-brand d-md-none" href="{{ host|safe }}">
+									<img src='{{ self.asset("favicon.ico")|safe }}' alt="" width="24" height="24" class="me-2 d-inline-block align-text-top" />
+									{%- if title.is_some() -%}
+										{{- title.as_ref().unwrap() -}}
+									{%- else -%}
+										{{- fluent!(self.lang, "product-name") -}}
+									{%- endif -%}
+								</a>
+
+								<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label='{{ fluent!(self.lang, "toggle-navigation") }}'>
+									<span class="navbar-toggler-icon"></span>
+								</button>
+
+								<div class="collapse navbar-collapse" id="navbarContent">
+									{%- if auth_info.username.is_some() -%}
+										<span class="navbar-text me-auto mb-2 mb-lg-0">
+											{{ fluent!(self.lang, "signed-in-as", { self.auth_info.username }) }}
+										</span>
+									{%- else -%}
+										<a class="btn btn-primary me-auto mb-2 mb-lg-0" href="{{ host|safe }}/login">
+											<svg:svg alt="" width="24" height="24" class="bi me-1" fill="currentColor">
+												<svg:use href='{{ self.asset("static/icons.svg")|safe }}#box-arrow-in-right' />
+											</svg:svg>
+											{{ fluent!(self.lang, "sign-in") }}
+										</a>
+									{%- endif -%}
+
+									<form class="d-flex mb-2 mb-lg-0">
+										<input id="search" class="form-control me-2" type="search" maxlength="32" placeholder='{{ fluent!(self.lang, "search-placeholder") }}' aria-label='{{ fluent!(self.lang, "search-placeholder") }}' />
+									</form>
+
+									<ul class="navbar-nav">
+										<li class="nav-item">
+											<a class="nav-link" href='{{ fluent!(self.lang, "github-url") }}'>
+												<svg:svg alt="" width="24" height="24" class="bi me-2" fill="currentColor">
+													<svg:use href='{{ self.asset("static/icons.svg")|safe }}#github' />
+												</svg:svg>
+												{{- fluent!(self.lang, "code-on-github") -}}
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</nav>
+
+						<div id="main-content" class="container-fluid p-3 overflow-auto" data-bs-spy="scroll" data-bs-target="#sidebar" data-bs-offset="160">
+							<div id="no-results" class="card border-warning mb-3 d-none">
+								<div class="card-header bg-warning text-dark">{{ fluent!(self.lang, "no-results-heading") }}</div>
+								<div class="card-body">
+									{{ fluent!(self.lang, "no-results-body") }}
+								</div>
+							</div>
+
+							<xsl:for-each select="ns:section/ns:package">
+								<xsl:sort select="ns:packageinformation/ns:packagename" />
+
+								<div class="anchor-fix package">
 									<xsl:attribute name="id"><xsl:value-of select="translate(@name, '.', '-')" /></xsl:attribute>
 
-									<div class="panel panel-default packagePanel">
+									<div class="card mb-3">
 										<xsl:if test="ns:packageinformation/ns:isapplication='1'">
-											<xsl:attribute name="class">panel panel-primary packagePanel</xsl:attribute>
+											<xsl:attribute name="class">card mb-2 border-primary</xsl:attribute>
 										</xsl:if>
 
-										<div class="panel-heading">
-											<h3 class="panel-title">
-												<xsl:value-of select="ns:packageinformation/ns:packagename" /> (<xsl:value-of select="@name" />)
+										<div class="card-header">
+											<xsl:if test="ns:packageinformation/ns:isapplication='1'">
+												<xsl:attribute name="class">text-white card-header bg-primary</xsl:attribute>
 
-												<xsl:if test="ns:authorinformation">
-													<xsl:choose>
-														<xsl:when test="ns:authorinformation/ns:authorurl">
-															{{ fluent!(self.lang, "by") }}
-															<a class="authorURL">
-																<xsl:attribute name="href"><xsl:value-of select="ns:authorinformation/ns:authorurl" /></xsl:attribute>
+												<svg:svg data-bs-toggle="tooltip" title='{{ fluent!(self.lang, "is-application") }}' alt='{{ fluent!(self.lang, "is-application") }}' width="24" height="24" class="bi me-2" fill="currentColor">
+													<svg:use href='{{ self.asset("static/icons.svg")|safe }}#stack' />
+												</svg:svg>
+											</xsl:if>
 
-																<xsl:choose>
-																	<xsl:when test="ns:authorinformation/ns:author">
-																		<xsl:value-of select="ns:authorinformation/ns:author" />
-																	</xsl:when>
-																	<xsl:otherwise>
-																		<xsl:value-of select="ns:authorinformation/ns:authorurl" />
-																	</xsl:otherwise>
-																</xsl:choose>
-															</a>
-														</xsl:when>
-														<xsl:otherwise>
-															<xsl:if test="ns:authorinformation/ns:author">
-																{{ fluent!(self.lang, "by") }} <xsl:value-of select="ns:authorinformation/ns:author" />
+											<xsl:value-of select="ns:packageinformation/ns:packagename" /> (<xsl:value-of select="@name" />)
+
+											<xsl:if test="ns:authorinformation">
+												<xsl:choose>
+													<xsl:when test="ns:authorinformation/ns:authorurl">
+														{{ fluent!(self.lang, "by") }}
+														<a>
+															<xsl:if test="ns:packageinformation/ns:isapplication='1'">
+																<xsl:attribute name="class">link-light</xsl:attribute>
 															</xsl:if>
-														</xsl:otherwise>
-													</xsl:choose>
-												</xsl:if>
-											</h3>
+
+															<xsl:attribute name="href"><xsl:value-of select="ns:authorinformation/ns:authorurl" /></xsl:attribute>
+
+															<xsl:choose>
+																<xsl:when test="ns:authorinformation/ns:author">
+																	<xsl:value-of select="ns:authorinformation/ns:author" />
+																</xsl:when>
+																<xsl:otherwise>
+																	<xsl:value-of select="ns:authorinformation/ns:authorurl" />
+																</xsl:otherwise>
+															</xsl:choose>
+														</a>
+													</xsl:when>
+													<xsl:otherwise>
+														<xsl:if test="ns:authorinformation/ns:author">
+															{{ fluent!(self.lang, "by") }} <xsl:value-of select="ns:authorinformation/ns:author" />
+														</xsl:if>
+													</xsl:otherwise>
+												</xsl:choose>
+											</xsl:if>
 										</div>
-										<xsl:if test="ns:packageinformation/ns:packagedescription!=''">
-											<div class="panel-body">
-												<xsl:value-of select="ns:packageinformation/ns:packagedescription" />
-											</div>
-										</xsl:if>
-										<div class="table-responsive">
-											<table class="table table-striped">
-												<thead>
-													<tr>
-														<th class="col-md-2">{{ fluent!(self.lang, "version") }}</th>
-														<th class="col-md-4">{{ fluent!(self.lang, "license") }}</th>
-														<th class="col-md-4">{{ fluent!(self.lang, "required-packages") }}</th>
-														<th class="col-md-2 jsOnly">{{ fluent!(self.lang, "last-modified") }}</th>
-													</tr>
-												</thead>
-												<tbody>
-													<xsl:for-each select="ns:versions/ns:version">
-														<xsl:sort select="position()" data-type="number" order="descending" />
 
+										<div class="card-body">
+											<xsl:if test="ns:packageinformation/ns:packagedescription!=''">
+												<p class="card-text">
+													<xsl:value-of select="ns:packageinformation/ns:packagedescription" />
+												</p>
+											</xsl:if>
+
+											<div class="table-responsive">
+												<table class="table table-striped">
+													<xsl:variable name="has-optionals" select="boolean(ns:versions/ns:version/ns:optionalpackages/ns:optionalpackage)" />
+													<thead>
 														<tr>
-															<td>
-																<!-- Latest version anchor -->
-																<xsl:if test="position()=1">
-																	<span class="anchorFix">
-																		<xsl:attribute name="id"><xsl:value-of select="translate(translate(../../@name, ' ', '-'), '.', '-')" />-latest</xsl:attribute>
-																	</span>
-																</xsl:if>
+															<th scope="col" class="col-md-2">{{ fluent!(self.lang, "version") }}</th>
+															<th scope="col" class="col-md-4">{{ fluent!(self.lang, "license") }}</th>
+															<th scope="col">
+																<xsl:attribute name="class">
+																	<xsl:choose>
+																		<xsl:when test="$has-optionals">col-md-2</xsl:when>
+																		<xsl:otherwise>col-md-4</xsl:otherwise>
+																	</xsl:choose>
+																</xsl:attribute>
+																{{- fluent!(self.lang, "required-packages") -}}
+															</th>
 
-																<!-- Version anchor -->
-																<span class="anchorFix">
-																	<xsl:attribute name="id"><xsl:value-of select="translate(translate(../../@name, ' ', '-'), '.', '-')" />-<xsl:value-of select="translate(translate(@name, ' ', '-'), '.', '-')" /></xsl:attribute>
-																</span>
+															<xsl:if test="$has-optionals">
+																<th scope="col" class="col-md-2">{{ fluent!(self.lang, "optional-packages") }}</th>
+															</xsl:if>
 
-																<xsl:choose>
-																	<xsl:when test="@accessible='true'">
-																		<a>
-																			<xsl:attribute name="href"><xsl:value-of select="ns:file" /></xsl:attribute>
-
-																			<xsl:value-of select="@name" />
-																		</a>
-																	</xsl:when>
-																	<xsl:otherwise>
-																		<xsl:value-of select="@name" />
-																	</xsl:otherwise>
-																</xsl:choose>
-															</td>
-															<td>
-																<xsl:choose>
-																	<xsl:when test="ns:license">
-																		<xsl:choose>
-																			<xsl:when test="ns:license/@url">
-																				<a>
-																					<xsl:attribute name="href"><xsl:value-of select="ns:license/@url" /></xsl:attribute>
-																					<xsl:value-of select="ns:license" />
-																				</a>
-																			</xsl:when>
-																			<xsl:otherwise>
-																				<xsl:value-of select="ns:license" />
-																			</xsl:otherwise>
-																		</xsl:choose>
-																	</xsl:when>
-																	<xsl:otherwise>{{ fluent!(self.lang, "no-license-information") }}</xsl:otherwise>
-																</xsl:choose>
-															</td>
-															<td>
-																<xsl:choose>
-																	<xsl:when test="ns:requiredpackages/ns:requiredpackage">
-																		<ul>
-																			<xsl:for-each select="ns:requiredpackages/ns:requiredpackage">
-																				<xsl:choose>
-																					<xsl:when test="/ns:section/ns:package[@name=current()]">
-																						<li>
-																							<a>
-																								<xsl:attribute name="href">
-																									#<xsl:value-of select="translate(., '.', '-')" />
-																								</xsl:attribute>
-
-																								<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
-																							</a>
-																						</li>
-																					</xsl:when>
-																					<xsl:otherwise>
-																						<li>
-																							<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
-																						</li>
-																					</xsl:otherwise>
-																				</xsl:choose>
-																			</xsl:for-each>
-																		</ul>
-																	</xsl:when>
-																	<xsl:otherwise>{{ fluent!(self.lang, "no-requirements") }}</xsl:otherwise>
-																</xsl:choose>
-															</td>
-															<td class="jsOnly">
-																<time>
-																	<xsl:value-of select="ns:timestamp" />
-																</time>
-															</td>
+															<th scope="col" class="col-md-2">{{ fluent!(self.lang, "last-modified") }}</th>
 														</tr>
-													</xsl:for-each>
-												</tbody>
-											</table>
+													</thead>
+													<tbody>
+														<xsl:for-each select="ns:versions/ns:version">
+															<xsl:sort select="position()" data-type="number" order="descending" />
+
+															<tr>
+																<th scope="row">
+																	<!-- Latest version anchor -->
+																	<xsl:if test="position()=1">
+																		<span class="anchor-fix">
+																			<xsl:attribute name="id"><xsl:value-of select="translate(translate(../../@name, ' ', '-'), '.', '-')" />-latest</xsl:attribute>
+																		</span>
+																	</xsl:if>
+
+																	<!-- Version anchor -->
+																	<span class="anchor-fix">
+																		<xsl:attribute name="id"><xsl:value-of select="translate(translate(../../@name, ' ', '-'), '.', '-')" />-<xsl:value-of select="translate(translate(@name, ' ', '-'), '.', '-')" /></xsl:attribute>
+																	</span>
+
+																	<xsl:choose>
+																		<xsl:when test="@accessible='true'">
+																			<a>
+																				<xsl:attribute name="href"><xsl:value-of select="ns:file" /></xsl:attribute>
+
+																				<xsl:value-of select="@name" />
+																			</a>
+																		</xsl:when>
+																		<xsl:otherwise>
+																			<xsl:value-of select="@name" />
+																		</xsl:otherwise>
+																	</xsl:choose>
+																</th>
+																<td>
+																	<xsl:choose>
+																		<xsl:when test="ns:license">
+																			<xsl:choose>
+																				<xsl:when test="ns:license/@url">
+																					<a>
+																						<xsl:attribute name="href"><xsl:value-of select="ns:license/@url" /></xsl:attribute>
+																						<xsl:value-of select="ns:license" />
+																					</a>
+																				</xsl:when>
+																				<xsl:otherwise>
+																					<xsl:value-of select="ns:license" />
+																				</xsl:otherwise>
+																			</xsl:choose>
+																		</xsl:when>
+																		<xsl:otherwise>{{ fluent!(self.lang, "no-license-information") }}</xsl:otherwise>
+																	</xsl:choose>
+																</td>
+																<td>
+																	<xsl:choose>
+																		<xsl:when test="ns:requiredpackages/ns:requiredpackage">
+																			<ul>
+																				<xsl:for-each select="ns:requiredpackages/ns:requiredpackage">
+																					<xsl:choose>
+																						<xsl:when test="/ns:section/ns:package[@name=current()]">
+																							<li>
+																								<a>
+																									<xsl:attribute name="href">
+																										#<xsl:value-of select="translate(., '.', '-')" />
+																									</xsl:attribute>
+
+																									<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
+																								</a>
+																							</li>
+																						</xsl:when>
+																						<xsl:otherwise>
+																							<li>
+																								<xsl:value-of select="." /> (<xsl:value-of select="@minversion" />)
+																							</li>
+																						</xsl:otherwise>
+																					</xsl:choose>
+																				</xsl:for-each>
+																			</ul>
+																		</xsl:when>
+																		<xsl:otherwise>{{ fluent!(self.lang, "no-requirements") }}</xsl:otherwise>
+																	</xsl:choose>
+																</td>
+
+																<xsl:choose>
+																	<xsl:when test="ns:optionalpackages/ns:optionalpackage">
+																		<td>
+																			<ul>
+																				<xsl:for-each select="ns:optionalpackages/ns:optionalpackage">
+																					<xsl:choose>
+																						<xsl:when test="/ns:section/ns:package[@name=current()]">
+																							<li>
+																								<a>
+																									<xsl:attribute name="href">
+																										#<xsl:value-of select="translate(., '.', '-')" />
+																									</xsl:attribute>
+
+																									<xsl:value-of select="." />
+																								</a>
+																							</li>
+																						</xsl:when>
+																						<xsl:otherwise>
+																							<li>
+																								<xsl:value-of select="." />
+																							</li>
+																						</xsl:otherwise>
+																					</xsl:choose>
+																				</xsl:for-each>
+																			</ul>
+																		</td>
+																	</xsl:when>
+
+																	<xsl:when test="$has-optionals">
+																		<td></td>
+																	</xsl:when>
+
+																	<xsl:otherwise></xsl:otherwise>
+																</xsl:choose>
+
+																<td>
+																	<time>
+																		<xsl:attribute name="data-timestamp">
+																			<xsl:value-of select="ns:timestamp" />
+																		</xsl:attribute>
+
+																		<xsl:attribute name="datetime">
+																			<xsl:call-template name="dateTime">
+																				<xsl:with-param name="unixTime" select="ns:timestamp" />
+																			</xsl:call-template>
+																		</xsl:attribute>
+
+																		<xsl:call-template name="dateTime">
+																			<xsl:with-param name="unixTime" select="ns:timestamp" />
+																		</xsl:call-template>
+																	</time>
+																</td>
+															</tr>
+														</xsl:for-each>
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 								</div>
 							</xsl:for-each>
 
-							<div id="noResults" class="panel panel-warning">
-								<div class="panel-heading">{{ fluent!(self.lang, "no-results-heading") }}</div>
-								<div class="panel-body">
-									{{ fluent!(self.lang, "no-results-body") }}
-								</div>
-							</div>
-
-							<div id="timsPackageServerLicenseInfo" class="anchorFix">
-								<div class="panel panel-default">
-									<div class="panel-body">
+							<div id="license-info" class="anchor-fix">
+								<div class="card">
+									<div class="card-body">
 										<p>{{ fluent!(self.lang, "presented-by", { self.server_version })|safe }}</p>
 										<p>{{ fluent!(self.lang, "license-terms")|safe }}</p>
 										<p>{{ fluent!(self.lang, "source-code-url")|safe }}</p>
-										<p>
-											{{ fluent!(self.lang, "made-possible-by") }} <button data-toggle="collapse" data-target="#licenseInfo">{{ fluent!(self.lang, "show") }}</button>
-											<div id="licenseInfo" class="collapse" style="margin-top: 10px">
-												<table class="table table-striped table-bordered table-hover table-condensed">
-													<thead>
-														<tr>
-															<th>{{ fluent!(self.lang, "name") }}</th>
-															<th>{{ fluent!(self.lang, "version") }}</th>
-															<th>{{ fluent!(self.lang, "license") }}</th>
-															<th>{{ fluent!(self.lang, "authors") }}</th>
-														</tr>
-													</thead>
-													<tbody>
-														{% for lib in license_info %}
-															<tr>
-																<td><a href="https://crates.io/crates/{{ lib.0 }}/{{ lib.1 }}">{{ lib.0 }}</a></td>
-																<td>{{ lib.1 }}</td>
-																<td>{{ lib.2 }}</td>
-																<td>
-																	{% for author in lib.3 %}
-																		{{ author }}<br />
-																	{% endfor %}
-																</td>
-															</tr>
-														{% endfor %}
-													</tbody>
-												</table>
-											</div>
-										</p>
+										<p>{{ fluent!(self.lang, "third-party-info")|safe }}</p>
 									</div>
 								</div>
 							</div>
 						</div>
-					</div>
+					</main>
 				</div>
 
-				<script src='{{ self.asset("static/jquery.min.js")|safe }}' integrity='{{ self.sri("static/jquery.min.js")|safe }}'></script>
-				<script src='{{ self.asset("static/moment-with-locales.min.js")|safe }}' integrity='{{ self.sri("static/moment-with-locales.min.js")|safe }}'></script>
-				<script src='{{ self.asset("static/bootstrap.min.js")|safe }}' integrity='{{ self.sri("static/bootstrap.min.js")|safe }}'></script>
 				<script src='{{ self.asset("static/fuse.min.js")|safe }}' integrity='{{ self.sri("static/fuse.min.js")|safe }}'></script>
+				<script src='{{ self.asset("static/bootstrap.bundle.min.js")|safe }}' integrity='{{ self.sri("static/bootstrap.bundle.min.js")|safe }}'></script>
 
 				<script>
-					window.packageSearch = [
+					window.TPS_packages = [
 						<xsl:for-each select="ns:section/ns:package">
 							{
 								id: '<xsl:value-of select="@name" />',
 								name: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:packageinformation/ns:packagename" /></xsl:call-template>',
 								description: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:packageinformation/ns:packagedescription" /></xsl:call-template>',
 								author: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:authorinformation/ns:author" /></xsl:call-template>',
-								authorURL: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:authorinformation/ns:authorurl" /></xsl:call-template>'
+								authorURL: '<xsl:call-template name="escapeQuotes"><xsl:with-param name="txt" select="ns:authorinformation/ns:authorurl" /></xsl:call-template>',
+								versions: [
+									<xsl:for-each select="ns:versions/ns:version">
+										<xsl:sort select="position()" data-type="number" order="descending" />
+
+										'<xsl:value-of select="@name" />',
+									</xsl:for-each>
+								]
 							},
 						</xsl:for-each>
 					];
 				</script>
 
-				<script>
-					$(document).ready(function () {
-						var fuse = new Fuse(packageSearch, {
-							keys: ['name', 'description'],
-							includeScore: true,
-							threshold: 0.5,
-							distance: 100
-						});
-
-						window.packageSearch = null; // Free some memory, hopefully
-
-						requestAnimationFrame = (function() {
-							if ("requestAnimationFrame" in window) {
-								return window.requestAnimationFrame;
-							}
-							else {
-								return function(call) {
-									if (typeof call === 'function') {
-										call();
-									}
-								}
-							}
-						})();
-
-						(function(window) {
-							var defaultOrder = (function() {
-								var list = [];
-
-								$('#main .jsPackage').each(function() {
-									list.push($(this).attr('id'));
-								});
-
-								return list;
-							})();
-
-							var sortDOMElements = function(container, selector, order) {
-								order = order || defaultOrder;
-
-								var elements = [];
-
-								$.each(order, function(index, value) {
-									elements.push($(selector + value));
-								});
-
-								container.prepend(elements);
-							};
-
-							_doSearch = function(value) {
-								value = value.substr(0, 32);
-
-								if (!value.length) {
-									sortDOMElements($('#main'), '#');
-									sortDOMElements($('#sidebarNav > ul'), '#nav-');
-
-									$('.jsPackage').show();
-									$('#noResults').hide();
-
-									$('body').scrollspy('refresh');
-									$('body').trigger('scroll');
-
-									return;
-								}
-
-								var results = fuse.search(value);
-
-								results = results.map(function(v, k, a) {
-									return v.item.id.replace(/\./g, '-');
-								});
-
-								if (results.length) {
-									$('.jsPackage').hide();
-
-									sortDOMElements($('#main'), '#', results);
-									sortDOMElements($('#sidebarNav > ul'), '#nav-', results);
-
-									$('#' + results.join(', #')).show();
-									$('#nav-' + results.join(', #nav-')).show();
-
-									$('#noResults').hide();
-								}
-								else {
-									$('.jsPackage').hide();
-									$('#noResults').show();
-								}
-
-								$('body').scrollspy('refresh');
-								$('body').trigger('scroll');
-							};
-
-							window.doSearch = function(value) {
-								requestAnimationFrame(function() {
-									_doSearch(value, false);
-									$(window).scrollTop(0);
-								});
-							};
-						})(window);
-
-						$('#search').on('input change', function() {
-							doSearch($(this).val());
-						});
-
-						moment.locale(window.navigator.userLanguage || window.navigator.language);
-
-						$('time').each(function(k, v) {
-							$(v).html(moment.unix($(v).text()).format('LL'));
-						});
-
-						$('.jsOnly').show();
-
-						$('body').scrollspy({
-							target: "#sidebarNav",
-							offset: 50
-						});
-
-						var sidebar = $('#sidebarNav').parent();
-
-						$('ul.nav li').on('activate.bs.scrollspy', function () {
-							siblingsHeight = (function() {
-								height = 0;
-								$(this).prevAll().each(function(k, v) {
-									height += $(v).outerHeight(true);
-								});
-
-								return height;
-							}).call(this);
-
-							sidebar.scrollTop(siblingsHeight);
-						});
-					});
-				</script>
+				<script src='{{ self.asset("static/main.js")|safe }}' integrity='{{ self.sri("static/main.js")|safe }}'></script>
 			</body>
 		</html>
 	</xsl:template>
@@ -491,7 +382,7 @@
 	<xsl:template name="escapeQuotes">
 		<!-- http://mac-blog.org.ua/xslt-escape-single-quotes/ -->
 
-		<xsl:param name="txt"/>
+		<xsl:param name="txt" />
 		<xsl:variable name="backSlashQuote">&#92;&#39;</xsl:variable>
 		<xsl:variable name="singleQuote">&#39;</xsl:variable>
 
@@ -501,16 +392,52 @@
 			</xsl:when>
 
 			<xsl:when test="contains($txt, $singleQuote)">
-				<xsl:value-of disable-output-escaping="yes" select="concat(substring-before($txt, $singleQuote), $backSlashQuote)"/>
+				<xsl:value-of disable-output-escaping="yes" select="concat(substring-before($txt, $singleQuote), $backSlashQuote)" />
 
 				<xsl:call-template name="escapeQuotes">
-					<xsl:with-param name="txt" select="substring-after($txt, $singleQuote)"/>
+					<xsl:with-param name="txt" select="substring-after($txt, $singleQuote)" />
 				</xsl:call-template>
 			</xsl:when>
 
 			<xsl:otherwise>
-				<xsl:value-of disable-output-escaping="yes" select="$txt"/>
+				<xsl:value-of disable-output-escaping="yes" select="$txt" />
 			</xsl:otherwise>
 		</xsl:choose>
+	</xsl:template>
+
+	<xsl:template name="dateTime">
+		<xsl:param name="unixTime" />
+
+		<xsl:variable name="JDN" select="floor($unixTime div 86400) + 2440588" />
+		<xsl:variable name="secs" select="$unixTime mod 86400" />
+
+		<xsl:variable name="f" select="$JDN + 1401 + floor((floor((4 * $JDN + 274277) div 146097) * 3) div 4) - 38" />
+		<xsl:variable name="e" select="4*$f + 3" />
+		<xsl:variable name="g" select="floor(($e mod 1461) div 4)" />
+		<xsl:variable name="h" select="5*$g + 2" />
+
+		<xsl:variable name="d" select="floor(($h mod 153) div 5 ) + 1" />
+		<xsl:variable name="m" select="(floor($h div 153) + 2) mod 12 + 1" />
+		<xsl:variable name="y" select="floor($e div 1461) - 4716 + floor((14 - $m) div 12)" />
+
+		<xsl:variable name="H" select="floor($secs div 3600)" />
+		<xsl:variable name="M" select="floor($secs mod 3600 div 60)" />
+		<xsl:variable name="S" select="$secs mod 60" />
+
+		<xsl:variable name="out">
+			<xsl:value-of select="$y" />
+			<xsl:text>-</xsl:text>
+			<xsl:value-of select="format-number($m, '00')" />
+			<xsl:text>-</xsl:text>
+			<xsl:value-of select="format-number($d, '00')" />
+			<xsl:text>T</xsl:text>
+			<xsl:value-of select="format-number($H, '00')" />
+			<xsl:text>:</xsl:text>
+			<xsl:value-of select="format-number($M, '00')" />
+			<xsl:text>:</xsl:text>
+			<xsl:value-of select="format-number($S, '00')" />Z
+		</xsl:variable>
+
+		<xsl:value-of select="normalize-space($out)" />
 	</xsl:template>
 </xsl:stylesheet>

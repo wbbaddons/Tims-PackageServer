@@ -25,6 +25,25 @@ use askama_actix::Template;
 use std::sync::Arc;
 use unic_langid::LanguageIdentifier;
 
+trait Assets {
+    fn get_host(&self) -> &str;
+
+    fn asset(&self, name: &str) -> String {
+        format!("{}/{}", self.get_host(), name)
+    }
+
+    fn sri(&self, name: &str) -> &'static str {
+        crate::SOURCE_FILES
+            .get(format!("assets/{}", name).as_str())
+            .map_or(
+                // https://w3c.github.io/webappsec-subresource-integrity/#the-integrity-attribute
+                // > The value of the attribute MUST be either the empty string, or at least one valid metadata
+                "",
+                |source_file| source_file.sha384_digest,
+            )
+    }
+}
+
 #[derive(Template)]
 #[template(path = "main.xslt", escape = "xml")]
 pub struct MainTemplate {
@@ -37,20 +56,9 @@ pub struct MainTemplate {
     pub auth_info: AuthInfo,
 }
 
-impl MainTemplate {
-    fn asset(&self, name: &str) -> String {
-        format!("{}/{}", self.host, name)
-    }
-
-    fn sri(&self, name: &str) -> &'static str {
-        crate::SOURCE_FILES
-            .get(format!("assets/{}", name).as_str())
-            .map_or(
-                // https://w3c.github.io/webappsec-subresource-integrity/#the-integrity-attribute
-                // > The value of the attribute MUST be either the empty string, or at least one valid metadata
-                "",
-                |source_file| source_file.sha384_digest,
-            )
+impl Assets for MainTemplate {
+    fn get_host(&self) -> &str {
+        &self.host
     }
 }
 
@@ -68,6 +76,22 @@ pub struct PackageUpdateXmlTemplate {
     pub deterministic: bool,
     pub uptime: std::time::Duration,
     pub start_time: std::time::Instant,
+}
+
+#[derive(Template)]
+#[template(path = "about.html")]
+pub struct AboutTemplate {
+    pub host: String,
+    pub server_version: String,
+    pub title: Option<&'static String>,
+    pub license_info: LicenseInfo,
+    pub lang: String,
+}
+
+impl Assets for AboutTemplate {
+    fn get_host(&self) -> &str {
+        &self.host
+    }
 }
 
 #[derive(Template)]

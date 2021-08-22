@@ -16,20 +16,24 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-mod about;
-mod assets;
-mod download;
-mod health;
-mod login;
-mod main_xslt;
-mod package_update_xml;
-mod source_code;
+use crate::{
+    http::{
+        header::{Host, Language},
+        SETTINGS,
+    },
+    templates::AboutTemplate,
+    LICENSE_INFO,
+};
+use actix_web::{get, http::header::VARY, Responder};
 
-pub use about::*;
-pub use assets::*;
-pub use download::*;
-pub use health::*;
-pub use login::*;
-pub use main_xslt::*;
-pub use package_update_xml::*;
-pub use source_code::*;
+#[get("/about/")]
+pub async fn about(language: Language, host: Host) -> impl Responder {
+    AboutTemplate {
+        host: host.clone(),
+        server_version: crate::built_info::version(),
+        title: SETTINGS.page_title.as_ref(),
+        license_info: LICENSE_INFO,
+        lang: language.to_string(),
+    }
+    .with_header(VARY, "accept-language")
+}

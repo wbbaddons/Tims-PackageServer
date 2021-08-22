@@ -1,0 +1,34 @@
+.anchor-fix {
+	padding-top: calc(1rem + 60px);
+	margin-top: calc(-1rem - 60px);
+}
+
+.bi {
+	display: inline-block;
+	vertical-align: bottom;
+}
+
+#main-grid {
+	display: grid;
+	grid-template-areas: "sidebar main";
+	grid-template-columns: 20rem auto;
+	grid-template-rows: 100vh;
+}
+
+#sidebar {
+	grid-area: sidebar;
+	position: relative;
+	grid-template-rows: min-content auto;
+}
+
+#main {
+	display: grid;
+	grid-area: main / sidebar / sidebar / main;
+	grid-template-rows: min-content auto;
+}
+
+@media (min-width: 768px) {
+	#main {
+		grid-area: main;
+	}
+}
