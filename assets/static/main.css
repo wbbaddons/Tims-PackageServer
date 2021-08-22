@@ -55,3 +55,7 @@
 .navbar-dark .navbar-nav .nav-link:hover {
 	color: #fff;
 }
+
+.package:target > .card {
+	border-color: #198754 !important;
+}
