@@ -164,19 +164,19 @@
 											</xsl:if>
 										</div>
 
-										<div class="card-body">
+										<div class="card-body px-0 pb-0">
 											<xsl:if test="ns:packageinformation/ns:packagedescription!=''">
-												<p class="card-text">
+												<p class="card-text mx-3">
 													<xsl:value-of select="ns:packageinformation/ns:packagedescription" />
 												</p>
 											</xsl:if>
 
 											<div class="table-responsive">
-												<table class="table table-striped">
+												<table class="table table-striped mb-0">
 													<xsl:variable name="has-optionals" select="boolean(ns:versions/ns:version/ns:optionalpackages/ns:optionalpackage)" />
 													<thead>
 														<tr>
-															<th scope="col" class="col-md-2">{{ fluent!(self.lang, "version") }}</th>
+															<th scope="col" class="col-md-2 ps-4">{{ fluent!(self.lang, "version") }}</th>
 															<th scope="col" class="col-md-4">{{ fluent!(self.lang, "license") }}</th>
 															<th scope="col">
 																<xsl:attribute name="class">
@@ -192,7 +192,7 @@
 																<th scope="col" class="col-md-2">{{ fluent!(self.lang, "optional-packages") }}</th>
 															</xsl:if>
 
-															<th scope="col" class="col-md-2">{{ fluent!(self.lang, "last-modified") }}</th>
+															<th scope="col" class="col-md-2 pe-4">{{ fluent!(self.lang, "last-modified") }}</th>
 														</tr>
 													</thead>
 													<tbody>
@@ -200,7 +200,7 @@
 															<xsl:sort select="position()" data-type="number" order="descending" />
 
 															<tr>
-																<th scope="row">
+																<th scope="row" class="ps-4">
 																	<!-- Latest version anchor -->
 																	<xsl:if test="position()=1">
 																		<span class="anchor-fix">
@@ -309,7 +309,7 @@
 																	<xsl:otherwise></xsl:otherwise>
 																</xsl:choose>
 
-																<td>
+																<td class="pe-4">
 																	<time>
 																		<xsl:attribute name="data-timestamp">
 																			<xsl:value-of select="ns:timestamp" />

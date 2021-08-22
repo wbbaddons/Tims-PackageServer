@@ -36,3 +36,7 @@
 #main-content {
 	position: relative;
 }
+
+#main-content .card .table > tbody > :last-child > * {
+	border-bottom-width: 0 !important;
+}
