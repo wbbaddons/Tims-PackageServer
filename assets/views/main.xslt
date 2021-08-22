@@ -127,7 +127,7 @@
 											<xsl:if test="ns:packageinformation/ns:isapplication='1'">
 												<xsl:attribute name="class">text-white card-header bg-primary</xsl:attribute>
 
-												<svg:svg data-bs-toggle="tooltip" title='{{ fluent!(self.lang, "is-application") }}' alt='{{ fluent!(self.lang, "is-application") }}' width="24" height="24" class="bi me-2" fill="currentColor">
+												<svg:svg data-bs-toggle="tooltip" data-bs-container="#main-content" title='{{ fluent!(self.lang, "is-application") }}' alt='{{ fluent!(self.lang, "is-application") }}' width="24" height="24" class="bi me-2" fill="currentColor">
 													<svg:use href='{{ self.asset("static/icons.svg")|safe }}#stack' />
 												</svg:svg>
 											</xsl:if>
