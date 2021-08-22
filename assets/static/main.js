@@ -69,6 +69,7 @@ document.querySelectorAll('time').forEach(function(v) {
 	v.textContent = date_formatter.format(date)
 
 	v.setAttribute('title', datetime_formatter.format(date))
+	v.dataset.bsContainer = '#main-content'
 	v.dataset.bsToggle = 'tooltip'
 })
 
