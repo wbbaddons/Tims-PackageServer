@@ -19,63 +19,63 @@
  */
 
 .anchor-fix {
-	padding-top: calc(1rem + 60px);
-	margin-top: calc(-1rem - 60px);
+  padding-top: calc(1rem + 60px);
+  margin-top: calc(-1rem - 60px);
 }
 
 .bi {
-	display: inline-block;
-	vertical-align: bottom;
+  display: inline-block;
+  vertical-align: bottom;
 }
 
 #main-grid {
-	display: grid;
-	grid-template-areas: "sidebar main";
-	grid-template-columns: 20rem auto;
-	grid-template-rows: 100vh;
+  display: grid;
+  grid-template-areas: "sidebar main";
+  grid-template-columns: 20rem auto;
+  grid-template-rows: 100vh;
 }
 
 #sidebar {
-	grid-area: sidebar;
-	position: relative;
-	grid-template-rows: min-content auto;
+  grid-area: sidebar;
+  position: relative;
+  grid-template-rows: min-content auto;
 }
 
 #main {
-	display: grid;
-	grid-area: main / sidebar / sidebar / main;
-	grid-template-rows: min-content auto;
+  display: grid;
+  grid-area: main / sidebar / sidebar / main;
+  grid-template-rows: min-content auto;
 }
 
 @media (min-width: 768px) {
-	#main {
-		grid-area: main;
-	}
+  #main {
+    grid-area: main;
+  }
 }
 
 #main-content {
-	position: relative;
+  position: relative;
 }
 
 #main-content .card .table > tbody > :last-child > * {
-	border-bottom-width: 0 !important;
+  border-bottom-width: 0 !important;
 }
 
 .nav-pills > :hover > .nav-link {
-	background-color: #ced4da; /* $gray-400 */
-	color: #000;
+  background-color: #ced4da; /* $gray-400 */
+  color: #000;
 }
 
 .nav-pills > :hover > .nav-link.active {
-	background-color: #0a58ca; /* $blue-600 */
-	color: #fff;
+  background-color: #0a58ca; /* $blue-600 */
+  color: #fff;
 }
 
 .navbar-dark .navbar-nav .nav-link:focus,
 .navbar-dark .navbar-nav .nav-link:hover {
-	color: #fff;
+  color: #fff;
 }
 
 .package:target > .card {
-	border-color: #198754 !important;
+  border-color: #198754 !important;
 }
