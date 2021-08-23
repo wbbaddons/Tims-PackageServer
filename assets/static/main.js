@@ -165,6 +165,8 @@ window.addEventListener('DOMContentLoaded', event => {
 		const sidebar = document.querySelector('#sidebar-nav')
 		const target = document.querySelector('#sidebar-nav .nav-link.active')
 
+		window.history.replaceState({}, document.title, target.hash)
+
 		let siblings_height = 0;
 		let element = target.parentElement
 
