@@ -155,10 +155,17 @@ window.addEventListener('DOMContentLoaded', event => {
 	search.addEventListener('input', do_search)
 	search.addEventListener('change', do_search)
 
-	// Stupid ScrollSpy offset workaround
-	// First we reset the scroll position (might be set on page reload)
-	document.querySelector('#main-content').scrollTop = 0
-	// Then we manually enable ScrollSpy
+	// Stupid ScrollSpy offset workaround (scroll position might be set on page reload)
+	if (history.scrollRestoration) {
+		// Tell the browser to reset the scroll position
+		history.scrollRestoration = 'manual'
+	}
+	else {
+		// Manually reset the scroll position
+		document.querySelector('#main-content').scrollTop = 0
+	}
+
+	// Nanually enable ScrollSpy
 	bootstrap.ScrollSpy.getOrCreateInstance(scroll_spy)
 
 	scroll_spy.addEventListener('activate.bs.scrollspy', function (event) {
