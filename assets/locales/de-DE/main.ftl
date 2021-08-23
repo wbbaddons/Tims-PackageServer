@@ -19,8 +19,8 @@ access-denied = Sie haben keinen Zugriff auf dieses Paket
 name = Name
 authors = Autoren
 made-possible-by = Diese Software wurde durch die folgenden Bibliotheken ermöglicht:
-toggle-navigation = Navigation Umschalten
-is-application = Dieses Paket stellt eine App bereit
+toggle-navigation = Navigation umschalten
+is-application = Dieses Paket stellt eine App bereit.
 
 presented-by = Diese Liste wurde Ihnen von <a href="{ github-url }">{ product-name }</a> in Version { $server_version } präsentiert.
 license-terms = { product-name } ist unter den Bedingungen der <a href="{ license-url }">{ license-name }</a> lizensiert.

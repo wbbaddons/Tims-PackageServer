@@ -5,12 +5,11 @@
 	<xsl:template match="/">
 		<html>
 			<head>
-				<meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 				<link rel="stylesheet" href='{{ self.asset("static/bootstrap.min.css")|safe }}' integrity='{{ self.sri("static/bootstrap.min.css")|safe }}' />
 				<link rel="stylesheet" href='{{ self.asset("static/main.css")|safe }}' integrity='{{ self.sri("static/main.css")|safe }}' />
-				<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' integrity='{{ self.sri("static/favicon.ico")|safe }}' />
+				<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' />
 
 				<title>
 					{%- if title.is_some() -%}
@@ -79,7 +78,7 @@
 										</span>
 									{%- else -%}
 										<a class="btn btn-primary me-auto mb-2 mb-lg-0" href="{{ host|safe }}/login">
-											<svg:svg alt="" width="24" height="24" class="bi me-1" fill="currentColor">
+											<svg:svg width="24" height="24" class="bi me-1" fill="currentColor">
 												<svg:use href='{{ self.asset("static/icons.svg")|safe }}#box-arrow-in-right' />
 											</svg:svg>
 											{{ fluent!(self.lang, "sign-in") }}
@@ -93,7 +92,7 @@
 									<ul class="navbar-nav">
 										<li class="nav-item">
 											<a class="nav-link" href='{{ fluent!(self.lang, "github-url") }}'>
-												<svg:svg alt="" width="24" height="24" class="bi me-2" fill="currentColor">
+												<svg:svg width="24" height="24" class="bi me-2" fill="currentColor">
 													<svg:use href='{{ self.asset("static/icons.svg")|safe }}#github' />
 												</svg:svg>
 												{{- fluent!(self.lang, "code-on-github") -}}
@@ -127,9 +126,11 @@
 											<xsl:if test="ns:packageinformation/ns:isapplication='1'">
 												<xsl:attribute name="class">text-white card-header bg-primary</xsl:attribute>
 
-												<svg:svg data-bs-toggle="tooltip" data-bs-container="#main-content" title='{{ fluent!(self.lang, "is-application") }}' alt='{{ fluent!(self.lang, "is-application") }}' width="24" height="24" class="bi me-2" fill="currentColor">
-													<svg:use href='{{ self.asset("static/icons.svg")|safe }}#stack' />
-												</svg:svg>
+												<span data-bs-toggle="tooltip" data-bs-container="#main-content" title='{{ fluent!(self.lang, "is-application") }}'>
+													<svg:svg width="24" height="24" class="bi me-2" fill="currentColor">
+														<svg:use href='{{ self.asset("static/icons.svg")|safe }}#stack' />
+													</svg:svg>
+												</span>
 											</xsl:if>
 
 											<xsl:value-of select="ns:packageinformation/ns:packagename" /> (<xsl:value-of select="@name" />)

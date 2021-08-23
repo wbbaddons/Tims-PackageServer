@@ -6,7 +6,7 @@
 
 		<link rel="stylesheet" href='{{ self.asset("static/bootstrap.min.css")|safe }}' integrity='{{ self.sri("static/bootstrap.min.css")|safe }}' />
 		<link rel="stylesheet" href='{{ self.asset("static/main.css")|safe }}' integrity='{{ self.sri("static/main.css")|safe }}' />
-		<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' integrity='{{ self.sri("static/favicon.ico")|safe }}' />
+		<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' />
 
 		<title>
 			{%- if title.is_some() -%}
@@ -38,7 +38,7 @@
 							<ul class="navbar-nav ms-auto">
 								<li class="nav-item">
 									<a class="nav-link" href='{{ fluent!(self.lang, "github-url") }}'>
-										<svg alt="" width="24" height="24" class="bi me-2" fill="currentColor">
+										<svg width="24" height="24" class="bi me-2" fill="currentColor">
 											<use href='{{ self.asset("static/icons.svg")|safe }}#github' />
 										</svg>
 										{{- fluent!(self.lang, "code-on-github") -}}
@@ -70,9 +70,13 @@
 											<td>{{ lib.1 }}</td>
 											<td>{{ lib.2 }}</td>
 											<td>
+											{% if !lib.3.is_empty() %}
+												<ul>
 												{% for author in lib.3 %}
-													{{ author }}<br />
+													<li>{{ author }}</li>
 												{% endfor %}
+												</ul>
+											{% endif %}
 											</td>
 										</tr>
 									{% endfor %}

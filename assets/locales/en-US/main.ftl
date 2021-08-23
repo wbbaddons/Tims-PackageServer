@@ -20,7 +20,7 @@ name = Name
 authors = Authors
 made-possible-by = This software was made possible by the following libraries:
 toggle-navigation = Toggle navigation
-is-application = This package provides an app
+is-application = This package provides an app.
 
 presented-by = This list was presented by <a href="{ github-url }">{ product-name }</a> in version { $server_version }.
 license-terms = { product-name } is licensed under the terms of the <a href="{ license-url }">{ license-name }</a>.
