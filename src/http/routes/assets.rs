@@ -48,9 +48,13 @@ fn serve_asset(req: HttpRequest, filename: &str) -> Result<impl Responder, Error
                 return HttpResponse::NotModified().body(actix_web::body::Body::None);
             }
 
-            let content_type = mime_guess::from_path(filename)
-                .first_or_octet_stream()
-                .to_string();
+            let content_type = if filename.ends_with(".js.map") {
+                "application/json".to_owned()
+            } else {
+                mime_guess::from_path(filename)
+                    .first_or_octet_stream()
+                    .to_string()
+            };
 
             HttpResponse::Ok()
                 .set(etag)

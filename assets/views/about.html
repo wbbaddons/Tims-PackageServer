@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<link rel="stylesheet" href='{{ self.asset("static/bootstrap.min.css")|safe }}' integrity='{{ self.sri("static/bootstrap.min.css")|safe }}' />
+		<link rel="stylesheet" href='{{ self.asset("static/main.css")|safe }}' integrity='{{ self.sri("static/main.css")|safe }}' />
+		<link rel="icon" href='{{ self.asset("favicon.ico")|safe }}' />
+
+		<title>
+			{%- if title.is_some() -%}
+				{{- title.as_ref().unwrap() -}}
+			{%- else -%}
+				{{- fluent!(self.lang, "product-name") -}}
+			{%- endif -%}
+		</title>
+	</head>
+	<body>
+		<div id="main-grid">
+			<main id="main" style="grid-area: main / sidebar / sidebar / main;">
+				<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+					<div class="container-fluid">
+						<a class="navbar-brand" href="{{ host|safe }}">
+							<img src='{{ self.asset("favicon.ico")|safe }}' alt="" width="24" height="24" class="me-2 d-inline-block align-text-top" />
+							{%- if title.is_some() -%}
+								{{- title.as_ref().unwrap() -}}
+							{%- else -%}
+								{{- fluent!(self.lang, "product-name") -}}
+							{%- endif -%}
+						</a>
+
+						<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label='{{ fluent!(self.lang, "toggle-navigation") }}'>
+							<span class="navbar-toggler-icon"></span>
+						</button>
+
+						<div class="collapse navbar-collapse" id="navbarContent">
+							<ul class="navbar-nav ms-auto">
+								<li class="nav-item">
+									<a class="nav-link" href='{{ fluent!(self.lang, "github-url") }}'>
+										<svg width="24" height="24" class="bi me-2" fill="currentColor">
+											<use href='{{ self.asset("static/icons.svg")|safe }}#github' />
+										</svg>
+										{{- fluent!(self.lang, "code-on-github") -}}
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</nav>
+
+				<div id="main-content" class="overflow-auto">
+					<div class="container p-3">
+						<h1>{{ fluent!(self.lang, "made-possible-by") }}</h1>
+
+						<div class="table-responsive">
+							<table class="table table-striped table-bordered table-hover table-condensed">
+								<thead>
+									<tr>
+										<th>{{ fluent!(self.lang, "name") }}</th>
+										<th>{{ fluent!(self.lang, "version") }}</th>
+										<th>{{ fluent!(self.lang, "license") }}</th>
+										<th>{{ fluent!(self.lang, "authors") }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for lib in license_info %}
+										<tr>
+											<td><a href="https://crates.io/crates/{{ lib.0 }}/{{ lib.1 }}">{{ lib.0 }}</a></td>
+											<td>{{ lib.1 }}</td>
+											<td>{{ lib.2 }}</td>
+											<td>
+											{% if !lib.3.is_empty() %}
+												<ul>
+												{% for author in lib.3 %}
+													<li>{{ author }}</li>
+												{% endfor %}
+												</ul>
+											{% endif %}
+											</td>
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<script src='{{ self.asset("static/bootstrap.bundle.min.js")|safe }}' integrity='{{ self.sri("static/bootstrap.bundle.min.js")|safe }}'></script>
+	</body>
+</html>
