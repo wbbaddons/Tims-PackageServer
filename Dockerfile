@@ -24,7 +24,7 @@ RUN	cd /usr/src/PackageServer/ \
 &&	find . -not -path './.git/*' \
 &&	cargo build --release
 
-FROM	debian:bullseye
+FROM	debian:bullseye-slim
 
 RUN	set -ex \
 &&	groupadd -r packageserver \
