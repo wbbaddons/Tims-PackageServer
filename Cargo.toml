@@ -24,7 +24,7 @@
 	futures-util = { version = "0.3.17", default-features = false }
 	humantime = "2.1.0"
 	language-tags = "0.3.2"
-	libc = "0.2.101"
+	libc = "0.2.102"
 	log = "0.4.14"
 	mime = "0.3.16"
 	mime_guess = { version = "2.0.3", default-features = false }
@@ -35,7 +35,7 @@
 	regex = { version = "1.5.4", default-features = false }
 	roxmltree = "0.14.1"
 	serde = { version = "1.0.130", features = [ "derive" ] }
-	serde_json = { version = "1.0.67", default-features = false }
+	serde_json = { version = "1.0.68", default-features = false }
 	sha2 = "0.9.8"
 	tar = { version = "0.4.37", default-features = false }
 	unic-langid = "0.9.0"
