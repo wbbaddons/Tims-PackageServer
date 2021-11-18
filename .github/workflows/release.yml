@@ -34,7 +34,7 @@ jobs:
           profile: minimal
           toolchain: stable
       - uses: Swatinem/rust-cache@v1
-      - run: cargo build --release --verbose
+      - run: cargo build --locked --release --verbose
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1

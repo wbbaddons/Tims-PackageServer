@@ -37,4 +37,4 @@ jobs:
     - uses: Swatinem/rust-cache@v1
       with:
         sharedKey: ci
-    - run: cargo test --verbose
+    - run: cargo test --locked --verbose

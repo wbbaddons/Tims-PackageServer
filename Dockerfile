@@ -22,7 +22,7 @@ COPY	. /usr/src/PackageServer/
 
 RUN	cd /usr/src/PackageServer/ \
 &&	find . -not -path './.git/*' \
-&&	cargo build --release
+&&	cargo build --locked --release
 
 FROM	debian:bullseye-slim
 
