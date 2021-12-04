@@ -1,56 +1,56 @@
 [package]
-	name = "tims-package-server"
-	version = "10.1.9"
-	license = "AGPL-3.0-or-later"
-	authors = ["Maximilian Mader", "Tim Düsterhus"]
+name = "tims-package-server"
+version = "10.1.9"
+license = "AGPL-3.0-or-later"
+authors = ["Maximilian Mader", "Tim Düsterhus"]
 
-	build = "build.rs"
-	edition = "2018"
+build = "build.rs"
+edition = "2018"
 
 [dependencies]
-	actix-files = "0.5.0"
-	actix-web = { version = "3.3.2", default-features = false }
-	actix-web-httpauth = "0.5.1"
-	arc-swap = "1.5.0"
-	askama = { version = "0.10.5", default-features = false, features = [ "config" ] }
-	askama_actix = "0.11.1"
-	base64 = { version = "0.13.0", default-features = false }
-	bcrypt = "0.10.1"
-	config = "0.11.0"
-	env_logger = "0.9.0"
-	fluent-langneg = { version = "0.13.0", default-features = false }
-	fluent-templates = { version = "0.6.1", default-features = false }
-	futures = { version = "0.3.17", default-features = false, features = [ "async-await" ] }
-	futures-util = { version = "0.3.17", default-features = false }
-	humantime = "2.1.0"
-	language-tags = "0.3.2"
-	libc = "0.2.107"
-	log = "0.4.14"
-	mime = "0.3.16"
-	mime_guess = { version = "2.0.3", default-features = false }
-	nom = { version = "7.1.0", default-features = false, features = [ "alloc" ] }
-	notify = "4.0.17"
-	once_cell = { version = "1.8.0", default-features = false }
-	phf = "0.10.0"
-	regex = { version = "1.5.4", default-features = false }
-	roxmltree = "0.14.1"
-	serde = { version = "1.0.130", features = [ "derive" ] }
-	serde_json = { version = "1.0.71", default-features = false }
-	sha2 = "0.9.8"
-	tar = { version = "0.4.37", default-features = false }
-	unic-langid = "0.9.0"
-	url = { version = "2.2.2", features = ["serde"] }
+actix-files = "0.5.0"
+actix-web = { version = "3.3.2", default-features = false }
+actix-web-httpauth = "0.5.1"
+arc-swap = "1.5.0"
+askama = { version = "0.10.5", default-features = false, features = [ "config" ] }
+askama_actix = "0.11.1"
+base64 = { version = "0.13.0", default-features = false }
+bcrypt = "0.10.1"
+config = "0.11.0"
+env_logger = "0.9.0"
+fluent-langneg = { version = "0.13.0", default-features = false }
+fluent-templates = { version = "0.6.1", default-features = false }
+futures = { version = "0.3.17", default-features = false, features = [ "async-await" ] }
+futures-util = { version = "0.3.17", default-features = false }
+humantime = "2.1.0"
+language-tags = "0.3.2"
+libc = "0.2.107"
+log = "0.4.14"
+mime = "0.3.16"
+mime_guess = { version = "2.0.3", default-features = false }
+nom = { version = "7.1.0", default-features = false, features = [ "alloc" ] }
+notify = "4.0.17"
+once_cell = { version = "1.8.0", default-features = false }
+phf = "0.10.0"
+regex = { version = "1.5.4", default-features = false }
+roxmltree = "0.14.1"
+serde = { version = "1.0.130", features = [ "derive" ] }
+serde_json = { version = "1.0.71", default-features = false }
+sha2 = "0.9.8"
+tar = { version = "0.4.37", default-features = false }
+unic-langid = "0.9.0"
+url = { version = "2.2.2", features = ["serde"] }
 
 [build-dependencies]
-	base64 = "0.13.0"
-	built = { version = "0.5.1", features = [ "git2" ] }
-	cargo-license = "0.4.2"
-	cargo_metadata = { version = "0.14.1", default-features = false }
-	ignore = "0.4.18"
-	phf_codegen = "0.10.0"
-	sha2 = "0.9.8"
+base64 = "0.13.0"
+built = { version = "0.5.1", features = [ "git2" ] }
+cargo-license = "0.4.2"
+cargo_metadata = { version = "0.14.1", default-features = false }
+ignore = "0.4.18"
+phf_codegen = "0.10.0"
+sha2 = "0.9.8"
 
 [profile.release]
-	panic = "abort"
-	lto = true
+panic = "abort"
+lto = true
 
