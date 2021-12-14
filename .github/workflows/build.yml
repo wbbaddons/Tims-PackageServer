@@ -39,6 +39,11 @@ jobs:
     - uses: Swatinem/rust-cache@v1
       with:
         sharedKey: ci
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "16"
+        cache: "npm"
+    - run: npm ci
     - run: cargo build --verbose
     - uses: actions/upload-artifact@v2
       with:

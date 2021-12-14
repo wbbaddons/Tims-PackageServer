@@ -34,6 +34,11 @@ jobs:
           profile: minimal
           toolchain: stable
       - uses: Swatinem/rust-cache@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          cache: "npm"
+      - run: npm ci
       - run: cargo build --locked --release --verbose
       - name: Create Release
         id: create_release
