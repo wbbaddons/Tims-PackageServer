@@ -5,7 +5,8 @@ license = "AGPL-3.0-or-later"
 authors = ["Maximilian Mader", "Tim Düsterhus"]
 
 build = "build.rs"
-edition = "2018"
+edition = "2021"
+resolver = "1"
 
 [dependencies]
 actix-files = "0.5.0"
