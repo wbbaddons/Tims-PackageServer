@@ -19,7 +19,7 @@
 use crate::version::Version;
 use once_cell::sync::Lazy;
 use regex::{Regex, RegexBuilder};
-use std::{convert::TryFrom, fmt::Display};
+use std::fmt::Display;
 use unic_langid::LanguageIdentifier;
 use url::Url;
 

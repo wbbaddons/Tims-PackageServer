@@ -28,8 +28,6 @@ use std::{
     io::Read,
     str::Utf8Error,
 };
-
-use std::convert::TryFrom;
 use unic_langid::LanguageIdentifierError;
 
 type Result<T> = std::result::Result<T, PackageXmlError>;

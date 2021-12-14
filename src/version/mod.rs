@@ -29,7 +29,7 @@ use nom::{
     sequence::terminated,
     IResult,
 };
-use std::{cmp::Ordering, convert::TryFrom, fmt::Display};
+use std::{cmp::Ordering, fmt::Display};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
 pub struct Version {

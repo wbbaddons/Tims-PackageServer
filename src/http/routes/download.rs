@@ -37,7 +37,6 @@ use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
-    convert::TryFrom,
     fs::OpenOptions,
     io::Write,
     path::PathBuf,

@@ -17,7 +17,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use super::types::AuthData;
-use std::{convert::TryFrom, error, fmt, path::PathBuf};
+use std::{error, fmt, path::PathBuf};
 
 type Result<T> = std::result::Result<T, AuthParseError>;
 
