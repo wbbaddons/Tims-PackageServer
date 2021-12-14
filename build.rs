@@ -86,6 +86,7 @@ fn bundle_source_code() -> crate::Result<()> {
 
     let walker = WalkBuilder::new("./")
         .hidden(false)
+        .follow_links(true)
         .require_git(false)
         .overrides(overrides)
         .sort_by_file_name(|a, b| a.cmp(b))
