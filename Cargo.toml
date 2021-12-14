@@ -37,7 +37,7 @@ roxmltree = "0.14.1"
 serde = { version = "1.0.131", features = [ "derive" ] }
 serde_json = { version = "1.0.72", default-features = false }
 sha2 = "0.10.0"
-tar = { version = "0.4.37", default-features = false }
+tar = { version = "0.4.38", default-features = false }
 unic-langid = "0.9.0"
 url = { version = "2.2.2", features = ["serde"] }
 
