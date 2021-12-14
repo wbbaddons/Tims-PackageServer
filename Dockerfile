@@ -16,9 +16,17 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+FROM	node:16 AS npm
+
+COPY	package.json package-lock.json /usr/src/PackageServer/
+
+RUN	cd /usr/src/PackageServer \
+&&	npm ci
+
 FROM	rust:1 AS builder
 
 COPY	. /usr/src/PackageServer/
+COPY	--from=npm /usr/src/PackageServer/node_modules/ /usr/src/PackageServer/node_modules/
 
 RUN	cd /usr/src/PackageServer/ \
 &&	find . -not -path './.git/*' \
