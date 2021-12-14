@@ -21,8 +21,8 @@ config = "0.11.0"
 env_logger = "0.9.0"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.6.1", default-features = false }
-futures = { version = "0.3.18", default-features = false, features = [ "async-await" ] }
-futures-util = { version = "0.3.18", default-features = false }
+futures = { version = "0.3.17", default-features = false, features = [ "async-await" ] }
+futures-util = { version = "0.3.17", default-features = false }
 humantime = "2.1.0"
 language-tags = "0.3.2"
 libc = "0.2.112"
