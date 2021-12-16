@@ -35,7 +35,7 @@ once_cell = { version = "1.9.0", default-features = false }
 phf = "0.10.1"
 regex = { version = "1.5.4", default-features = false }
 roxmltree = "0.14.1"
-serde = { version = "1.0.131", features = [ "derive" ] }
+serde = { version = "1.0.132", features = [ "derive" ] }
 serde_json = { version = "1.0.73", default-features = false }
 sha2 = "0.10.0"
 tar = { version = "0.4.38", default-features = false }
