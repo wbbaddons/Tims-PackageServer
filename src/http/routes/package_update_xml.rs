@@ -167,7 +167,11 @@ fn response(
 
             if not_modified(&req, Some(&etag), Some(*last_modified)) {
                 return Ok(Either::B(
-                    HttpResponse::NotModified().body(actix_web::body::Body::None),
+                    HttpResponse::NotModified()
+                        .set_header(ETAG, etag)
+                        .set_header(LAST_MODIFIED, last_modified)
+                        .set_header(VARY, "accept, accept-language")
+                        .body(actix_web::body::Body::None),
                 ));
             }
 

@@ -72,7 +72,11 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
 
             if not_modified(&req, Some(&etag), None) {
                 return Ok(Either::B(
-                    HttpResponse::NotModified().body(actix_web::body::Body::None),
+                    HttpResponse::NotModified()
+                        .set_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
+                        .set_header(ETAG, etag)
+                        .set_header(VARY, "accept, accept-language")
+                        .body(actix_web::body::Body::None),
                 ));
             }
 
@@ -101,7 +105,11 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
 
             if not_modified(&req, Some(&etag), None) {
                 return Ok(Either::B(
-                    HttpResponse::NotModified().body(actix_web::body::Body::None),
+                    HttpResponse::NotModified()
+                        .set_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
+                        .set_header(ETAG, etag)
+                        .set_header(VARY, "accept, accept-language")
+                        .body(actix_web::body::Body::None),
                 ));
             }
 
