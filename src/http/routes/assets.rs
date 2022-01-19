@@ -45,7 +45,10 @@ fn serve_asset(req: HttpRequest, filename: &str) -> Result<impl Responder, Error
             let etag = ETag::from(source_file);
 
             if not_modified(&req, Some(&etag), None) {
-                return HttpResponse::NotModified().body(actix_web::body::Body::None);
+                return HttpResponse::NotModified()
+                    .set(etag)
+                    .set(CacheControl(vec![CacheDirective::Public]))
+                    .body(actix_web::body::Body::None);
             }
 
             let content_type = if filename.ends_with(".js.map") {
