@@ -124,6 +124,12 @@ fn test_parse() {
             "users": {
                 "Foo": {
                     "passwd": "-"
+                },
+                "Bar": {
+                    "passwd": "Bcrypt:$2y$10$0QxMnGyTrXnL7ngq2y/qFui3H2IaEuXfNwbLWR50m9Yarp0HZwEmq"
+                },
+                "root": {
+                    "passwd": "$2a$08$3GNrFLqG5M7BsGI/BtxcGuNWX2iY/UsfTwWnmJiddHB.z/PdkAsR2"
                 }
             },
             "groups": {},
@@ -131,10 +137,19 @@ fn test_parse() {
         }"#,
         )
         .unwrap();
-        assert_eq!(data.users.len(), 1);
+
+        assert_eq!(data.users.len(), 3);
+
         assert!(data.users.contains_key("Foo"));
         assert!(!data.users.get("Foo").unwrap().passwd.verify("foo"));
         assert_eq!(data.users.get("Foo").unwrap().groups.len(), 0);
+
+        assert!(data.users.contains_key("Bar"));
+        assert!(data.users.get("Bar").unwrap().passwd.verify("bar"));
+
+        assert!(data.users.contains_key("root"));
+        assert!(data.users.get("root").unwrap().passwd.verify("root"));
+
         assert_eq!(data.groups.len(), 0);
         assert_eq!(data.packages.len(), 0);
     }

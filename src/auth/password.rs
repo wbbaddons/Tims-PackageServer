@@ -53,6 +53,8 @@ impl<'de> Visitor<'de> for PasswordHashVisitor {
 
         let mut split = s.splitn(2, ':');
         if let (Some(name), Some(hash)) = (split.next(), split.next()) {
+            assert_eq!(None, split.next());
+
             let name = name.to_ascii_lowercase();
 
             if name == "bcrypt" {
