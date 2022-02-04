@@ -55,7 +55,7 @@ impl<'de> Visitor<'de> for PasswordHashVisitor {
         if let (Some(name), Some(hash)) = (split.next(), split.next()) {
             let name = name.to_ascii_lowercase();
 
-            if name.as_str() == "bcrypt" {
+            if name == "bcrypt" {
                 return Ok(Box::new(Bcrypt(hash.to_owned())));
             }
         }
