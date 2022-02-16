@@ -46,7 +46,7 @@ url = { version = "2.2.2", features = ["serde"] }
 base64 = "0.13.0"
 built = { version = "0.5.1", features = [ "git2" ] }
 cargo-license = "0.4.2"
-cargo_metadata = { version = "0.14.1", default-features = false }
+cargo_metadata = { version = "0.14.2", default-features = false }
 ignore = "0.4.18"
 phf_codegen = "0.10.0"
 sha2 = "0.10.1"
