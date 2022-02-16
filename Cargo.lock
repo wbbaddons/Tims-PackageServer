@@ -344,11 +344,22 @@ version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d298738b6e47e1034e560e5afe63aa488fea34e25ec11b855a76f0d7b8e73134"
 dependencies = [
- "askama_derive",
+ "askama_derive 0.10.5",
  "askama_escape",
- "askama_shared",
+ "askama_shared 0.11.1",
  "mime",
  "mime_guess",
+]
+
+[[package]]
+name = "askama"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d8f355701c672c2ba3d718acbd213f740beea577cc4eae66accdffe15be1882"
+dependencies = [
+ "askama_derive 0.11.0",
+ "askama_escape",
+ "askama_shared 0.12.1",
 ]
 
 [[package]]
@@ -358,7 +369,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20653490b9baa13ed557b0ea6dae1fc9bbc2349ace67efeaaffbaea1c76f518a"
 dependencies = [
  "actix-web",
- "askama",
+ "askama 0.10.5",
  "bytes 0.5.6",
  "futures-util",
 ]
@@ -369,16 +380,27 @@ version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca2925c4c290382f9d2fa3d1c1b6a63fa1427099721ecca4749b154cc9c25522"
 dependencies = [
- "askama_shared",
+ "askama_shared 0.11.1",
+ "proc-macro2",
+ "syn",
+]
+
+[[package]]
+name = "askama_derive"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84704cab5b7ae0fd3a9f78ee5eb7b27f3749df445f04623db6633459ae283267"
+dependencies = [
+ "askama_shared 0.12.1",
  "proc-macro2",
  "syn",
 ]
 
 [[package]]
 name = "askama_escape"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a1bb320f97e6edf9f756bf015900038e43c7700e059688e5724a928c8f3b8d5"
+checksum = "619743e34b5ba4e9703bba34deac3427c72507c7159f5fd030aea8cac0cfe341"
 
 [[package]]
 name = "askama_shared"
@@ -396,6 +418,21 @@ dependencies = [
  "serde 1.0.136",
  "syn",
  "toml",
+]
+
+[[package]]
+name = "askama_shared"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3d372b233d121e841b4cc5dc716538755e338ca902b3e12ac131ffb6b9d5fbf"
+dependencies = [
+ "askama_escape",
+ "mime",
+ "mime_guess",
+ "nom 7.1.0",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2548,7 +2585,7 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "arc-swap",
- "askama",
+ "askama 0.11.0",
  "askama_actix",
  "base64",
  "bcrypt",
