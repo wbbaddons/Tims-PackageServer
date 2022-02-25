@@ -10,7 +10,7 @@ resolver = "2"
 
 [dependencies]
 actix-files = "0.5.0"
-actix-web = { version = "3.3.3", default-features = false }
+actix-web = { version = "4.0.0", default-features = false }
 actix-web-httpauth = "0.5.1"
 arc-swap = "1.5.0"
 askama = { version = "0.10.5", default-features = false }
