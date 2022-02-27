@@ -21,7 +21,10 @@ use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::{
     ffi::OsStr,
     path::Path,
-    sync::{mpsc, mpsc::Receiver, Arc, Mutex},
+    sync::{
+        mpsc::{Receiver, Sender},
+        Arc, Mutex,
+    },
 };
 
 pub struct PackageWatcher<'a> {
@@ -31,20 +34,16 @@ pub struct PackageWatcher<'a> {
 }
 
 impl<'a> PackageWatcher<'a> {
-    pub fn new(path: &'a Path) -> notify::Result<Self> {
-        let (tx, rx) = mpsc::channel();
-
+    pub fn new(path: &'a Path, tx: Sender<DebouncedEvent>) -> notify::Result<Self> {
         let mut inner = notify::watcher(tx, std::time::Duration::from_secs(5))?;
 
         inner.watch(&path, RecursiveMode::Recursive)?;
 
-        let mut watcher = Self {
+        let watcher = Self {
             inner,
             path,
             scanning: Arc::new(Mutex::new(())),
         };
-
-        watcher.start_watcher(rx);
 
         Ok(watcher)
     }
@@ -114,7 +113,7 @@ impl<'a> PackageWatcher<'a> {
         }
     }
 
-    fn start_watcher(&mut self, rx: Receiver<DebouncedEvent>) {
+    pub fn start_watcher(&mut self, rx: Receiver<DebouncedEvent>) {
         loop {
             match rx.recv() {
                 Ok(DebouncedEvent::Error(err, Some(path))) => {
