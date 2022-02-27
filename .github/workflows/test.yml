@@ -46,7 +46,7 @@ jobs:
     - run: cargo build --locked --verbose
     - uses: actions/upload-artifact@v2
       with:
-        name: Compiled
+        name: tims-package-server
         path: target/*/tims-package-server
         if-no-files-found: error
         retention-days: 2
@@ -68,3 +68,37 @@ jobs:
         cache: "npm"
     - run: npm ci
     - run: cargo test --locked --verbose
+  end_to_end_test:
+    name: End to end test
+    needs:
+    - cargo_build
+    runs-on: ubuntu-latest
+    steps:
+    - run: sudo apt-get update
+    - run: sudo apt-get install -y httpie
+    - uses: actions/checkout@v2
+    - name: Build packages
+      run: |
+        set -x
+        cp tests/auth.json packages/auth.json
+        pushd tests/
+        for package in be.bastelstu.*; do
+          mkdir "../packages/$package/"
+          pushd "$package"
+          for version in *.xml; do
+            tar cf "../../packages/$package/$(basename "$version" ".xml").tar" $version --transform 's~.*~package.xml~'
+          done
+          popd
+        done
+        popd
+    - uses: actions/download-artifact@v2
+      with:
+        name: tims-package-server
+    - run: mv */tims-package-server .
+    - run: chmod +x ./tims-package-server
+    - run: sudo systemd-run --unit=tims-package-server --same-dir --uid="$(id -u)" ./tims-package-server
+    - run: systemctl status tims-package-server
+    - run: |
+        set -x
+        http --pretty=all -v GET :9001/
+    - run: sudo systemctl stop tims-package-server

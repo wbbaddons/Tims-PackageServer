@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package name="be.bastelstu.packages.test" xmlns="http://www.woltlab.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.woltlab.com http://www.woltlab.com/XSD/maelstrom/package.xsd">
+	<packageinformation>
+		<packagename>English</packagename>
+		<packagename language="de">German</packagename>
+		<isapplication>0</isapplication>
+		<version>1.0.0</version>
+		<date>2022-02-27</date>
+	</packageinformation>
+
+	<authorinformation>
+		<author>Tim Düsterhus</author>
+		<authorurl>http://tims.bastelstu.be</authorurl>
+	</authorinformation>
+
+	<requiredpackages>
+		<requiredpackage minversion="5.4.10">com.woltlab.wcf</requiredpackage>
+	</requiredpackages>
+
+	<excludedpackages>
+		<excludedpackage version="6.0.0 Alpha 1">com.woltlab.wcf</excludedpackage>
+	</excludedpackages>
+
+	<instructions type="install">
+		<instruction type="file" />
+	</instructions>
+</package>
