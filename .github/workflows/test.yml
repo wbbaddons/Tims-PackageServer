@@ -26,7 +26,32 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  cargo_build:
+    name: cargo build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+    - uses: Swatinem/rust-cache@v1
+      with:
+        sharedKey: ci
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "16"
+        cache: "npm"
+    - run: npm ci
+    - run: cargo build --verbose
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Compiled
+        path: target/*/tims-package-server
+        if-no-files-found: error
+        retention-days: 2
+  cargo_test:
+    name: cargo test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
