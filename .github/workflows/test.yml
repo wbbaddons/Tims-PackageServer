@@ -43,7 +43,7 @@ jobs:
         node-version: "16"
         cache: "npm"
     - run: npm ci
-    - run: cargo build --verbose
+    - run: cargo build --locked --verbose
     - uses: actions/upload-artifact@v2
       with:
         name: Compiled
