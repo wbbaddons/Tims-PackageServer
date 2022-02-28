@@ -75,12 +75,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: sudo apt-get update
-    - run: sudo apt-get install -y httpie
+    - run: sudo apt-get install -y httpie jq
+    - run: pip3 install yq
     - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: tims-package-server
+    - run: mv */tims-package-server .
+    - run: chmod +x ./tims-package-server
+    - run: sudo systemd-run --unit=tims-package-server --same-dir --uid="$(id -u)" ./tims-package-server
+    - run: systemctl status tims-package-server
+    - name: Wait for the HTTP service to come up
+      run: |
+        set -x
+        success=
+        for _ in $(seq 5); do
+          if [ "200" == "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9001)" ]; then
+            success=1
+            break
+          fi
+          sleep 1
+        done
+
+        if [ -z "$success" ]; then
+          echo "::error::The HTTP service did not come up." >&2
+          exit 1
+        fi
     - name: Build packages
       run: |
         set -x
-        cp tests/auth.json packages/auth.json
         pushd tests/
         for package in be.bastelstu.*; do
           mkdir "../packages/$package/"
@@ -91,14 +114,30 @@ jobs:
           popd
         done
         popd
-    - uses: actions/download-artifact@v2
-      with:
-        name: tims-package-server
-    - run: mv */tims-package-server .
-    - run: chmod +x ./tims-package-server
-    - run: sudo systemd-run --unit=tims-package-server --same-dir --uid="$(id -u)" ./tims-package-server
-    - run: systemctl status tims-package-server
-    - run: |
+      shell: bash
+    - name: Grab initial ETag
+      id: etag
+      run: printf "::set-output name=ETAG::%s" "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')"
+    - run: mv tests/auth.json packages/auth.json
+    - name: Wait for the ETag to change
+      run: |
         set -x
-        http --pretty=all -v GET :9001/
+        success=
+        for _ in $(seq 30); do
+          if [ "200" == "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9001/ -H 'if-none-match: ${{ steps.etag.outputs.ETAG }}')" ]; then
+            success=1
+            break
+          fi
+          sleep 1
+        done
+
+        if [ -z "$success" ]; then
+          echo "::error::The ETag did not change." >&2
+          exit 1
+        fi
+        if [ "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')" = '${{ steps.etag.outputs.ETAg }}' ]; then
+          echo "::error::The ETag did not change." >&2
+          exit 1
+        fi
+    - run: http --pretty=all -v GET :9001/
     - run: sudo systemctl stop tims-package-server
