@@ -9,15 +9,15 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-actix-files = "0.5.0"
-actix-web = { version = "3.3.3", default-features = false }
-actix-web-httpauth = "0.5.1"
+actix-files = "0.6.0"
+actix-web = { version = "4.0.1", default-features = false, features = [ "macros" ] }
+actix-web-httpauth = "0.6.0-beta.8"
 arc-swap = "1.5.0"
-askama = { version = "0.10.5", default-features = false }
-askama_actix = "0.11.1"
+askama = { version = "0.11.1", default-features = false }
+askama_actix = "0.13.0"
 base64 = { version = "0.13.0", default-features = false }
 bcrypt = "0.12.0"
-config = "0.11.0"
+config = "0.12.0"
 env_logger = "0.9.0"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.6.1", default-features = false }

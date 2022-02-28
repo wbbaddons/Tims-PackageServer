@@ -92,14 +92,12 @@ fn response(
 ) -> impl Responder {
     let accept = Accept::parse(&req);
     let is_acceptable = match accept.as_ref().ok() {
-        Some(accept) if !accept.mime_precedence().is_empty() => {
-            accept.mime_precedence().iter().any(|mime| {
-                matches!(
-                    (mime.type_(), mime.subtype()),
-                    (mime::TEXT, mime::XML) | (mime::STAR, _)
-                )
-            })
-        }
+        Some(accept) if !accept.ranked().is_empty() => accept.ranked().iter().any(|mime| {
+            matches!(
+                (mime.type_(), mime.subtype()),
+                (mime::TEXT, mime::XML) | (mime::STAR, _)
+            )
+        }),
         Some(_) | None => true,
     };
 
@@ -131,7 +129,7 @@ fn response(
                         .map(|version| format!("{}/{}/{}/", *host, name, version))
                         .unwrap_or_else(|| format!("{}/{}/", *host, name));
 
-                    return Ok(Either::B(redirect(RedirectType::Permanent(url))));
+                    return Ok(Either::Right(redirect(RedirectType::Permanent(url))));
                 }
             }
 
@@ -166,16 +164,16 @@ fn response(
             let last_modified = LastModified(package_list.updated_at.into());
 
             if not_modified(&req, Some(&etag), Some(*last_modified)) {
-                return Ok(Either::B(
+                return Ok(Either::Right(
                     HttpResponse::NotModified()
-                        .set_header(ETAG, etag)
-                        .set_header(LAST_MODIFIED, last_modified)
-                        .set_header(VARY, "accept, accept-language")
-                        .body(actix_web::body::Body::None),
+                        .insert_header((ETAG, etag))
+                        .insert_header((LAST_MODIFIED, last_modified))
+                        .insert_header((VARY, "accept, accept-language"))
+                        .body(()),
                 ));
             }
 
-            Ok(Either::A(
+            Ok(Either::Left(
                 PackageUpdateXmlTemplate {
                     host: host.clone(),
                     server_version: crate::built_info::version(),
@@ -189,10 +187,11 @@ fn response(
                     deterministic: SETTINGS.deterministic,
                     start_time: std::time::Instant::now(),
                 }
-                .with_header(ETAG, etag)
-                .with_header(LAST_MODIFIED, last_modified)
-                .with_header(CONTENT_TYPE, "text/xml; charset=utf-8")
-                .with_header(VARY, "accept, accept-language"),
+                .customize()
+                .insert_header((ETAG, etag))
+                .insert_header((LAST_MODIFIED, last_modified))
+                .insert_header((CONTENT_TYPE, "text/xml; charset=utf-8"))
+                .insert_header((VARY, "accept, accept-language")),
             ))
         }
         None => Err(PackageListUnavailable(req)),

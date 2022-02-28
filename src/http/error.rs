@@ -18,13 +18,12 @@
 
 use crate::{fluent, http::header::Language, version::Version};
 use actix_web::{
-    dev::HttpResponseBuilder,
     http::{
         header,
         header::{Accept, CacheControl, CacheDirective},
         StatusCode,
     },
-    HttpRequest, HttpResponse, ResponseError,
+    HttpRequest, HttpResponse, HttpResponseBuilder, ResponseError,
 };
 use actix_web_httpauth::headers::www_authenticate::{basic::Basic as Challenge, WwwAuthenticate};
 use std::fmt::Display;
@@ -123,8 +122,8 @@ impl ResponseError for Error {
             let challenge = Challenge::with_realm(fluent!(lang, "password-prompt"));
 
             return HttpResponse::Unauthorized()
-                .set(WwwAuthenticate(challenge))
-                .set(CacheControl(vec![
+                .insert_header(WwwAuthenticate(challenge))
+                .insert_header(CacheControl(vec![
                     CacheDirective::NoCache,
                     CacheDirective::NoStore,
                     CacheDirective::Private,
@@ -133,8 +132,8 @@ impl ResponseError for Error {
         }
 
         HttpResponseBuilder::new(self.status_code())
-            .set_header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
-            .set(CacheControl(vec![
+            .insert_header((header::CONTENT_TYPE, "text/plain; charset=utf-8"))
+            .insert_header(CacheControl(vec![
                 CacheDirective::NoCache,
                 CacheDirective::NoStore,
                 CacheDirective::Private,

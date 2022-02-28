@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     net::{IpAddr, Ipv6Addr},
     path::PathBuf,
-    sync::Arc,
+    sync::{mpsc, Arc},
 };
 
 mod auth;
@@ -79,14 +79,13 @@ impl Default for Settings {
 }
 
 pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
-    let mut settings: Settings = Config::default()
-        .with_merged(Config::try_from(&Settings::default()).unwrap())
+    let mut settings: Settings = Config::builder()
+        .add_source(Config::try_from(&Settings::default()).unwrap())
+        .add_source(config::File::with_name("PackageServer_config").required(false))
+        .add_source(config::Environment::with_prefix("PackageServer"))
+        .build()
         .unwrap()
-        .with_merged(config::File::with_name("PackageServer_config").required(false))
-        .unwrap()
-        .with_merged(config::Environment::with_prefix("PackageServer"))
-        .unwrap()
-        .try_into()
+        .try_deserialize()
         .unwrap();
 
     settings.package_dir = settings
@@ -100,7 +99,6 @@ pub static PACKAGE_LIST: Lazy<ArcSwapOption<PackageList>> = Lazy::new(ArcSwapOpt
 pub static AUTH_DATA: Lazy<ArcSwap<AuthData>> =
     Lazy::new(|| ArcSwap::from_pointee(AuthData::default()));
 pub static UPTIME: OnceCell<std::time::Instant> = OnceCell::new();
-pub static WATCHER: OnceCell<PackageWatcher> = OnceCell::new();
 
 async fn init_auth_data() -> crate::Result<()> {
     let path = SETTINGS.package_dir.join("auth.json");
@@ -155,11 +153,17 @@ async fn main() -> crate::Result<()> {
         http::run(),
         init_auth_data(),
         init_package_list().and_then(|_| async {
-            let watcher = PackageWatcher::new(&SETTINGS.package_dir);
+            let (tx, rx) = mpsc::channel();
+            let watcher = PackageWatcher::new(&SETTINGS.package_dir, tx);
 
             match watcher {
-                Ok(watcher) => {
-                    WATCHER.set(watcher).expect("the OnceCell to be empty");
+                Ok(mut watcher) => {
+                    // The watcher blocks the thread it is running on,
+                    // with Actix 3 it was ok to block on the main thread,
+                    // but Actix 4 doesn't like this very much.
+                    std::thread::spawn(move || {
+                        watcher.start_watcher(rx);
+                    });
                 }
                 Err(err) => {
                     log::error!("Failed to start FS watcher: {}", err);

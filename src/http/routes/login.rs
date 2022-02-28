@@ -20,12 +20,16 @@ use crate::{
     http::{error::Error::AccessDenied, get_auth_info, redirect, RedirectType},
     AUTH_DATA,
 };
-use actix_web::{dev::HttpServiceFactory, middleware, web, HttpRequest, Responder};
+use actix_web::{
+    dev::HttpServiceFactory,
+    middleware::{NormalizePath, TrailingSlash},
+    web, HttpRequest, Responder,
+};
 use actix_web_httpauth::extractors::basic::BasicAuth;
 
 pub fn login() -> impl HttpServiceFactory {
     web::scope("/login")
-        .wrap(middleware::NormalizePath::default())
+        .wrap(NormalizePath::new(TrailingSlash::Always))
         .service(
             web::resource("/")
                 .route(web::get().to(perform_login))

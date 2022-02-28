@@ -37,11 +37,11 @@ pub async fn run() -> crate::Result<()> {
                     // 2.0: Standard package server
                     // 2.1: Supports `etag`, `last-modified`, `wcf-update-server-ssl`, status code 304 and the `/list/<lang>.xml` endpoint
                     // 3.1: Supports the '<compatibility>` element
-                    .header("wcf-update-server-api", "2.0 2.1 3.1")
-                    .header(
+                    .add(("wcf-update-server-api", "2.0 2.1 3.1"))
+                    .add((
                         "wcf-update-server-ssl",
                         if SETTINGS.ssl { "true" } else { "false" },
-                    ),
+                    )),
             )
             .service(health)
             .service(download())

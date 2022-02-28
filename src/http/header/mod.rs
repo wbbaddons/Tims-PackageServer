@@ -18,11 +18,11 @@
 
 use actix_web::{
     http::header::{EntityTag, Header, HttpDate, IfModifiedSince, IfNoneMatch, IF_NONE_MATCH},
-    web::{Bytes, BytesMut, PayloadConfig},
+    web::{Bytes, BytesMut},
     FromRequest, HttpMessage, HttpRequest,
 };
-use askama_actix::futures;
 use fluent_templates::LanguageIdentifier;
+use futures_util::future::{ready, Ready};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod accept_language;
@@ -71,15 +71,14 @@ impl From<&HttpRequest> for Language {
 }
 
 impl FromRequest for Language {
-    type Config = PayloadConfig;
     type Error = actix_web::error::Error;
-    type Future = futures::Ready<Result<Self, Self::Error>>;
+    type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(
         req: &HttpRequest,
         _: &mut actix_web::dev::Payload,
     ) -> <Self as FromRequest>::Future {
-        futures::ready(Ok(req.into()))
+        ready(Ok(req.into()))
     }
 }
 
@@ -87,15 +86,14 @@ impl FromRequest for Language {
 pub struct Host(String);
 
 impl FromRequest for Host {
-    type Config = PayloadConfig;
     type Error = actix_web::error::Error;
-    type Future = futures::Ready<Result<Self, Self::Error>>;
+    type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(
         req: &HttpRequest,
         _: &mut actix_web::dev::Payload,
     ) -> <Self as FromRequest>::Future {
-        futures::ready(if let Some(host) = &crate::SETTINGS.host {
+        ready(if let Some(host) = &crate::SETTINGS.host {
             Ok(Self(host.clone()))
         } else {
             let info = req.connection_info();
