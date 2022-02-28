@@ -42,5 +42,6 @@ pub async fn main_xslt(auth: Option<BasicAuth>, language: Language, host: Host) 
         auth_data,
         auth_info,
     }
-    .with_header(VARY, "accept-language")
+    .customize()
+    .insert_header((VARY, "accept-language"))
 }

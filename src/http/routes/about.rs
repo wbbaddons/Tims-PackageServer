@@ -35,5 +35,6 @@ pub async fn about(language: Language, host: Host) -> impl Responder {
         license_info: LICENSE_INFO,
         lang: language.to_string(),
     }
-    .with_header(VARY, "accept-language")
+    .customize()
+    .insert_header((VARY, "accept-language"))
 }

@@ -43,7 +43,7 @@ pub fn is_accessible(
     }
 }
 
-pub fn timestamp(t: &SystemTime) -> askama::Result<u64> {
+pub fn timestamp(t: SystemTime) -> askama::Result<u64> {
     let duration = t
         .duration_since(std::time::SystemTime::UNIX_EPOCH)
         .map_err(|_| askama::Error::from(std::fmt::Error))?;

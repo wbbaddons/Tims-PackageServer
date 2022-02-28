@@ -126,6 +126,6 @@ impl RedirectType {
 
 pub fn redirect(ty: RedirectType) -> HttpResponse {
     HttpResponse::build(ty.status_code())
-        .set_header(LOCATION, ty.to())
+        .insert_header((LOCATION, ty.to()))
         .finish()
 }

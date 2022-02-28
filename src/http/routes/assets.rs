@@ -32,7 +32,7 @@ pub async fn favicon(req: HttpRequest) -> impl Responder {
 }
 
 #[get("/static/{filename:.+}")]
-pub async fn assets(req: HttpRequest, web::Path(filename): web::Path<String>) -> impl Responder {
+pub async fn assets(req: HttpRequest, filename: web::Path<String>) -> impl Responder {
     serve_asset(req, &filename)
 }
 
@@ -46,9 +46,9 @@ fn serve_asset(req: HttpRequest, filename: &str) -> Result<impl Responder, Error
 
             if not_modified(&req, Some(&etag), None) {
                 return HttpResponse::NotModified()
-                    .set(etag)
-                    .set(CacheControl(vec![CacheDirective::Public]))
-                    .body(actix_web::body::Body::None);
+                    .insert_header(etag)
+                    .insert_header(CacheControl(vec![CacheDirective::Public]))
+                    .body(()); // None
             }
 
             let content_type = if filename.ends_with(".js.map") {
@@ -60,8 +60,8 @@ fn serve_asset(req: HttpRequest, filename: &str) -> Result<impl Responder, Error
             };
 
             HttpResponse::Ok()
-                .set(etag)
-                .set(CacheControl(vec![CacheDirective::Public]))
+                .insert_header(etag)
+                .insert_header(CacheControl(vec![CacheDirective::Public]))
                 .content_type(content_type)
                 .body(source_file.contents)
         })

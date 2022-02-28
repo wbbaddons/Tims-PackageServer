@@ -43,19 +43,19 @@ enum OutputType {
 
 #[get("/")]
 async fn index(req: HttpRequest, language: Language, host: Host) -> impl Responder {
-    use askama_actix::TemplateIntoResponse;
-
     let accept = Accept::parse(&req);
     let output_type = match accept.as_ref().ok() {
-        Some(accept) if !accept.mime_precedence().is_empty() => accept
-            .mime_precedence()
-            .iter()
-            .find_map(|mime| match (mime.type_(), mime.subtype()) {
-                (mime::TEXT, mime::HTML) => Some(OutputType::Html),
-                (mime::TEXT, mime::PLAIN) => Some(OutputType::Plain),
-                (mime::STAR, _) => Some(OutputType::Html),
-                _ => None,
-            }),
+        Some(accept) if !accept.ranked().is_empty() => {
+            accept
+                .ranked()
+                .iter()
+                .find_map(|mime| match (mime.type_(), mime.subtype()) {
+                    (mime::TEXT, mime::HTML) => Some(OutputType::Html),
+                    (mime::TEXT, mime::PLAIN) => Some(OutputType::Plain),
+                    (mime::STAR, _) => Some(OutputType::Html),
+                    _ => None,
+                })
+        }
         Some(_) | None => Some(OutputType::Plain),
     };
 
@@ -63,68 +63,60 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
         Some(OutputType::Html) => {
             let etag = ETag(EntityTag::new(
                 false,
-                format!(
-                    "html-{}-{}",
-                    language.to_string(),
-                    crate::SOURCE_FILES_COMBINED_HASH
-                ),
+                format!("html-{}-{}", *language, crate::SOURCE_FILES_COMBINED_HASH),
             ));
 
             if not_modified(&req, Some(&etag), None) {
-                return Ok(Either::B(
+                return Ok(Either::Right(
                     HttpResponse::NotModified()
-                        .set_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
-                        .set_header(ETAG, etag)
-                        .set_header(VARY, "accept, accept-language")
-                        .body(actix_web::body::Body::None),
+                        .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                        .insert_header((ETAG, etag))
+                        .insert_header((VARY, "accept, accept-language"))
+                        .body(()),
                 ));
             }
 
-            Ok(Either::A(
+            Ok(Either::Left(Either::Left(
                 SourceCodeHtmlTemplate {
                     host: host.clone(),
                     server_version: crate::built_info::version(),
                     title: crate::SETTINGS.page_title.as_ref(),
                     lang: language.to_string(),
                 }
-                .into_response()
-                .with_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
-                .with_header(ETAG, etag)
-                .with_header(VARY, "accept, accept-language"),
-            ))
+                .customize()
+                .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                .insert_header((ETAG, etag))
+                .insert_header((VARY, "accept, accept-language")),
+            )))
         }
         Some(OutputType::Plain) => {
             let etag = ETag(EntityTag::new(
                 false,
-                format!(
-                    "txt-{}-{}",
-                    language.to_string(),
-                    crate::SOURCE_FILES_COMBINED_HASH
-                ),
+                format!("txt-{}-{}", *language, crate::SOURCE_FILES_COMBINED_HASH),
             ));
 
             if not_modified(&req, Some(&etag), None) {
-                return Ok(Either::B(
+                return Ok(Either::Right(
                     HttpResponse::NotModified()
-                        .set_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
-                        .set_header(ETAG, etag)
-                        .set_header(VARY, "accept, accept-language")
-                        .body(actix_web::body::Body::None),
+                        .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                        .insert_header((ETAG, etag))
+                        .insert_header((VARY, "accept, accept-language"))
+                        .body(()),
                 ));
             }
 
-            Ok(Either::A(
+            Ok(Either::Left(Either::Right(
                 SourceCodeTextTemplate {
                     host: host.clone(),
                     server_version: crate::built_info::version(),
                     title: crate::SETTINGS.page_title.as_ref(),
                     lang: language.to_string(),
                 }
-                .into_response()
-                .with_header(CACHE_CONTROL, CacheControl(vec![CacheDirective::Public]))
-                .with_header(ETAG, etag)
-                .with_header(VARY, "accept, accept-language"),
-            ))
+                .customize()
+                .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                .insert_header((ETAG, etag))
+                .insert_header((VARY, "accept, accept-language")),
+            )))
         }
         None => {
             // This unwrap is safe because the header must have
@@ -135,9 +127,9 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
 }
 
 #[get("/{filename:.*}")]
-async fn get_file(req: HttpRequest, web::Path(filename): web::Path<String>) -> impl Responder {
+async fn get_file(req: HttpRequest, filename: web::Path<String>) -> impl Responder {
     if let Some(source_file) = crate::SOURCE_FILES.get(&filename) {
-        let content_type = mime_guess::from_path(filename)
+        let content_type = mime_guess::from_path(filename.as_str())
             .first()
             .map(|mime| {
                 // Let browsers try to display the file directly
@@ -151,11 +143,11 @@ async fn get_file(req: HttpRequest, web::Path(filename): web::Path<String>) -> i
             .to_string();
 
         return Ok(HttpResponse::Ok()
-            .set(ETag::from(source_file))
-            .set(CacheControl(vec![CacheDirective::Public]))
+            .insert_header(ETag::from(source_file))
+            .insert_header(CacheControl(vec![CacheDirective::Public]))
             .content_type(content_type)
             .body(source_file.contents));
     }
 
-    Err(FileNotFound(req, filename))
+    Err(FileNotFound(req, filename.to_string()))
 }

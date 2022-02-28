@@ -30,7 +30,8 @@ use crate::{
 use actix_web::{
     dev::HttpServiceFactory,
     http::header::{ContentDisposition, DispositionParam, DispositionType},
-    middleware, web, HttpRequest, Responder,
+    middleware::{NormalizePath, TrailingSlash},
+    web, HttpRequest, Responder,
 };
 use actix_web_httpauth::extractors::basic::BasicAuth;
 use once_cell::sync::Lazy;
@@ -132,7 +133,7 @@ pub struct DownloadRequest {
 
 pub fn download() -> impl HttpServiceFactory {
     web::scope("/{package_id:[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)+}")
-        .wrap(middleware::NormalizePath::default())
+        .wrap(NormalizePath::new(TrailingSlash::Always))
         .service(
             web::resource(
                 "/{version:[0-9]+\\.[0-9]+\\.[0-9]+(?:_(?:a|alpha|b|beta|d|dev|rc|pl)_[0-9]+)?}/",
@@ -156,7 +157,7 @@ async fn download_latest(
     req: HttpRequest,
     host: crate::http::header::Host,
     auth: Option<BasicAuth>,
-    web::Path(package_id): web::Path<String>,
+    package_id: web::Path<String>,
 ) -> impl Responder {
     let auth_data = AUTH_DATA.load_full();
     let auth_info = get_auth_info(&auth_data, auth);
@@ -164,7 +165,7 @@ async fn download_latest(
     if let Some(package_list) = PACKAGE_LIST.load_full() {
         'outer: for package in &package_list.packages {
             for version in package.iter().rev() {
-                if version.data.name != package_id {
+                if version.data.name != package_id.as_str() {
                     continue 'outer;
                 }
 
@@ -185,7 +186,7 @@ async fn download_latest(
         }
 
         // No version found
-        Err(UnknownPackage(req, package_id))
+        Err(UnknownPackage(req, package_id.to_string()))
     } else {
         Err(PackageListUnavailable(req))
     }
@@ -219,9 +220,10 @@ async fn post_download_package(
 fn download_package(
     req: HttpRequest,
     auth: Option<BasicAuth>,
-    web::Path((package_id, version_str)): web::Path<(String, String)>,
+    path: web::Path<(String, String)>,
     params: DownloadRequest,
 ) -> impl Responder {
+    let (package_id, version_str) = path.into_inner();
     let auth_data = AUTH_DATA.load_full();
     let auth_info = get_auth_info(&auth_data, auth);
     // The path makes sure that the version is valid
@@ -263,8 +265,7 @@ fn download_package(
             .use_etag(true)
             .use_last_modified(true)
             .set_content_disposition(cd)
-            .into_response(&req)
-            .expect("NamedFile::into_response always returns an Ok value"));
+            .into_response(&req));
     } else if file_path.is_file() {
         let who = auth_info
             .username

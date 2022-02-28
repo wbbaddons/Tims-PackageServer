@@ -21,8 +21,8 @@
 
 use super::Writer;
 use actix_web::http::header::{
-    fmt_comma_delimited, from_comma_delimited, Header, HeaderName, HeaderValue, IntoHeaderValue,
-    InvalidHeaderValue, QualityItem, ACCEPT_LANGUAGE,
+    fmt_comma_delimited, from_comma_delimited, Header, HeaderName, HeaderValue, InvalidHeaderValue,
+    QualityItem, TryIntoHeaderValue, ACCEPT_LANGUAGE,
 };
 use fluent_templates::LanguageIdentifier;
 
@@ -69,10 +69,10 @@ impl std::fmt::Display for AcceptLanguage {
     }
 }
 
-impl IntoHeaderValue for AcceptLanguage {
+impl TryIntoHeaderValue for AcceptLanguage {
     type Error = InvalidHeaderValue;
 
-    fn try_into(self) -> Result<HeaderValue, Self::Error> {
+    fn try_into_value(self) -> Result<HeaderValue, Self::Error> {
         use std::fmt::Write;
         let mut writer = Writer::new();
         let _ = write!(&mut writer, "{}", self);

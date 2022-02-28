@@ -29,7 +29,7 @@ pub async fn health(req: HttpRequest) -> impl Responder {
         .load_full()
         .map(|_| {
             HttpResponse::Ok()
-                .set(CacheControl(vec![
+                .insert_header(CacheControl(vec![
                     CacheDirective::NoCache,
                     CacheDirective::NoStore,
                     CacheDirective::Private,
