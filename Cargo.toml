@@ -9,7 +9,7 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-actix-files = "0.5.0"
+actix-files = "0.6.0"
 actix-web = { version = "3.3.3", default-features = false }
 actix-web-httpauth = "0.5.1"
 arc-swap = "1.5.0"
