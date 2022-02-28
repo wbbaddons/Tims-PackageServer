@@ -79,14 +79,13 @@ impl Default for Settings {
 }
 
 pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
-    let mut settings: Settings = Config::default()
-        .with_merged(Config::try_from(&Settings::default()).unwrap())
+    let mut settings: Settings = Config::builder()
+        .add_source(Config::try_from(&Settings::default()).unwrap())
+        .add_source(config::File::with_name("PackageServer_config").required(false))
+        .add_source(config::Environment::with_prefix("PackageServer"))
+        .build()
         .unwrap()
-        .with_merged(config::File::with_name("PackageServer_config").required(false))
-        .unwrap()
-        .with_merged(config::Environment::with_prefix("PackageServer"))
-        .unwrap()
-        .try_into()
+        .try_deserialize()
         .unwrap();
 
     settings.package_dir = settings
