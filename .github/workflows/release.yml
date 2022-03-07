@@ -28,7 +28,7 @@ jobs:
     name: Upload Release Asset
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -73,7 +73,7 @@ jobs:
       - name: Extract version from tag
         id: extract_version
         run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\/v/}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: docker/build-push-action@v2
         with:
           context: .
