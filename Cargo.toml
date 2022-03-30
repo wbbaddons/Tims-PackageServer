@@ -16,7 +16,7 @@ arc-swap = "1.5.0"
 askama = { version = "0.11.1", default-features = false }
 askama_actix = "0.13.0"
 base64 = { version = "0.13.0", default-features = false }
-bcrypt = "0.12.0"
+bcrypt = "0.12.1"
 config = "0.12.0"
 env_logger = "0.9.0"
 fluent-langneg = { version = "0.13.0", default-features = false }
