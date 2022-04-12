@@ -40,7 +40,7 @@ fn verify(password: &str, hash: &str) -> crate::Result<bool> {
 }
 
 fn get_salted_hash(password: &str, hash: &str) -> crate::Result<String> {
-    let version = match hash.splitn(3, '$').nth(1) {
+    let version = match hash.split('$').nth(1) {
         Some("2a") => bcrypt::Version::TwoA,
         Some("2x") => bcrypt::Version::TwoX,
         Some("2y") => bcrypt::Version::TwoY,

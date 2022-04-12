@@ -20,9 +20,8 @@ mod macros;
 
 use crate::SOURCE_FILES;
 use fluent_templates::{
-    fluent_bundle::{concurrent::FluentBundle, FluentResource},
-    fs::resource_from_str,
-    loader, LanguageIdentifier, Loader, StaticLoader,
+    fluent_bundle::FluentResource, fs::resource_from_str, loader, FluentBundle, LanguageIdentifier,
+    Loader, StaticLoader,
 };
 use once_cell::sync::Lazy;
 use std::{

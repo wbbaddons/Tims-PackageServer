@@ -17,15 +17,15 @@ askama = { version = "0.11.1", default-features = false }
 askama_actix = "0.13.0"
 base64 = { version = "0.13.0", default-features = false }
 bcrypt = "0.12.1"
-config = "0.12.0"
+config = "0.13.0"
 env_logger = "0.9.0"
 fluent-langneg = { version = "0.13.0", default-features = false }
-fluent-templates = { version = "0.6.1", default-features = false }
+fluent-templates = { version = "0.7.1", default-features = false }
 futures = { version = "0.3.21", default-features = false, features = [ "async-await" ] }
 futures-util = { version = "0.3.21", default-features = false }
 humantime = "2.1.0"
 language-tags = "0.3.2"
-libc = "0.2.121"
+libc = "0.2.122"
 log = "0.4.16"
 mime = "0.3.16"
 mime_guess = { version = "2.0.4", default-features = false }
