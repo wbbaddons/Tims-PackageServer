@@ -78,7 +78,7 @@ jobs:
     - run: sudo apt-get install -y httpie jq
     - run: pip3 install yq
     - uses: actions/checkout@v3
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: tims-package-server
     - run: mv */tims-package-server .
