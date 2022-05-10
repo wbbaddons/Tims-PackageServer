@@ -17,6 +17,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::auth::PasswordHash;
+use bcrypt::BcryptError;
 
 #[derive(Debug)]
 pub struct DoubleBcrypt(pub String);
@@ -53,16 +54,16 @@ fn get_salted_hash(password: &str, hash: &str) -> crate::Result<String> {
         }
     };
 
-    let mut salt = [0; 16];
     let parts = hash.parse::<bcrypt::HashParts>()?;
+    let salt = base64::decode_config(parts.get_salt(), base64::BCRYPT)?;
+    let salt_len = salt.len();
 
-    // Safety:
-    // This function panics if the given buffer is too small.
-    // The `HashParts` parser guarantees that the base64-encoded salt is 22 bytes long.
-    // To decode an input of 22 characters we need a buffer of size `floor((22 * 3) / 4) = 16` bytes.
-    base64::decode_config_slice(parts.get_salt(), base64::BCRYPT, &mut salt)?;
-
-    let parts = bcrypt::hash_with_salt(password, parts.get_cost(), salt)?;
+    let parts = bcrypt::hash_with_salt(
+        password,
+        parts.get_cost(),
+        salt.try_into()
+            .map_err(|_| BcryptError::InvalidSaltLen(salt_len))?,
+    )?;
 
     Ok(parts.format_for_version(version))
 }
