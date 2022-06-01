@@ -74,7 +74,7 @@ jobs:
         id: extract_version
         run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\/v/}
       - uses: actions/checkout@v3
-      - uses: docker/build-push-action@v2
+      - uses: docker/build-push-action@v3
         with:
           context: .
           push: true
