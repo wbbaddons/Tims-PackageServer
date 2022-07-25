@@ -9,7 +9,7 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-actix-files = "0.6.1"
+actix-files = "0.6.2"
 actix-web = { version = "4.1.0", default-features = false, features = [ "macros" ] }
 actix-web-httpauth = "0.6.0"
 arc-swap = "1.5.0"
@@ -33,7 +33,7 @@ nom = { version = "7.1.1", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
 once_cell = { version = "1.13.0", default-features = false }
 phf = "0.10.1"
-regex = { version = "1.5.6", default-features = false }
+regex = { version = "1.6.0", default-features = false }
 roxmltree = "0.14.1"
 serde = { version = "1.0.140", features = [ "derive" ] }
 serde_json = { version = "1.0.82", default-features = false }
