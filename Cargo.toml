@@ -11,7 +11,7 @@ resolver = "2"
 [dependencies]
 actix-files = "0.6.2"
 actix-web = { version = "4.1.0", default-features = false, features = [ "macros" ] }
-actix-web-httpauth = "0.6.0"
+actix-web-httpauth = "0.8.0"
 arc-swap = "1.5.1"
 askama = { version = "0.11.1", default-features = false }
 askama_actix = "0.13.0"
@@ -32,7 +32,7 @@ mime_guess = { version = "2.0.4", default-features = false }
 nom = { version = "7.1.1", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
 once_cell = { version = "1.13.0", default-features = false }
-phf = "0.10.1"
+phf = "0.11.0"
 regex = { version = "1.6.0", default-features = false }
 roxmltree = "0.14.1"
 serde = { version = "1.0.141", features = [ "derive" ] }
@@ -46,9 +46,8 @@ url = { version = "2.2.2", features = ["serde"] }
 base64 = "0.13.0"
 built = { version = "0.5.1", features = [ "git2" ] }
 cargo-license = "0.4.2"
-cargo_metadata = { version = "0.14.2", default-features = false }
 ignore = "0.4.18"
-phf_codegen = "0.10.0"
+phf_codegen = "0.11.0"
 sha2 = "0.10.2"
 
 [profile.release]

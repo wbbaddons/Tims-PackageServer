@@ -168,8 +168,8 @@ fn bundle_source_code() -> crate::Result<()> {
 fn main() -> crate::Result<()> {
     built::write_built_file().expect("Failed to acquire build-time information");
 
-    let cmd = cargo_metadata::MetadataCommand::new();
-    let dependencies = cargo_license::get_dependencies_from_cargo_lock(cmd, false, false)?;
+    let dependencies =
+        cargo_license::get_dependencies_from_cargo_lock(Default::default(), false, false)?;
 
     write_license_info_file(dependencies)?;
 

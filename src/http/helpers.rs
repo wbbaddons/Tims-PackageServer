@@ -79,10 +79,10 @@ pub fn get_auth_info(auth_data: &AuthData, auth: Option<BasicAuth>) -> AuthInfo 
         let user_id = auth.user_id();
         let password = auth.password();
 
-        let user = auth_data.users.get(user_id.as_ref());
+        let user = auth_data.users.get(user_id);
 
         user.and_then(|user| match password {
-            Some(password) if user.passwd.verify(password) => Some(user_id.as_ref().to_owned()),
+            Some(password) if user.passwd.verify(password) => Some(user_id.to_owned()),
             _ => None,
         })
     });
