@@ -48,7 +48,7 @@ built = { version = "0.5.1", features = [ "git2" ] }
 cargo-license = "0.4.2"
 cargo_metadata = { version = "0.14.2", default-features = false }
 ignore = "0.4.18"
-phf_codegen = "0.10.0"
+phf_codegen = "0.11.0"
 sha2 = "0.10.2"
 
 [profile.release]
