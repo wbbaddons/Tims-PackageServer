@@ -17,7 +17,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::{AUTH_DATA, PACKAGE_LIST, SETTINGS};
-use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_mini::{new_debouncer, DebounceEventResult, DebouncedEvent, Debouncer};
+
 use std::{
     ffi::OsStr,
     path::Path,
@@ -28,16 +30,19 @@ use std::{
 };
 
 pub struct PackageWatcher<'a> {
-    inner: RecommendedWatcher,
+    // We need to keep the reference around, to prevent it from being dropped
+    #[allow(dead_code)]
+    inner: Debouncer<RecommendedWatcher>,
+
     path: &'a Path,
     scanning: Arc<Mutex<()>>,
 }
 
 impl<'a> PackageWatcher<'a> {
-    pub fn new(path: &'a Path, tx: Sender<DebouncedEvent>) -> notify::Result<Self> {
-        let mut inner = notify::watcher(tx, std::time::Duration::from_secs(5))?;
+    pub fn new(path: &'a Path, tx: Sender<DebounceEventResult>) -> notify::Result<Self> {
+        let mut inner = new_debouncer(std::time::Duration::from_secs(5), None, tx)?;
 
-        inner.watch(path, RecursiveMode::Recursive)?;
+        inner.watcher().watch(path, RecursiveMode::Recursive)?;
 
         let watcher = Self {
             inner,
@@ -88,45 +93,38 @@ impl<'a> PackageWatcher<'a> {
     }
 
     fn handle_event(&self, event: DebouncedEvent) {
-        match event {
-            DebouncedEvent::NoticeWrite(ref path)
-            | DebouncedEvent::NoticeRemove(ref path)
-            | DebouncedEvent::Create(ref path)
-            | DebouncedEvent::Write(ref path)
-            | DebouncedEvent::Chmod(ref path)
-            | DebouncedEvent::Remove(ref path)
-            | DebouncedEvent::Rename(ref path, _) => {
-                if path.extension() == Some(OsStr::new("tar"))
-                    || path == &self.path.join("auth.json")
-                {
-                    log::trace!("Re-scan triggered by event: {:#?}", event);
-                    self.start_scan();
-                }
-            }
-            DebouncedEvent::Rescan => {
-                log::trace!("Re-scan triggered by DebouncedEvent::Rescan");
-                self.start_scan();
-            }
-            DebouncedEvent::Error(..) => {
-                unreachable!("Error events have been handled in `start_thread` already");
-            }
+        // TODO: Previously we also scanned when we got a "Rescan" event.
+        // We might have to scan when we get an event where `event.path == self.path`.
+
+        if event.path.extension() == Some(OsStr::new("tar"))
+            || event.path == self.path.join("auth.json")
+        {
+            log::trace!("Re-scan triggered by event: {:#?}", event);
+            self.start_scan();
         }
     }
 
-    pub fn start_watcher(&mut self, rx: Receiver<DebouncedEvent>) {
+    pub fn start_watcher(&mut self, rx: Receiver<DebounceEventResult>) {
         loop {
             match rx.recv() {
-                Ok(DebouncedEvent::Error(err, Some(path))) => {
-                    log::error!("Watch error in path {:?}: {:?}", path, err);
-                }
-                Ok(DebouncedEvent::Error(err, None)) => {
-                    log::error!("Watch error: {:?}", err);
-                }
                 Err(err) => {
                     log::error!("Generic watch error, stopping loop: {:?}", err);
                     break;
                 }
-                Ok(event) => self.handle_event(event),
+                Ok(Ok(events)) => {
+                    for event in events {
+                        self.handle_event(event)
+                    }
+                }
+                Ok(Err(errors)) => {
+                    log::error!(
+                        "Encountered {} errors while processing events:",
+                        errors.len()
+                    );
+                    for (i, err) in errors.iter().enumerate() {
+                        log::error!("Error #{i}: {err}");
+                    }
+                }
             }
         }
     }
@@ -137,11 +135,5 @@ impl std::fmt::Debug for PackageWatcher<'_> {
         f.debug_struct("PackageWatcher")
             .field("path", &self.path)
             .finish()
-    }
-}
-
-impl Drop for PackageWatcher<'_> {
-    fn drop(&mut self) {
-        self.inner.unwatch(self.path).unwrap();
     }
 }
