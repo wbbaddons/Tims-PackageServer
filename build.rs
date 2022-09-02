@@ -16,6 +16,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use cargo_license::GetDependenciesOpt;
 use sha2::{Digest, Sha384};
 use std::{
     collections::HashMap,
@@ -168,8 +169,16 @@ fn bundle_source_code() -> crate::Result<()> {
 fn main() -> crate::Result<()> {
     built::write_built_file().expect("Failed to acquire build-time information");
 
-    let dependencies =
-        cargo_license::get_dependencies_from_cargo_lock(Default::default(), false, false)?;
+    let cmd = Default::default();
+
+    let ops = GetDependenciesOpt {
+        avoid_dev_deps: false,
+        avoid_build_deps: false,
+        direct_deps_only: false,
+        root_only: false,
+    };
+
+    let dependencies = cargo_license::get_dependencies_from_cargo_lock(cmd, ops)?;
 
     write_license_info_file(dependencies)?;
 
