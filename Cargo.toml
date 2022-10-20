@@ -37,7 +37,7 @@ regex = { version = "1.6.0", default-features = false }
 roxmltree = "0.15.0"
 serde = { version = "1.0.145", features = [ "derive" ] }
 serde_json = { version = "1.0.85", default-features = false }
-sha2 = "0.10.5"
+sha2 = "0.10.6"
 tar = { version = "0.4.38", default-features = false }
 unic-langid = "0.9.0"
 url = { version = "2.3.1", features = ["serde"] }
@@ -48,7 +48,7 @@ built = { version = "0.5.1", features = [ "git2" ] }
 cargo-license = "0.5.1"
 ignore = "0.4.18"
 phf_codegen = "0.11.1"
-sha2 = "0.10.5"
+sha2 = "0.10.6"
 
 [profile.release]
 panic = "abort"
