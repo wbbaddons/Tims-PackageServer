@@ -17,15 +17,15 @@ askama = { version = "0.11.1", default-features = false }
 askama_actix = "0.13.0"
 base64 = { version = "0.13.1", default-features = false }
 bcrypt = "0.13.0"
-config = "0.13.2"
-env_logger = "0.9.1"
+config = "0.13.3"
+env_logger = "0.10.0"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.8.0", default-features = false }
 futures = { version = "0.3.25", default-features = false, features = [ "async-await" ] }
 futures-util = { version = "0.3.25", default-features = false }
 humantime = "2.1.0"
 language-tags = "0.3.2"
-libc = "0.2.137"
+libc = "0.2.138"
 log = "0.4.17"
 mime = "0.3.16"
 mime_guess = { version = "2.0.4", default-features = false }
@@ -34,9 +34,9 @@ notify = "4.0.17"
 once_cell = { version = "1.16.0", default-features = false }
 phf = "0.11.1"
 regex = { version = "1.7.0", default-features = false }
-roxmltree = "0.15.0"
-serde = { version = "1.0.147", features = [ "derive" ] }
-serde_json = { version = "1.0.87", default-features = false }
+roxmltree = "0.16.0"
+serde = { version = "1.0.149", features = [ "derive" ] }
+serde_json = { version = "1.0.89", default-features = false }
 sha2 = "0.10.6"
 tar = { version = "0.4.38", default-features = false }
 unic-langid = "0.9.1"
@@ -44,7 +44,7 @@ url = { version = "2.3.1", features = ["serde"] }
 
 [build-dependencies]
 base64 = "0.13.1"
-built = { version = "0.5.1", features = [ "git2" ] }
+built = { version = "0.5.2", features = [ "git2" ] }
 cargo-license = "0.5.1"
 ignore = "0.4.18"
 phf_codegen = "0.11.1"
