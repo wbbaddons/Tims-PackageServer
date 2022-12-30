@@ -25,18 +25,18 @@ futures = { version = "0.3.25", default-features = false, features = [ "async-aw
 futures-util = { version = "0.3.25", default-features = false }
 humantime = "2.1.0"
 language-tags = "0.3.2"
-libc = "0.2.138"
+libc = "0.2.139"
 log = "0.4.17"
 mime = "0.3.16"
 mime_guess = { version = "2.0.4", default-features = false }
 nom = { version = "7.1.1", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
-once_cell = { version = "1.16.0", default-features = false }
+once_cell = { version = "1.17.0", default-features = false }
 phf = "0.11.1"
 regex = { version = "1.7.0", default-features = false }
 roxmltree = "0.16.0"
-serde = { version = "1.0.149", features = [ "derive" ] }
-serde_json = { version = "1.0.89", default-features = false }
+serde = { version = "1.0.152", features = [ "derive" ] }
+serde_json = { version = "1.0.91", default-features = false }
 sha2 = "0.10.6"
 tar = { version = "0.4.38", default-features = false }
 unic-langid = "0.9.1"
