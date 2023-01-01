@@ -35,7 +35,7 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
-    - uses: Swatinem/rust-cache@v1
+    - uses: Swatinem/rust-cache@v2
       with:
         sharedKey: ci
     - uses: actions/setup-node@v3
@@ -59,7 +59,7 @@ jobs:
       with:
         profile: minimal
         toolchain: stable
-    - uses: Swatinem/rust-cache@v1
+    - uses: Swatinem/rust-cache@v2
       with:
         sharedKey: ci
     - uses: actions/setup-node@v3
