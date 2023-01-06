@@ -30,7 +30,7 @@ fn write_license_info_file(
     dependencies: Vec<cargo_license::DependencyDetails>,
 ) -> std::io::Result<()> {
     let dst = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).join("licence_info.rs");
-    let mut file = std::fs::File::create(&dst)?;
+    let mut file = std::fs::File::create(dst)?;
 
     writeln!(file, "pub type LicenseInfo = &'static [(&'static str, &'static str, &'static str, &'static [&'static str])];")?;
     writeln!(file, "pub const LICENSE_INFO: LicenseInfo = &[")?;
@@ -94,7 +94,7 @@ fn bundle_source_code() -> crate::Result<()> {
         .build();
 
     let dst = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).join("source_files.rs");
-    let mut out = BufWriter::new(std::fs::File::create(&dst)?);
+    let mut out = BufWriter::new(std::fs::File::create(dst)?);
 
     let mut const_names = HashMap::new();
 
