@@ -117,7 +117,7 @@ jobs:
       shell: bash
     - name: Grab initial ETag
       id: etag
-      run: printf "::set-output name=ETAG::%s" "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')"
+      run: printf "ETAG=%s" "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')" >> $GITHUB_OUTPUT
     - run: mv tests/auth.json packages/auth.json
     - name: Wait for the ETag to change
       run: |
