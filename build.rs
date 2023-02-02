@@ -49,8 +49,7 @@ fn write_license_info_file(
 
         writeln!(
             file,
-            r#"    ("{}", "{}", "{}", &[{}]),"#,
-            name, version, license, authors
+            r#"    ("{name}", "{version}", "{license}", &[{authors}]),"#
         )?;
     }
 

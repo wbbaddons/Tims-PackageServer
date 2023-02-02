@@ -37,7 +37,7 @@ impl PasswordHash for DoubleBcrypt {
 fn verify(password: &str, hash: &str) -> crate::Result<bool> {
     Ok(password)
         .and_then(|password| get_salted_hash(password, hash))
-        .and_then(|salted_hash| bcrypt::verify(&salted_hash, hash).map_err(Into::into))
+        .and_then(|salted_hash| bcrypt::verify(salted_hash, hash).map_err(Into::into))
 }
 
 fn get_salted_hash(password: &str, hash: &str) -> crate::Result<String> {

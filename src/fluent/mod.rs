@@ -139,11 +139,11 @@ CARGO_TEST_STRING_5 = foo = { $foo }
         Lazy::new(|| RESOURCES.keys().cloned().collect());
 
     static FALLBACKS: Lazy<HashMap<loader::LanguageIdentifier, Vec<loader::LanguageIdentifier>>> =
-        Lazy::new(|| loader::build_fallbacks(&*LOCALES));
+        Lazy::new(|| loader::build_fallbacks(&LOCALES));
 
     static BUNDLES: Lazy<
         HashMap<loader::LanguageIdentifier, FluentBundle<&'static FluentResource>>,
-    > = Lazy::new(|| loader::build_bundles(&*RESOURCES, CORE_RESOURCE.as_ref(), customizer));
+    > = Lazy::new(|| loader::build_bundles(&RESOURCES, CORE_RESOURCE.as_ref(), customizer));
 
     StaticLoader::new(&BUNDLES, &FALLBACKS, DEFAULT.clone())
 });

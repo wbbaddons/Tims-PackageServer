@@ -37,7 +37,7 @@ impl<'a> PackageWatcher<'a> {
     pub fn new(path: &'a Path, tx: Sender<DebouncedEvent>) -> notify::Result<Self> {
         let mut inner = notify::watcher(tx, std::time::Duration::from_secs(5))?;
 
-        inner.watch(&path, RecursiveMode::Recursive)?;
+        inner.watch(path, RecursiveMode::Recursive)?;
 
         let watcher = Self {
             inner,
@@ -142,6 +142,6 @@ impl std::fmt::Debug for PackageWatcher<'_> {
 
 impl Drop for PackageWatcher<'_> {
     fn drop(&mut self) {
-        self.inner.unwatch(&self.path).unwrap();
+        self.inner.unwatch(self.path).unwrap();
     }
 }

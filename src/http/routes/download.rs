@@ -232,7 +232,7 @@ fn download_package(
     let filename = format!("{}.tar", version_str);
     let download_name = format!("{}_v{}.tar", &package_id, version_str);
 
-    let file_path = SETTINGS.package_dir.join(&package_id).join(&filename);
+    let file_path = SETTINGS.package_dir.join(&package_id).join(filename);
 
     if is_accessible(&package_id, &version, &auth_info, &auth_data) {
         let file = match actix_files::NamedFile::open(file_path) {
