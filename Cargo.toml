@@ -15,7 +15,7 @@ actix-web-httpauth = "0.8.0"
 arc-swap = "1.6.0"
 askama = { version = "0.11.1", default-features = false }
 askama_actix = "0.13.0"
-base64 = { version = "0.13.1", default-features = false }
+base64 = { version = "0.21.0", default-features = false }
 bcrypt = "0.14.0"
 config = "0.13.3"
 env_logger = "0.10.0"
@@ -43,7 +43,7 @@ unic-langid = "0.9.1"
 url = { version = "2.3.1", features = ["serde"] }
 
 [build-dependencies]
-base64 = "0.13.1"
+base64 = "0.21.0"
 built = { version = "0.6.0", features = [ "git2" ] }
 cargo-license = "0.5.1"
 ignore = "0.4.20"
