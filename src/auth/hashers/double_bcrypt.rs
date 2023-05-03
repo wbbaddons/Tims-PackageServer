@@ -17,7 +17,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::auth::PasswordHash;
+use base64::{alphabet::BCRYPT, engine::general_purpose::NO_PAD, Engine as _};
 use bcrypt::BcryptError;
+
+pub const BASE64: base64::engine::GeneralPurpose =
+    base64::engine::GeneralPurpose::new(&BCRYPT, NO_PAD);
 
 #[derive(Debug)]
 pub struct DoubleBcrypt(pub String);
@@ -55,7 +59,7 @@ fn get_salted_hash(password: &str, hash: &str) -> crate::Result<String> {
     };
 
     let parts = hash.parse::<bcrypt::HashParts>()?;
-    let salt = base64::decode_config(parts.get_salt(), base64::BCRYPT)?;
+    let salt = BASE64.decode(parts.get_salt())?;
     let salt_len = salt.len();
 
     let parts = bcrypt::hash_with_salt(

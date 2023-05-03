@@ -34,6 +34,7 @@ use actix_web::{
     web, Either, HttpRequest, HttpResponse, Responder,
 };
 use actix_web_httpauth::extractors::basic::BasicAuth;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64, Engine as _};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -159,7 +160,7 @@ fn response(
 
             let etag = ETag(EntityTag::new(
                 !SETTINGS.deterministic,
-                base64::encode_config(etag_content, base64::URL_SAFE_NO_PAD),
+                BASE64.encode(etag_content),
             ));
             let last_modified = LastModified(package_list.updated_at.into());
 

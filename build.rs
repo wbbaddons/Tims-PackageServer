@@ -16,6 +16,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+use base64::{prelude::BASE64_STANDARD as BASE64, Engine};
 use cargo_license::GetDependenciesOpt;
 use sha2::{Digest, Sha384};
 use std::{
@@ -135,7 +136,7 @@ fn bundle_source_code() -> crate::Result<()> {
                 out,
                 "const {}_SHA384_DIGEST: &str = \"sha384-{}\";",
                 const_name,
-                base64::encode(hash)
+                BASE64.encode(hash)
             )?;
 
             builder.entry(
@@ -157,7 +158,7 @@ fn bundle_source_code() -> crate::Result<()> {
     writeln!(
         out,
         "pub const SOURCE_FILES_COMBINED_HASH: &str = \"{}\";\n",
-        base64::encode(combined_hasher.finalize())
+        BASE64.encode(combined_hasher.finalize())
     )?;
 
     out.flush().unwrap();
