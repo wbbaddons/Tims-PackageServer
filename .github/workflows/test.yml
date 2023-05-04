@@ -31,13 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
+    - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
       with:
-        sharedKey: ci
+        shared-key: ci
     - uses: actions/setup-node@v3
       with:
         node-version: "16"
@@ -50,24 +47,23 @@ jobs:
         path: target/*/tims-package-server
         if-no-files-found: error
         retention-days: 2
+
   cargo_test:
     name: cargo test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
+    - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
       with:
-        sharedKey: ci
+        shared-key: ci
     - uses: actions/setup-node@v3
       with:
         node-version: "16"
         cache: "npm"
     - run: npm ci
     - run: cargo test --locked --verbose
+
   end_to_end_test:
     name: End to end test
     needs:

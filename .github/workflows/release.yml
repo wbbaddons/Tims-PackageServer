@@ -29,10 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v3
         with:
@@ -40,6 +37,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: cargo build --locked --release --verbose
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -50,6 +48,7 @@ jobs:
           release_name: Tim’s PackageServer ${{ github.ref }}
           draft: false
           prerelease: ${{ contains(github.ref, 'rc') }}
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -60,6 +59,7 @@ jobs:
           asset_path: target/release/tims-package-server
           asset_name: tims-package-server_linux_amd64
           asset_content_type: application/x-pie-executable
+
   docker_image:
     name: Push Docker image to ghcr.io
     runs-on: ubuntu-latest
