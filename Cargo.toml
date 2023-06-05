@@ -40,7 +40,7 @@ serde_json = { version = "1.0.96", default-features = false }
 sha2 = "0.10.6"
 tar = { version = "0.4.38", default-features = false }
 unic-langid = "0.9.1"
-url = { version = "2.3.1", features = ["serde"] }
+url = { version = "2.4.0", features = ["serde"] }
 
 [build-dependencies]
 base64 = "0.21.2"
