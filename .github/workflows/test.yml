@@ -30,7 +30,7 @@ jobs:
     name: cargo build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
       with:
@@ -52,7 +52,7 @@ jobs:
     name: cargo test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
       with:
@@ -73,7 +73,7 @@ jobs:
     - run: sudo apt-get update
     - run: sudo apt-get install -y httpie jq
     - run: pip3 install yq
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/download-artifact@v3
       with:
         name: tims-package-server
