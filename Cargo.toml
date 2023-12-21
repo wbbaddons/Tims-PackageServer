@@ -34,7 +34,7 @@ notify = "4.0.17"
 once_cell = { version = "1.19.0", default-features = false }
 phf = "0.11.2"
 regex = { version = "1.10.2", default-features = false }
-roxmltree = "0.18.1"
+roxmltree = "0.19.0"
 serde = { version = "1.0.193", features = [ "derive" ] }
 serde_json = { version = "1.0.108", default-features = false }
 sha2 = "0.10.8"
