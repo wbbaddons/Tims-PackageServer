@@ -12,7 +12,7 @@ resolver = "2"
 actix-files = "0.6.5"
 actix-web = { version = "4.5.1", default-features = false, features = [ "macros" ] }
 actix-web-httpauth = "0.8.1"
-arc-swap = "1.6.0"
+arc-swap = "1.7.0"
 askama = { version = "0.12.1", default-features = false }
 askama_actix = "0.14.0"
 base64 = { version = "0.21.7", default-features = false }
