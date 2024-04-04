@@ -2226,7 +2226,7 @@ dependencies = [
  "arc-swap",
  "askama",
  "askama_actix",
- "base64 0.21.7",
+ "base64 0.22.0",
  "bcrypt",
  "built",
  "cargo-license",
