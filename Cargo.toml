@@ -20,7 +20,7 @@ bcrypt = "0.15.1"
 config = "0.14.0"
 env_logger = "0.11.3"
 fluent-langneg = { version = "0.13.0", default-features = false }
-fluent-templates = { version = "0.8.0", default-features = false }
+fluent-templates = { version = "0.9.1", default-features = false }
 futures = { version = "0.3.30", default-features = false, features = [ "async-await" ] }
 futures-util = { version = "0.3.28", default-features = false }
 humantime = "2.1.0"

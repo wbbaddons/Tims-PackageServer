@@ -937,9 +937,9 @@ dependencies = [
 
 [[package]]
 name = "fluent-templates"
-version = "0.8.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c3ef2c2152757885365abce32ddf682746062f1b6b3c0824a29fbed6ee4d080"
+checksum = "8f755e319f6f8f836b94b28c6094c414d29a17cee76e24374c7cd61f7696b3f6"
 dependencies = [
  "arc-swap",
  "fluent",
@@ -948,7 +948,6 @@ dependencies = [
  "fluent-syntax",
  "flume",
  "heck",
- "ignore",
  "intl-memoizer",
  "lazy_static",
  "log",
