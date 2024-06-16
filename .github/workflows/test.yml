@@ -136,4 +136,7 @@ jobs:
           exit 1
         fi
     - run: http --pretty=all -v GET :9001/
+    - run: systemctl status tims-package-server
+      if: always()
     - run: sudo systemctl stop tims-package-server
+      if: always()
