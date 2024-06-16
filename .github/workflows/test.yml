@@ -131,7 +131,7 @@ jobs:
           echo "::error::The ETag did not change." >&2
           exit 1
         fi
-        if [ "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')" = '${{ steps.etag.outputs.ETAg }}' ]; then
+        if [ "$(curl -fsSi http://localhost:9001/ |awk '/^etag:/{print $2}' |tr -d '\r\n')" = '${{ steps.etag.outputs.ETAG }}' ]; then
           echo "::error::The ETag did not change." >&2
           exit 1
         fi
