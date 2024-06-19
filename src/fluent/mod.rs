@@ -176,7 +176,7 @@ pub fn lookup(id: &str, lang_id: &str, json_args: &serde_json::Value) -> crate::
     };
 
     let loader = &*crate::fluent::FLUENT_LOADER;
-    match loader.lookup_complete(&lang, id, args.as_ref()) {
+    match loader.try_lookup_complete(&lang, id, args.as_ref()) {
         Some(response) => Ok(response),
         None => Err(format!("Failed to find text \"{id}\" for language {lang_id}").into()),
     }
