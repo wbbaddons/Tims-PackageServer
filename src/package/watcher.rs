@@ -17,47 +17,136 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::{AUTH_DATA, PACKAGE_LIST, SETTINGS};
-use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::{new_debouncer, DebounceEventResult, DebouncedEvent, Debouncer};
+use notify::{
+    event::{AccessKind, AccessMode, CreateKind, MetadataKind, ModifyKind, RemoveKind, RenameMode},
+    EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+};
+use notify_debouncer_full::{
+    new_debouncer, DebounceEventHandler, DebounceEventResult, DebouncedEvent, Debouncer, FileIdMap,
+};
 
 use std::{
     ffi::OsStr,
-    path::Path,
-    sync::{
-        mpsc::{Receiver, Sender},
-        Arc, Mutex,
-    },
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
-pub struct PackageWatcher<'a> {
-    // We need to keep the reference around, to prevent it from being dropped
-    #[allow(dead_code)]
-    inner: Debouncer<RecommendedWatcher>,
-
-    path: &'a Path,
+struct EventHandler {
+    auth_json: PathBuf,
     scanning: Arc<Mutex<()>>,
 }
 
-impl<'a> PackageWatcher<'a> {
-    pub fn new(path: &'a Path, tx: Sender<DebounceEventResult>) -> notify::Result<Self> {
-        let mut inner = new_debouncer(std::time::Duration::from_secs(5), None, tx)?;
+impl DebounceEventHandler for EventHandler {
+    fn handle_event(&mut self, result: DebounceEventResult) {
+        match result {
+            Ok(events) => {
+                for event in events {
+                    if event.need_rescan() {
+                        self.start_scan(event);
+                        break;
+                    }
 
-        inner.watcher().watch(path, RecursiveMode::Recursive)?;
+                    match event.kind {
+                        // If a package file or the auth.json was created, removed or written to, start a scan.
+                        EventKind::Create(CreateKind::File)
+                        | EventKind::Remove(RemoveKind::File)
+                        | EventKind::Access(AccessKind::Close(AccessMode::Write))
+                        | EventKind::Modify(ModifyKind::Data(_)) => {
+                            if self.path_matches(&event.paths[0]) {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
 
-        let watcher = Self {
-            inner,
-            path,
-            scanning: Arc::new(Mutex::new(())),
-        };
+                        // If a folder was created or removed, assume it affected package files and start a scan.
+                        EventKind::Create(CreateKind::Folder)
+                        | EventKind::Remove(RemoveKind::Folder) => {
+                            self.start_scan(event);
+                            break;
+                        }
 
-        Ok(watcher)
+                        // If permissions / ownership / the last modified time of a package file or folder changed, start a scan.
+                        EventKind::Modify(ModifyKind::Metadata(MetadataKind::Permissions))
+                        | EventKind::Modify(ModifyKind::Metadata(MetadataKind::Ownership))
+                        | EventKind::Modify(ModifyKind::Metadata(MetadataKind::WriteTime)) => {
+                            if self.path_matches(&event.paths[0]) || event.paths[0].is_dir() {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
+
+                        // If a package file was (re)moved, start a scan.
+                        EventKind::Remove(RemoveKind::Any)
+                        | EventKind::Modify(ModifyKind::Name(RenameMode::From)) => {
+                            if self.path_matches(&event.paths[0]) {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
+
+                        // If a package file was created or moved, start a scan.
+                        EventKind::Create(CreateKind::Any)
+                        | EventKind::Modify(ModifyKind::Name(RenameMode::To)) => {
+                            if self.path_matches(&event.paths[0]) {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
+
+                        // In this case we know both the old and the new name,
+                        // if either name matches a package file name or the auth.json path, start a scan.
+                        EventKind::Modify(ModifyKind::Name(RenameMode::Both)) => {
+                            // Check the old path and the new path
+                            if self.path_matches(&event.paths[0])
+                                || self.path_matches(&event.paths[1])
+                            {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
+
+                        // If any other modification affected a package file, start a scan.
+                        EventKind::Modify(_) => {
+                            if self.path_matches(&event.paths[0]) {
+                                self.start_scan(event);
+                                break;
+                            }
+                        }
+
+                        // All other unhandled events are ignored.
+                        _ => {
+                            log::trace!("Unhandled event: {:?}", event);
+                            // Do nothing
+                        }
+                    }
+                }
+            }
+            Err(errors) => {
+                log::error!(
+                    "Encountered {} errors while processing events:",
+                    errors.len()
+                );
+
+                for (i, err) in errors.iter().enumerate() {
+                    log::error!("Error #{i}: {err}");
+                }
+            }
+        }
+    }
+}
+
+impl EventHandler {
+    fn path_matches(&self, path: &Path) -> bool {
+        path.extension() == Some(OsStr::new("tar")) || path == self.auth_json
     }
 
-    fn start_scan(&self) {
+    fn start_scan(&self, event: DebouncedEvent) {
+        log::trace!("Re-scan triggered by event: {:#?}", event);
+
         let maybe_locked = self.scanning.try_lock();
 
         if maybe_locked.is_err() {
-            // A scan is already running
+            log::trace!("A scan is already in progress.");
             return;
         }
 
@@ -91,46 +180,37 @@ impl<'a> PackageWatcher<'a> {
             std::mem::drop(scanning);
         });
     }
+}
 
-    fn handle_event(&self, event: DebouncedEvent) {
-        // TODO: Previously we also scanned when we got a "Rescan" event.
-        // We might have to scan when we get an event where `event.path == self.path`.
+pub struct PackageWatcher<'a> {
+    // We need to keep the reference around, to prevent it from being dropped
+    #[allow(dead_code)]
+    debouncer: Debouncer<RecommendedWatcher, FileIdMap>,
 
-        if event.path.extension() == Some(OsStr::new("tar"))
-            || event.path == self.path.join("auth.json")
-        {
-            log::trace!("Re-scan triggered by event: {:#?}", event);
-            self.start_scan();
-        }
-    }
+    path: &'a Path,
+}
 
-    pub fn start_watcher(&mut self, rx: Receiver<DebounceEventResult>) {
-        loop {
-            match rx.recv() {
-                Err(err) => {
-                    log::error!("Generic watch error, stopping loop: {:?}", err);
-                    break;
-                }
-                Ok(Ok(events)) => {
-                    for event in events {
-                        self.handle_event(event)
-                    }
-                }
-                Ok(Err(errors)) => {
-                    log::error!(
-                        "Encountered {} errors while processing events:",
-                        errors.len()
-                    );
-                    for (i, err) in errors.iter().enumerate() {
-                        log::error!("Error #{i}: {err}");
-                    }
-                }
-            }
-        }
+impl<'a> PackageWatcher<'a> {
+    pub fn new(path: &'a Path) -> notify::Result<Self> {
+        let mut handler = EventHandler {
+            auth_json: path.join("auth.json"),
+            scanning: Arc::new(Mutex::new(())),
+        };
+
+        let mut debouncer = new_debouncer(
+            std::time::Duration::from_secs(5),
+            None,
+            move |result: DebounceEventResult| handler.handle_event(result),
+        )?;
+
+        debouncer.watcher().watch(path, RecursiveMode::Recursive)?;
+        debouncer.cache().add_root(path, RecursiveMode::Recursive);
+
+        Ok(Self { debouncer, path })
     }
 }
 
-impl std::fmt::Debug for PackageWatcher<'_> {
+impl<'a> std::fmt::Debug for PackageWatcher<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("PackageWatcher")
             .field("path", &self.path)

@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     net::{IpAddr, Ipv6Addr},
     path::PathBuf,
-    sync::{mpsc, Arc},
+    sync::Arc,
 };
 
 mod auth;
@@ -149,29 +149,10 @@ async fn main() -> crate::Result<()> {
 
     env_logger::init_from_env(env);
 
-    futures::try_join!(
+    let (_, _, _watcher) = futures::try_join!(
         http::run(),
         init_auth_data(),
-        init_package_list().and_then(|_| async {
-            let (tx, rx) = mpsc::channel();
-            let watcher = PackageWatcher::new(&SETTINGS.package_dir, tx);
-
-            match watcher {
-                Ok(mut watcher) => {
-                    // The watcher blocks the thread it is running on,
-                    // with Actix 3 it was ok to block on the main thread,
-                    // but Actix 4 doesn't like this very much.
-                    std::thread::spawn(move || {
-                        watcher.start_watcher(rx);
-                    });
-                }
-                Err(err) => {
-                    log::error!("Failed to start FS watcher: {}", err);
-                }
-            }
-
-            Ok(())
-        })
+        init_package_list().and_then(|_| async { Ok(PackageWatcher::new(&SETTINGS.package_dir)?) })
     )?;
 
     Ok(())
