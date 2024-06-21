@@ -97,6 +97,7 @@ jobs:
         popd
       shell: bash
     - run: hurl --file-root=$(pwd) --color --verbose --test tests/startup.hurl
+    - run: hurl --file-root=$(pwd) --color --verbose --test tests/test.hurl
     - run: systemctl status tims-package-server
       if: always()
     - run: sudo systemctl stop tims-package-server
