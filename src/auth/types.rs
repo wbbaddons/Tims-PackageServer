@@ -40,6 +40,7 @@ impl<'de> Visitor<'de> for PackageNameVisitor {
         E: serde::de::Error,
     {
         let regex_str = regex::escape(s).replace("\\*", ".*");
+        let regex_str = format!("^{regex_str}$");
 
         let regex = Regex::new(&regex_str).map_err(serde::de::Error::custom)?;
 

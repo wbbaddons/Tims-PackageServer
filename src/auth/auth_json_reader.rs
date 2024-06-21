@@ -153,4 +153,22 @@ fn test_parse() {
         assert_eq!(data.groups.len(), 0);
         assert_eq!(data.packages.len(), 0);
     }
+
+    {
+        let data = AuthData::try_from(
+            r#"{
+            "packages": {
+                "foo": "*"
+            }
+        }"#,
+        )
+        .unwrap();
+
+        assert_eq!(data.packages.len(), 1);
+
+        let package = data.packages.keys().next().unwrap();
+
+        assert!(package.0.is_match("foo"));
+        assert!(!package.0.is_match("foobar"));
+    }
 }
