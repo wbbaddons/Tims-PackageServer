@@ -2203,7 +2203,7 @@ dependencies = [
 
 [[package]]
 name = "tims-package-server"
-version = "10.3.11"
+version = "10.3.12"
 dependencies = [
  "actix-files",
  "actix-web",
