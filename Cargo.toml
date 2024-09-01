@@ -25,7 +25,7 @@ futures = { version = "0.3.30", default-features = false, features = [ "async-aw
 futures-util = { version = "0.3.30", default-features = false }
 humantime = "2.1.0"
 language-tags = "0.3.2"
-libc = "0.2.155"
+libc = "0.2.158"
 log = "0.4.22"
 mime = "0.3.17"
 mime_guess = { version = "2.0.5", default-features = false }
