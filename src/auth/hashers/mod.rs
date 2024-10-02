@@ -25,6 +25,7 @@ mod double_bcrypt;
 pub use self::double_bcrypt::*;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct UnknownHash(pub String);
 impl PasswordHash for UnknownHash {}
 

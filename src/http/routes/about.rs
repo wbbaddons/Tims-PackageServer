@@ -30,7 +30,7 @@ use actix_web::{get, http::header::VARY, Responder};
 pub async fn about(language: Language, host: Host) -> impl Responder {
     AboutTemplate {
         host: host.clone(),
-        server_version: crate::built_info::version(),
+        // server_version: crate::built_info::version(),
         title: SETTINGS.page_title.as_ref(),
         license_info: LICENSE_INFO,
         lang: language.to_string(),

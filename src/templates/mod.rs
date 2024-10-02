@@ -50,9 +50,9 @@ pub struct MainTemplate {
     pub host: String,
     pub server_version: String,
     pub title: Option<&'static String>,
-    pub license_info: LicenseInfo,
+    // pub license_info: LicenseInfo,
     pub lang: String,
-    pub auth_data: Arc<AuthData>,
+    // pub auth_data: Arc<AuthData>,
     pub auth_info: AuthInfo,
 }
 
@@ -82,7 +82,7 @@ pub struct PackageUpdateXmlTemplate {
 #[template(path = "about.html")]
 pub struct AboutTemplate {
     pub host: String,
-    pub server_version: String,
+    // pub server_version: String,
     pub title: Option<&'static String>,
     pub license_info: LicenseInfo,
     pub lang: String,

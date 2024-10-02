@@ -25,7 +25,13 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct PackageName(pub Regex);
+pub struct PackageName(Regex);
+
+impl PackageName {
+    pub fn regex(&self) -> &Regex {
+        &self.0
+    }
+}
 
 struct PackageNameVisitor;
 impl<'de> Visitor<'de> for PackageNameVisitor {
@@ -69,6 +75,7 @@ impl Hash for PackageName {
 
 type UserName = String;
 type GroupName = String;
+
 pub type Permissions = HashMap<PackageName, Ruleset>;
 
 #[derive(Debug, Deserialize)]

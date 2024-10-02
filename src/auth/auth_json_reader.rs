@@ -168,7 +168,7 @@ fn test_parse() {
 
         let package = data.packages.keys().next().unwrap();
 
-        assert!(package.0.is_match("foo"));
-        assert!(!package.0.is_match("foobar"));
+        assert!(package.regex().is_match("foo"));
+        assert!(!package.regex().is_match("foobar"));
     }
 }

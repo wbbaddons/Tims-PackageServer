@@ -34,7 +34,7 @@ pub fn is_accessible(
 ) -> bool {
     let check_permissions = |permissions: &Permissions| -> bool {
         for (name_regex, rule) in permissions {
-            if name_regex.0.is_match(package_id) && rule.evaluate(version) {
+            if name_regex.regex().is_match(package_id) && rule.evaluate(version) {
                 return true;
             }
         }

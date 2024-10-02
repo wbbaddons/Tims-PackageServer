@@ -23,7 +23,7 @@ use crate::{
         SETTINGS,
     },
     templates::MainTemplate,
-    AUTH_DATA, LICENSE_INFO,
+    AUTH_DATA,
 };
 use actix_web::{get, http::header::VARY, Responder};
 use actix_web_httpauth::extractors::basic::BasicAuth;
@@ -37,9 +37,9 @@ pub async fn main_xslt(auth: Option<BasicAuth>, language: Language, host: Host) 
         host: host.clone(),
         server_version: crate::built_info::version(),
         title: SETTINGS.page_title.as_ref(),
-        license_info: LICENSE_INFO,
+        // license_info: LICENSE_INFO,
         lang: language.to_string(),
-        auth_data,
+        // auth_data,
         auth_info,
     }
     .customize()

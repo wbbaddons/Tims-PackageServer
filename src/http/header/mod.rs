@@ -111,7 +111,7 @@ impl std::ops::Deref for Host {
     }
 }
 
-pub(self) struct Writer {
+pub struct Writer {
     buf: BytesMut,
 }
 

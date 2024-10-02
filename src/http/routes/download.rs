@@ -59,6 +59,7 @@ fn log_download(package_id: &str, version_str: &str) {
             .read(false)
             .write(true)
             .create(true)
+            .truncate(true)
             .append(false)
             .open(&path);
 
