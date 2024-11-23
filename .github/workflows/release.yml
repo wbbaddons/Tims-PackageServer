@@ -26,6 +26,8 @@ name: Perform Release
 permissions:
   contents: read
   packages: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -41,6 +43,10 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: cargo build --locked --release --verbose
+
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: '${{ github.workspace }}/target/release/tims-package-server'
 
       - name: Create Release
         id: create_release
@@ -79,7 +85,14 @@ jobs:
         run: echo version=${GITHUB_REF/refs\/tags\/v/} >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
       - uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
           push: true
           tags: ghcr.io/wbbaddons/tims-package-server:latest,ghcr.io/wbbaddons/tims-package-server:${{ steps.extract_version.outputs.version }}
+      - uses: actions/attest-build-provenance@v1
+        id: attest
+        with:
+          subject-name: ghcr.io/wbbaddons/tims-package-server
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
