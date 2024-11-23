@@ -23,6 +23,10 @@ on:
 
 name: Perform Release
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   release:
     name: Upload Release Asset
