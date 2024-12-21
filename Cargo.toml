@@ -18,7 +18,7 @@ askama_actix = "0.14.0"
 base64 = { version = "0.22.1", default-features = false }
 bcrypt = "0.16.0"
 config = "0.14.1"
-env_logger = "0.11.5"
+env_logger = "0.11.6"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.9.4", default-features = false , features = [ "use-ignore" ]}
 futures = { version = "0.3.31", default-features = false, features = [ "async-await" ] }
