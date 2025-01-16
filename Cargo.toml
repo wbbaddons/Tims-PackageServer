@@ -17,7 +17,7 @@ askama = { version = "0.12.1", default-features = false }
 askama_actix = "0.14.0"
 base64 = { version = "0.22.1", default-features = false }
 bcrypt = "0.16.0"
-config = "0.15.4"
+config = "0.15.6"
 env_logger = "0.11.6"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.9.4", default-features = false , features = [ "use-ignore" ]}
