@@ -23,7 +23,7 @@ fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.9.4", default-features = false , features = [ "use-ignore" ]}
 futures = { version = "0.3.31", default-features = false, features = [ "async-await" ] }
 futures-util = { version = "0.3.31", default-features = false }
-humantime = "2.1.0"
+humantime = "2.2.0"
 language-tags = "0.3.2"
 libc = "0.2.171"
 log = "0.4.22"
