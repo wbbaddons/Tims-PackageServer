@@ -18,7 +18,7 @@
 
 use super::SuffixType;
 use crate::nom::{numeric, ws};
-use nom::{combinator::map, sequence::tuple, IResult};
+use nom::{combinator::map, IResult, Parser};
 
 use serde::Serialize;
 use std::fmt::Display;
@@ -75,10 +75,10 @@ impl Display for Suffix {
 
 /// Parses suffix strings followed by a number into a `Suffix`.
 fn parser(input: &str) -> IResult<&str, Suffix> {
-    map(
-        tuple((ws(SuffixType::parser), ws(numeric))),
-        |(ty, number)| Suffix { ty, number },
-    )(input)
+    map((ws(SuffixType::parser), ws(numeric)), |(ty, number)| {
+        Suffix { ty, number }
+    })
+    .parse(input)
 }
 
 #[test]

@@ -16,7 +16,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use nom::{branch::alt, bytes::complete::tag_no_case, combinator::value, IResult};
+use nom::{branch::alt, bytes::complete::tag_no_case, combinator::value, IResult, Parser};
 
 use serde::Serialize;
 
@@ -56,7 +56,8 @@ fn parser(input: &str) -> IResult<&str, SuffixType> {
         value(SuffixType::Dev, tag_no_case("d")),
         value(SuffixType::ReleaseCandidate, tag_no_case("rc")),
         value(SuffixType::PatchLevel, tag_no_case("pl")),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 #[test]

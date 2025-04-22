@@ -18,7 +18,7 @@
 
 use crate::nom::ws;
 
-use nom::{branch::alt, bytes::complete::tag, combinator::value, IResult};
+use nom::{branch::alt, bytes::complete::tag, combinator::value, IResult, Parser};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Relation {
@@ -41,7 +41,8 @@ fn parser(input: &str) -> IResult<&str, Relation> {
         value(Relation::Less, tag("<")),
         value(Relation::GreaterOrEquals, tag(">=")),
         value(Relation::Greater, tag(">")),
-    )))(input)
+    )))
+    .parse(input)
 }
 
 #[test]

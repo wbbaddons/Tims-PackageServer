@@ -27,7 +27,7 @@ use nom::{
     character::complete::{char, multispace0},
     combinator::{complete, eof, opt},
     sequence::terminated,
-    IResult,
+    IResult, Parser,
 };
 use std::{cmp::Ordering, fmt::Display};
 
@@ -147,7 +147,7 @@ impl<'a> TryFrom<&'a str> for Version {
     type Error = nom::Err<nom::error::Error<&'a str>>;
 
     fn try_from(other: &'a str) -> Result<Self, Self::Error> {
-        terminated(parser, eof)(other).map(|(rest, version)| {
+        terminated(parser, eof).parse(other).map(|(rest, version)| {
             assert!(rest.is_empty());
 
             version
@@ -165,7 +165,7 @@ fn parser(input: &str) -> IResult<&str, Version> {
     let (input, patch) = numeric(input)?;
     let (input, _) = multispace0(input)?;
 
-    let (input, suffix) = opt(complete(Suffix::parser))(input)?;
+    let (input, suffix) = opt(complete(Suffix::parser)).parse(input)?;
 
     Ok((
         input,

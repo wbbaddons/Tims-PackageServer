@@ -27,8 +27,8 @@ use nom::{
     character::complete::char,
     combinator::map,
     multi::many1,
-    sequence::{delimited, preceded, separated_pair, tuple},
-    IResult,
+    sequence::{delimited, preceded, separated_pair},
+    IResult, Parser,
 };
 
 #[derive(Debug, Clone)]
@@ -87,10 +87,10 @@ impl From<(V, Relation, V)> for Expression {
 /// Parses a logical conjunction: Several sub expressions combined using `&&`.
 fn and(input: &str) -> IResult<&str, Expression> {
     map(
-        tuple((
+        (
             ws(sub_expression),
             many1(preceded(ws(tag("&&")), sub_expression)),
-        )),
+        ),
         |(e1, e_list)| {
             assert!(!e_list.is_empty());
 
@@ -101,16 +101,17 @@ fn and(input: &str) -> IResult<&str, Expression> {
 
             Expression::And(Box::new(e1), Box::new(e2))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
 /// Parses a logical disjunction: Several sub expressions combined using `||`.
 fn or(input: &str) -> IResult<&str, Expression> {
     map(
-        tuple((
+        (
             ws(sub_expression),
             many1(preceded(ws(tag("||")), sub_expression)),
-        )),
+        ),
         |(e1, e_list)| {
             let e2 = e_list
                 .into_iter()
@@ -119,7 +120,8 @@ fn or(input: &str) -> IResult<&str, Expression> {
 
             Expression::Or(Box::new(e1), Box::new(e2))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
 /// Parses valid sub expressions:
@@ -146,13 +148,13 @@ fn sub_expression(input: &str) -> IResult<&str, Expression> {
             |(v1, v2)| Expression::Not(Box::new(Expression::Equals(v1, v2))),
         ),
         map(
-            tuple((
+            (
                 V::parser,
                 ws(Relation::parser),
                 V::parser,
                 ws(Relation::parser),
                 V::parser,
-            )),
+            ),
             |(v1, r1, v2, r2, v3)| {
                 let left = (v1, r1, v2).into();
                 let right = (v2, r2, v3).into();
@@ -160,15 +162,13 @@ fn sub_expression(input: &str) -> IResult<&str, Expression> {
                 Expression::And(Box::new(left), Box::new(right))
             },
         ),
-        map(
-            tuple((V::parser, ws(Relation::parser), V::parser)),
-            Into::into,
-        ),
+        map((V::parser, ws(Relation::parser), V::parser), Into::into),
         map(
             separated_pair(V::parser, ws(char('=')), V::parser),
             |(v1, v2)| Expression::Equals(v1, v2),
         ),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 /// Parses a valid expression:
@@ -176,5 +176,5 @@ fn sub_expression(input: &str) -> IResult<&str, Expression> {
 /// - A logical conjunction (and).
 /// - A logical disjunection (or).
 fn parser(input: &str) -> IResult<&str, Expression> {
-    alt((and, or, sub_expression))(input)
+    alt((and, or, sub_expression)).parse(input)
 }
