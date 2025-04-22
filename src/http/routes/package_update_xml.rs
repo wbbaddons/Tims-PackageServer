@@ -18,12 +18,12 @@
 
 use crate::{
     http::{
-        error::Error::{NotAcceptable, PackageListUnavailable},
+        error::Error::{IoError, NotAcceptable, PackageListUnavailable},
         get_auth_info,
         header::{negotiate_language, not_modified, Host, Language},
         redirect, RedirectType, SETTINGS,
     },
-    templates::PackageUpdateXmlTemplate,
+    templates::{PackageUpdateXmlTemplate, Template},
     AUTH_DATA, PACKAGE_LIST, UPTIME,
 };
 use actix_web::{
@@ -31,7 +31,7 @@ use actix_web::{
     http::header::{
         Accept, ETag, EntityTag, Header, LastModified, CONTENT_TYPE, ETAG, LAST_MODIFIED, VARY,
     },
-    web, Either, HttpRequest, HttpResponse, Responder,
+    web, HttpRequest, HttpResponse, Responder,
 };
 use actix_web_httpauth::extractors::basic::BasicAuth;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64, Engine as _};
@@ -130,7 +130,7 @@ fn response(
                         .map(|version| format!("{}/{}/{}/", *host, name, version))
                         .unwrap_or_else(|| format!("{}/{}/", *host, name));
 
-                    return Ok(Either::Right(redirect(RedirectType::Permanent(url))));
+                    return Ok(redirect(RedirectType::Permanent(url)));
                 }
             }
 
@@ -165,35 +165,35 @@ fn response(
             let last_modified = LastModified(package_list.updated_at.into());
 
             if not_modified(&req, Some(&etag), Some(*last_modified)) {
-                return Ok(Either::Right(
-                    HttpResponse::NotModified()
-                        .insert_header((ETAG, etag))
-                        .insert_header((LAST_MODIFIED, last_modified))
-                        .insert_header((VARY, "accept, accept-language"))
-                        .body(()),
-                ));
+                return Ok(HttpResponse::NotModified()
+                    .insert_header((ETAG, etag))
+                    .insert_header((LAST_MODIFIED, last_modified))
+                    .insert_header((VARY, "accept, accept-language"))
+                    .finish());
             }
 
-            Ok(Either::Left(
-                PackageUpdateXmlTemplate {
-                    host: host.clone(),
-                    server_version: crate::built_info::version(),
-                    package_list,
-                    user_lang: user_lang_string,
-                    xml_lang,
-                    auth_data,
-                    auth_info,
-
-                    uptime: UPTIME.get().unwrap().elapsed(),
-                    deterministic: SETTINGS.deterministic,
-                    start_time: std::time::Instant::now(),
-                }
-                .customize()
+            Ok(HttpResponse::Ok()
                 .insert_header((ETAG, etag))
                 .insert_header((LAST_MODIFIED, last_modified))
                 .insert_header((CONTENT_TYPE, "text/xml; charset=utf-8"))
-                .insert_header((VARY, "accept, accept-language")),
-            ))
+                .insert_header((VARY, "accept, accept-language"))
+                .body(
+                    PackageUpdateXmlTemplate {
+                        host: host.clone(),
+                        server_version: crate::built_info::version(),
+                        package_list,
+                        user_lang: user_lang_string,
+                        xml_lang,
+                        auth_data,
+                        auth_info,
+
+                        uptime: UPTIME.get().unwrap().elapsed(),
+                        deterministic: SETTINGS.deterministic,
+                        start_time: std::time::Instant::now(),
+                    }
+                    .render()
+                    .map_err(|err| IoError(req, err.into_io_error()))?,
+                ))
         }
         None => Err(PackageListUnavailable(req)),
     }

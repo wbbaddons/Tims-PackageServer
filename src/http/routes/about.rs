@@ -21,20 +21,24 @@ use crate::{
         header::{Host, Language},
         SETTINGS,
     },
-    templates::AboutTemplate,
+    templates::{AboutTemplate, Template},
     LICENSE_INFO,
 };
-use actix_web::{get, http::header::VARY, Responder};
+use actix_web::{get, http::header::VARY, HttpResponse, Responder};
 
 #[get("/about/")]
-pub async fn about(language: Language, host: Host) -> impl Responder {
-    AboutTemplate {
-        host: host.clone(),
-        server_version: crate::built_info::version(),
-        title: SETTINGS.page_title.as_ref(),
-        license_info: LICENSE_INFO,
-        lang: language.to_string(),
-    }
-    .customize()
-    .insert_header((VARY, "accept-language"))
+pub async fn about(language: Language, host: Host) -> std::io::Result<impl Responder> {
+    Ok(HttpResponse::Ok()
+        .insert_header((VARY, "accept-language"))
+        .body(
+            AboutTemplate {
+                host: host.clone(),
+                server_version: crate::built_info::version(),
+                title: SETTINGS.page_title.as_ref(),
+                license_info: LICENSE_INFO,
+                lang: language.to_string(),
+            }
+            .render()
+            .map_err(|err| err.into_io_error())?,
+        ))
 }

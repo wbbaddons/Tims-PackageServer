@@ -18,10 +18,10 @@
 
 use crate::{
     http::{
-        error::Error::{FileNotFound, NotAcceptable},
+        error::Error::{FileNotFound, IoError, NotAcceptable},
         header::{not_modified, Host, Language},
     },
-    templates::{SourceCodeHtmlTemplate, SourceCodeTextTemplate},
+    templates::{SourceCodeHtmlTemplate, SourceCodeTextTemplate, Template},
 };
 use actix_web::{
     dev::HttpServiceFactory,
@@ -29,7 +29,7 @@ use actix_web::{
     http::header::{
         Accept, CacheControl, CacheDirective, ETag, EntityTag, Header, CACHE_CONTROL, ETAG, VARY,
     },
-    web, Either, HttpRequest, HttpResponse, Responder,
+    web, HttpRequest, HttpResponse, Responder,
 };
 
 pub fn source_code() -> impl HttpServiceFactory {
@@ -67,27 +67,27 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
             ));
 
             if not_modified(&req, Some(&etag), None) {
-                return Ok(Either::Right(
-                    HttpResponse::NotModified()
-                        .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
-                        .insert_header((ETAG, etag))
-                        .insert_header((VARY, "accept, accept-language"))
-                        .body(()),
-                ));
+                return Ok(HttpResponse::NotModified()
+                    .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                    .insert_header((ETAG, etag))
+                    .insert_header((VARY, "accept, accept-language"))
+                    .finish());
             }
 
-            Ok(Either::Left(Either::Left(
-                SourceCodeHtmlTemplate {
-                    host: host.clone(),
-                    server_version: crate::built_info::version(),
-                    title: crate::SETTINGS.page_title.as_ref(),
-                    lang: language.to_string(),
-                }
-                .customize()
+            Ok(HttpResponse::Ok()
                 .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                 .insert_header((ETAG, etag))
-                .insert_header((VARY, "accept, accept-language")),
-            )))
+                .insert_header((VARY, "accept, accept-language"))
+                .body(
+                    SourceCodeHtmlTemplate {
+                        host: host.clone(),
+                        server_version: crate::built_info::version(),
+                        title: crate::SETTINGS.page_title.as_ref(),
+                        lang: language.to_string(),
+                    }
+                    .render()
+                    .map_err(|err| IoError(req, err.into_io_error()))?,
+                ))
         }
         Some(OutputType::Plain) => {
             let etag = ETag(EntityTag::new(
@@ -96,27 +96,27 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
             ));
 
             if not_modified(&req, Some(&etag), None) {
-                return Ok(Either::Right(
-                    HttpResponse::NotModified()
-                        .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
-                        .insert_header((ETAG, etag))
-                        .insert_header((VARY, "accept, accept-language"))
-                        .body(()),
-                ));
+                return Ok(HttpResponse::NotModified()
+                    .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
+                    .insert_header((ETAG, etag))
+                    .insert_header((VARY, "accept, accept-language"))
+                    .finish());
             }
 
-            Ok(Either::Left(Either::Right(
-                SourceCodeTextTemplate {
-                    host: host.clone(),
-                    server_version: crate::built_info::version(),
-                    title: crate::SETTINGS.page_title.as_ref(),
-                    lang: language.to_string(),
-                }
-                .customize()
+            Ok(HttpResponse::Ok()
                 .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                 .insert_header((ETAG, etag))
-                .insert_header((VARY, "accept, accept-language")),
-            )))
+                .insert_header((VARY, "accept, accept-language"))
+                .body(
+                    SourceCodeTextTemplate {
+                        host: host.clone(),
+                        server_version: crate::built_info::version(),
+                        title: crate::SETTINGS.page_title.as_ref(),
+                        lang: language.to_string(),
+                    }
+                    .render()
+                    .map_err(|err| IoError(req, err.into_io_error()))?,
+                ))
         }
         None => {
             // This unwrap is safe because the header must have
