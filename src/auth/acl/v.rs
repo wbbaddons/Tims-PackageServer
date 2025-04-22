@@ -22,7 +22,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     combinator::{map, value},
-    IResult,
+    IResult, Parser,
 };
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
@@ -42,7 +42,8 @@ fn parser(input: &str) -> IResult<&str, V> {
     alt((
         value(V::VersionInput, tag("$v")),
         map(Version::parser, V::Version),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 #[test]

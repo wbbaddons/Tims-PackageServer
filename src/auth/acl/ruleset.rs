@@ -25,6 +25,7 @@ use nom::{
     character::complete::char,
     combinator::{eof, map, value},
     sequence::terminated,
+    Parser,
 };
 
 #[derive(Debug, Clone)]
@@ -77,7 +78,8 @@ fn parser(input: &str) -> Result<Ruleset, nom::Err<nom::error::Error<&str>>> {
             map(ws(Expression::parser), Ruleset::Expression),
         )),
         eof,
-    )(input)?;
+    )
+    .parse(input)?;
 
     assert!(rest.is_empty());
 

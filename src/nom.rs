@@ -20,7 +20,7 @@ use nom::{
     character::complete::{digit1, multispace0},
     error::ParseError,
     sequence::delimited,
-    IResult,
+    IResult, Parser,
 };
 
 /// Parses a numeric value and returns it as T.
@@ -48,11 +48,9 @@ fn test_numeric() {
 }
 
 /// Ignores whitespaces around the `inner` parser.
-pub fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
-    inner: F,
-) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+pub fn ws<'a, O, E: ParseError<&'a str>, F>(inner: F) -> impl Parser<&'a str, Output = O, Error = E>
 where
-    F: FnMut(&'a str) -> IResult<&'a str, O, E>,
+    F: Parser<&'a str, Output = O, Error = E>,
 {
     delimited(multispace0, inner, multispace0)
 }
