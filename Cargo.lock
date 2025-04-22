@@ -331,13 +331,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "askama"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d4744ed2eef2645831b441d8f5459689ade2ab27c854488fbab1fbe94fce1a7"
+dependencies = [
+ "itoa",
+]
+
+[[package]]
 name = "askama_actix"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4b0dd17cfe203b00ba3853a89fba459ecf24c759b738b244133330607c78e55"
 dependencies = [
  "actix-web",
- "askama",
+ "askama 0.12.1",
 ]
 
 [[package]]
@@ -2442,7 +2451,7 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "arc-swap",
- "askama",
+ "askama 0.13.1",
  "askama_actix",
  "base64 0.22.1",
  "bcrypt",
