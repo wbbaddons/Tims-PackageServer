@@ -30,6 +30,7 @@ use unic_langid::LanguageIdentifier;
 
 pub fn is_accessible(
     package: &PackageInfo,
+    _: &dyn askama::Values,
     auth_info: &AuthInfo,
     auth_data: &AuthData,
 ) -> askama::Result<&'static str> {
@@ -43,7 +44,7 @@ pub fn is_accessible(
     }
 }
 
-pub fn timestamp(t: SystemTime) -> askama::Result<u64> {
+pub fn timestamp(t: SystemTime, _: &dyn askama::Values) -> askama::Result<u64> {
     let duration = t
         .duration_since(std::time::SystemTime::UNIX_EPOCH)
         .map_err(|_| askama::Error::from(std::fmt::Error))?;
@@ -51,7 +52,7 @@ pub fn timestamp(t: SystemTime) -> askama::Result<u64> {
     Ok(duration.as_secs())
 }
 
-pub fn rfc3339(t: &SystemTime) -> askama::Result<String> {
+pub fn rfc3339(t: &SystemTime, _: &dyn askama::Values) -> askama::Result<String> {
     Ok(humantime::format_rfc3339(*t).to_string())
 }
 
@@ -66,6 +67,7 @@ fn get_for_language<'a, T: xml::HasLanguage>(
 
 pub fn package_name(
     names: &[PackageName],
+    _: &dyn askama::Values,
     lang: &Option<LanguageIdentifier>,
 ) -> askama::Result<String> {
     let result = get_for_language(names, lang)
@@ -76,6 +78,7 @@ pub fn package_name(
 
 pub fn package_description(
     descriptions: &[PackageDescription],
+    _: &dyn askama::Values,
     lang: &Option<LanguageIdentifier>,
 ) -> askama::Result<String> {
     let result = get_for_language(descriptions, lang).map_or_else(
