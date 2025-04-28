@@ -51,6 +51,8 @@ pub enum Error {
     PaymentRequired(HttpRequest, String, Version),
 
     AccessDenied(HttpRequest),
+
+    IoError(HttpRequest, std::io::Error),
 }
 
 impl Error {
@@ -63,7 +65,8 @@ impl Error {
             | Self::UnknownPackageVersion(ref req, ..)
             | Self::PackageReadFailed(ref req, ..)
             | Self::PaymentRequired(ref req, ..)
-            | Self::PackageListUnavailable(ref req) => req,
+            | Self::PackageListUnavailable(ref req)
+            | Self::IoError(ref req, ..) => req,
         }
     }
 }
@@ -73,7 +76,7 @@ impl Display for Error {
         let req = self.get_request();
         let lang = Language::from(req);
 
-        let message = match *self {
+        let message = match self {
             Self::AccessDenied(..) => fluent!(lang, "password-prompt"),
 
             Self::FileNotFound(_, ref file) => fluent!(lang, "file-not-found", { file }),
@@ -94,6 +97,7 @@ impl Display for Error {
                 fluent!(lang, "package-payment-required", { package_id, "version": version.to_string() })
             }
             Self::PackageListUnavailable(..) => fluent!(lang, "package-list-unavailable"),
+            Self::IoError(..) => panic!("Not implemented"),
         };
 
         f.write_str(&message)
@@ -102,7 +106,7 @@ impl Display for Error {
 
 impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
-        match *self {
+        match self {
             Self::AccessDenied(..) => StatusCode::UNAUTHORIZED,
             Self::FileNotFound(..) => StatusCode::NOT_FOUND,
             Self::NotAcceptable(..) => StatusCode::NOT_ACCEPTABLE,
@@ -113,11 +117,16 @@ impl ResponseError for Error {
             Self::PaymentRequired(..) => StatusCode::PAYMENT_REQUIRED,
 
             Self::PackageListUnavailable(..) => StatusCode::SERVICE_UNAVAILABLE,
+            Self::IoError(_, e) => e.status_code(),
         }
     }
 
     fn error_response(&self) -> HttpResponse {
-        if let Self::AccessDenied(ref req) = *self {
+        if let Self::IoError(_, e) = self {
+            return e.error_response();
+        }
+
+        if let Self::AccessDenied(ref req) = self {
             let lang = Language::from(req);
             let challenge = Challenge::with_realm(fluent!(lang, "password-prompt"));
 

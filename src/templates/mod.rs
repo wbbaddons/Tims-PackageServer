@@ -21,7 +21,7 @@ mod filters;
 use crate::{
     auth::AuthData, fluent, http::helpers::AuthInfo, package::list_reader::PackageList, LicenseInfo,
 };
-use askama_actix::Template;
+pub use askama::Template;
 use std::sync::Arc;
 use unic_langid::LanguageIdentifier;
 

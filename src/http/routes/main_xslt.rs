@@ -22,26 +22,34 @@ use crate::{
         header::{Host, Language},
         SETTINGS,
     },
-    templates::MainTemplate,
+    templates::{MainTemplate, Template},
     AUTH_DATA, LICENSE_INFO,
 };
-use actix_web::{get, http::header::VARY, Responder};
+use actix_web::{get, http::header::VARY, HttpResponse, Responder};
 use actix_web_httpauth::extractors::basic::BasicAuth;
 
 #[get("/style/main.xslt")]
-pub async fn main_xslt(auth: Option<BasicAuth>, language: Language, host: Host) -> impl Responder {
+pub async fn main_xslt(
+    auth: Option<BasicAuth>,
+    language: Language,
+    host: Host,
+) -> std::io::Result<impl Responder> {
     let auth_data = AUTH_DATA.load_full();
     let auth_info = get_auth_info(&auth_data, auth);
 
-    MainTemplate {
-        host: host.clone(),
-        server_version: crate::built_info::version(),
-        title: SETTINGS.page_title.as_ref(),
-        license_info: LICENSE_INFO,
-        lang: language.to_string(),
-        auth_data,
-        auth_info,
-    }
-    .customize()
-    .insert_header((VARY, "accept-language"))
+    Ok(HttpResponse::Ok()
+        .insert_header((VARY, "accept-language"))
+        .body(
+            MainTemplate {
+                host: host.clone(),
+                server_version: crate::built_info::version(),
+                title: SETTINGS.page_title.as_ref(),
+                license_info: LICENSE_INFO,
+                lang: language.to_string(),
+                auth_data,
+                auth_info,
+            }
+            .render()
+            .map_err(|err| err.into_io_error())?,
+        ))
 }
