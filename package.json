@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "bootstrap": "^5.3.5",
+    "bootstrap": "^5.3.6",
     "fuse.js": "^7.1.0"
   }
 }
