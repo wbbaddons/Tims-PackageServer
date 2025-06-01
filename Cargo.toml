@@ -38,7 +38,7 @@ serde = { version = "1.0.219", features = [ "derive" ] }
 serde_json = { version = "1.0.140", default-features = false }
 sha2 = "0.10.9"
 tar = { version = "0.4.44", default-features = false }
-unic-langid = "0.9.5"
+unic-langid = "0.9.6"
 url = { version = "2.5.4", features = ["serde"] }
 
 [build-dependencies]
