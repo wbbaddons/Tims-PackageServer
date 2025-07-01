@@ -16,7 +16,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-FROM	node:22 AS npm
+FROM	node:24 AS npm
 
 COPY	package.json package-lock.json /usr/src/PackageServer/
 
