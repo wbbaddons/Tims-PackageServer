@@ -35,7 +35,7 @@ phf = "0.12.1"
 regex = { version = "1.11.1", default-features = false, features = [ "unicode" ] }
 roxmltree = "0.20.0"
 serde = { version = "1.0.219", features = [ "derive" ] }
-serde_json = { version = "1.0.140", default-features = false }
+serde_json = { version = "1.0.142", default-features = false }
 sha2 = "0.10.9"
 tar = { version = "0.4.44", default-features = false }
 unic-langid = "0.9.6"
