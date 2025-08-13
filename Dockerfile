@@ -32,7 +32,7 @@ RUN	cd /usr/src/PackageServer/ \
 &&	find . -not -path './.git/*' \
 &&	cargo build --locked --release
 
-FROM	debian:bookworm-slim
+FROM	debian:trixie-slim
 
 RUN	set -ex \
 &&	groupadd -r packageserver \
