@@ -169,16 +169,16 @@ fn bundle_source_code() -> crate::Result<()> {
 fn main() -> crate::Result<()> {
     built::write_built_file().expect("Failed to acquire build-time information");
 
-    let cmd = Default::default();
-
-    let ops = GetDependenciesOpt {
-        avoid_dev_deps: false,
-        avoid_build_deps: false,
-        direct_deps_only: false,
-        root_only: false,
-    };
-
-    let dependencies = cargo_license::get_dependencies_from_cargo_lock(cmd, ops)?;
+    let dependencies = cargo_license::get_dependencies_from_cargo_lock(
+        &Default::default(),
+        &GetDependenciesOpt {
+            avoid_dev_deps: false,
+            avoid_build_deps: false,
+            avoid_proc_macros: false,
+            direct_deps_only: false,
+            root_only: false,
+        },
+    )?;
 
     write_license_info_file(dependencies)?;
 
