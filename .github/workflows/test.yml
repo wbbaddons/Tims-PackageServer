@@ -77,7 +77,7 @@ jobs:
         curl -fsSL https://github.com/Orange-OpenSource/hurl/releases/download/4.3.0/hurl_4.3.0_amd64.deb -o hurl.deb
         sudo apt install ./hurl.deb
     - uses: actions/checkout@v5
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         name: tims-package-server
     - run: mv */tims-package-server .
