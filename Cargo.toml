@@ -31,7 +31,7 @@ mime_guess = { version = "2.0.5", default-features = false }
 nom = { version = "8.0.0", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
 once_cell = { version = "1.21.3", default-features = false }
-phf = "0.12.1"
+phf = "0.13.1"
 regex = { version = "1.11.2", default-features = false, features = [ "unicode" ] }
 roxmltree = "0.20.0"
 serde = { version = "1.0.219", features = [ "derive" ] }
