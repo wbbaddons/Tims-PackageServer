@@ -32,7 +32,7 @@ nom = { version = "8.0.0", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
 once_cell = { version = "1.21.3", default-features = false }
 phf = "0.13.1"
-regex = { version = "1.11.2", default-features = false, features = [ "unicode" ] }
+regex = { version = "1.12.2", default-features = false, features = [ "unicode" ] }
 roxmltree = "0.20.0"
 serde = { version = "1.0.219", features = [ "derive" ] }
 serde_json = { version = "1.0.148", default-features = false }
