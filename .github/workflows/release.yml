@@ -44,7 +44,7 @@ jobs:
       - run: npm ci
       - run: cargo build --locked --release --verbose
 
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: '${{ github.workspace }}/target/release/tims-package-server'
 
@@ -90,7 +90,7 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/wbbaddons/tims-package-server:latest,ghcr.io/wbbaddons/tims-package-server:${{ steps.extract_version.outputs.version }}
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@v4
         id: attest
         with:
           subject-name: ghcr.io/wbbaddons/tims-package-server
