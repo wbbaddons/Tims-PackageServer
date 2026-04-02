@@ -84,7 +84,7 @@ jobs:
         id: extract_version
         run: echo version=${GITHUB_REF/refs\/tags\/v/} >> $GITHUB_OUTPUT
       - uses: actions/checkout@v6
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         id: build
         with:
           context: .
