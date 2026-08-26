@@ -29,6 +29,7 @@ pub async fn health(req: HttpRequest) -> impl Responder {
         .load_full()
         .map(|_| {
             HttpResponse::Ok()
+                .content_type("text/plain; charset=utf-8")
                 .insert_header(CacheControl(vec![
                     CacheDirective::NoCache,
                     CacheDirective::NoStore,

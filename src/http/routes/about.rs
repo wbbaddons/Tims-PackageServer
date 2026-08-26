@@ -29,6 +29,7 @@ use actix_web::{get, http::header::VARY, HttpResponse, Responder};
 #[get("/about/")]
 pub async fn about(language: Language, host: Host) -> std::io::Result<impl Responder> {
     Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
         .insert_header((VARY, "accept-language"))
         .body(
             AboutTemplate {
