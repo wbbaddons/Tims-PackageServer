@@ -1,6 +1,6 @@
 [package]
 name = "tims-package-server"
-version = "10.3.17"
+version = "10.3.18"
 license = "AGPL-3.0-or-later"
 authors = ["Maximilian Mader", "Tim Düsterhus"]
 
