@@ -68,6 +68,7 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
 
             if not_modified(&req, Some(&etag), None) {
                 return Ok(HttpResponse::NotModified()
+                    .content_type("text/html; charset=utf-8")
                     .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                     .insert_header((ETAG, etag))
                     .insert_header((VARY, "accept, accept-language"))
@@ -75,6 +76,7 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
             }
 
             Ok(HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
                 .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                 .insert_header((ETAG, etag))
                 .insert_header((VARY, "accept, accept-language"))
@@ -97,6 +99,7 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
 
             if not_modified(&req, Some(&etag), None) {
                 return Ok(HttpResponse::NotModified()
+                    .content_type("text/plain; charset=utf-8")
                     .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                     .insert_header((ETAG, etag))
                     .insert_header((VARY, "accept, accept-language"))
@@ -104,6 +107,7 @@ async fn index(req: HttpRequest, language: Language, host: Host) -> impl Respond
             }
 
             Ok(HttpResponse::Ok()
+                .content_type("text/plain; charset=utf-8")
                 .insert_header((CACHE_CONTROL, CacheControl(vec![CacheDirective::Public])))
                 .insert_header((ETAG, etag))
                 .insert_header((VARY, "accept, accept-language"))

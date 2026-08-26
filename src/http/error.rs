@@ -19,7 +19,6 @@
 use crate::{fluent, http::header::Language, version::Version};
 use actix_web::{
     http::{
-        header,
         header::{Accept, CacheControl, CacheDirective},
         StatusCode,
     },
@@ -141,7 +140,7 @@ impl ResponseError for Error {
         }
 
         HttpResponseBuilder::new(self.status_code())
-            .insert_header((header::CONTENT_TYPE, "text/plain; charset=utf-8"))
+            .content_type("text/plain; charset=utf-8")
             .insert_header(CacheControl(vec![
                 CacheDirective::NoCache,
                 CacheDirective::NoStore,

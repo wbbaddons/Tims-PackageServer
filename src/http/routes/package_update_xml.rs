@@ -28,9 +28,7 @@ use crate::{
 };
 use actix_web::{
     dev::HttpServiceFactory,
-    http::header::{
-        Accept, ETag, EntityTag, Header, LastModified, CONTENT_TYPE, ETAG, LAST_MODIFIED, VARY,
-    },
+    http::header::{Accept, ETag, EntityTag, Header, LastModified, ETAG, LAST_MODIFIED, VARY},
     web, HttpRequest, HttpResponse, Responder,
 };
 use actix_web_httpauth::extractors::basic::BasicAuth;
@@ -166,6 +164,7 @@ fn response(
 
             if not_modified(&req, Some(&etag), Some(*last_modified)) {
                 return Ok(HttpResponse::NotModified()
+                    .content_type("text/xml; charset=utf-8")
                     .insert_header((ETAG, etag))
                     .insert_header((LAST_MODIFIED, last_modified))
                     .insert_header((VARY, "accept, accept-language"))
@@ -173,9 +172,9 @@ fn response(
             }
 
             Ok(HttpResponse::Ok()
+                .content_type("text/xml; charset=utf-8")
                 .insert_header((ETAG, etag))
                 .insert_header((LAST_MODIFIED, last_modified))
-                .insert_header((CONTENT_TYPE, "text/xml; charset=utf-8"))
                 .insert_header((VARY, "accept, accept-language"))
                 .body(
                     PackageUpdateXmlTemplate {
