@@ -4,6 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      phf:
+        patterns:
+          - "phf"
+          - "phf_codegen"
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
