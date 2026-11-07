@@ -141,7 +141,7 @@ fn bundle_source_code() -> crate::Result<()> {
 
             builder.entry(
                 name,
-                &format!(
+                format!(
                     "SourceFile {{ contents: {}, sha384_digest: {}_SHA384_DIGEST }}",
                     &const_name, &const_name
                 ),
