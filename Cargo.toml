@@ -24,16 +24,16 @@ futures = { version = "0.3.31", default-features = false, features = [ "async-aw
 futures-util = { version = "0.3.32", default-features = false }
 humantime = "2.3.0"
 language-tags = "0.3.2"
-libc = "0.2.174"
-log = "0.4.27"
-mime = "0.3.17"
+libc = "0.2.191"
+log = "0.4.35"
+mime = "0.3.18"
 mime_guess = { version = "2.0.5", default-features = false }
 nom = { version = "8.0.0", default-features = false, features = [ "alloc" ] }
 notify = "4.0.17"
 once_cell = { version = "1.21.4", default-features = false }
 phf = "0.13.1"
 regex = { version = "1.12.2", default-features = false, features = [ "unicode" ] }
-roxmltree = "0.21.1"
+roxmltree = "0.21.2"
 serde = { version = "1.0.219", features = [ "derive" ] }
 serde_json = { version = "1.0.150", default-features = false }
 sha2 = "0.10.9"
