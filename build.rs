@@ -114,10 +114,10 @@ fn bundle_source_code() -> crate::Result<()> {
             let const_name = const_name(file, &mut const_names);
 
             let hash = {
-                let mut hasher = Sha384::new();
+                let mut hasher = digest_io::IoWrapper(Sha384::new());
                 let mut file = std::fs::File::open(entry.path())?;
                 let _ = std::io::copy(&mut file, &mut hasher)?;
-                hasher.finalize()
+                hasher.0.finalize()
             };
 
             combined_hasher.update(hash);

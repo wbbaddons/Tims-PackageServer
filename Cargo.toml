@@ -17,6 +17,7 @@ askama = { version = "0.14.0", default-features = false, features = [ "alloc", "
 base64 = { version = "0.22.1", default-features = false }
 bcrypt = "0.17.1"
 config = "0.15.16"
+digest-io = "0.1.0"
 env_logger = "0.11.6"
 fluent-langneg = { version = "0.13.0", default-features = false }
 fluent-templates = { version = "0.9.4", default-features = false , features = [ "use-ignore" ]}
@@ -36,7 +37,7 @@ regex = { version = "1.12.2", default-features = false, features = [ "unicode" ]
 roxmltree = "0.21.2"
 serde = { version = "1.0.219", features = [ "derive" ] }
 serde_json = { version = "1.0.150", default-features = false }
-sha2 = "0.10.9"
+sha2 = "0.11.1"
 tar = { version = "0.4.46", default-features = false }
 unic-langid = "0.9.6"
 url = { version = "2.5.7", features = ["serde"] }
@@ -45,9 +46,10 @@ url = { version = "2.5.7", features = ["serde"] }
 base64 = "0.22.1"
 built = { version = "0.8.0", features = [ "git2" ] }
 cargo-license = "0.7.0"
+digest-io = "0.1.0"
 ignore = "0.4.25"
 phf_codegen = "0.11.3"
-sha2 = "0.10.9"
+sha2 = "0.11.1"
 
 [profile.release]
 panic = "abort"
