@@ -123,10 +123,16 @@ fn read_package_archive(
     }
 
     let hash = {
-        let mut hasher = Sha256::new();
+        use std::fmt::Write as _;
+
+        let mut hasher = digest_io::IoWrapper(Sha256::new());
         let mut file = std::fs::File::open(path)?;
         let _ = std::io::copy(&mut file, &mut hasher)?;
-        format!("{:x}", hasher.finalize())
+        let mut hash = String::with_capacity(64);
+        for b in hasher.0.finalize() {
+            let _ = write!(hash, "{b:02x}");
+        }
+        hash
     };
 
     Ok(PackageInfo {
